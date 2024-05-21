@@ -1,0 +1,89 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  @font-face {
+    font-family: "inter";
+    font-style: normal;
+    font-weight: 200;
+    font-display: swap;
+    src: url("./assets/Inter/static/Inter-Black.ttf") format("woff2");
+  }
+  @font-face {
+    font-family: "inter";
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url("./assets/Inter/static/Inter-Medium.ttf") format("woff2");
+  }
+}
+
+body {
+  background-color: #f9fafb;
+}
+
+.tertiary {
+  background: linear-gradient(132deg, #963fff -9.83%, #2e42ff 91.64%);
+  color: #fff;
+  transition: all 0.3s;
+}
+.tertiary:hover {
+  background: linear-gradient(132deg, #963fff -9.83%, #2e42ff 91.64%);
+  box-shadow: 0 4px 18px #4d42ff99;
+}
+.tertiary:active {
+  background: linear-gradient(132deg, #7137d5 -9.83%, #2939d5 91.64%);
+}
+.previous-btn {
+  background: rgba(230, 240, 254, 1);
+  color: rgba(30, 32, 34, 1);
+  font-weight: 600;
+  line-height: 22px;
+}
+.previous-btn:hover {
+  background-color: rgba(230, 237, 254, 22);
+}
+.css-117w1su-MuiStepIcon-text {
+  fill: rgba(46, 66, 255, 1) !important;
+}
+.css-1hv8oq8-MuiStepLabel-label.Mui-active {
+  font-size: 16px;
+  line-height: 22px;
+  font-weight: 500;
+  font-family: inter;
+}
+.css-ahj2mt-MuiTypography-root {
+  color: rgba(136, 137, 138, 1);
+  font-size: 14px !important;
+  font-weight: 400 !important;
+  line-height: 22px !important;
+}
+.css-1u4zpwo-MuiSvgIcon-root-MuiStepIcon-root.Mui-completed {
+  color: rgba(2, 210, 90, 1) !important;
+  border: rgba(2, 210, 90, 1) 1px solid;
+}
+.css-1hv8oq8-MuiStepLabel-label.Mui-completed {
+  color: rgba(136, 137, 138, 1) !important;
+  font-size: 20px !important;
+}
+.css-1u4zpwo-MuiSvgIcon-root-MuiStepIcon-root {
+  color: white !important;
+  border: rgba(136, 137, 138, 1) 1px solid;
+  border-radius: 50%;
+}
+.css-117w1su-MuiStepIcon-text {
+  fill: rgba(136, 137, 138, 1) !important;
+}
+.Mui-active.MuiStepIcon-root > .css-117w1su-MuiStepIcon-text {
+  fill: rgba(46, 66, 255, 1) !important;
+}
+.css-8t49rw-MuiStepConnector-line {
+  min-height: 42px !important;
+}
+.MuiAutocomplete-endAdornment {
+  left: 9px;
+}
+.MuiAutocomplete-input {
+  padding-left: 25px !important;
+}
