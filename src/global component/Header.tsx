@@ -1,6 +1,11 @@
+import React from "react";
+import GravityWriteLogo from "../assets/logo.svg";
 
+interface HeaderProps {
+  active: boolean;
+}
 
-function Header() {
+const Header: React.FC<HeaderProps> = ({ active }) => {
   return (
     <>
       <div className="border-b">
@@ -10,7 +15,13 @@ function Header() {
               <div className="flex items-center justify-between pt-[11px] pb-[14px] pr-2  cursor-pointer md:pr-7 ps-3">
                 <div className=" pr-5 left-0 pt-[11px] pb-[11px]">
                   {" "}
-                  {/* <img src={GravityWriteLogo} alt="" /> */}
+                  {active && (
+                    <img
+                      src={GravityWriteLogo}
+                      alt="gravity write logo"
+                      className="h-10 p-2 rounded-md cursor-pointer hover:bg-palatinate-blue-50"
+                    />
+                  )}
                 </div>
               </div>
               <div className="flex items-center justify-between py-2 pr-2 border-r cursor-pointer md:pr-7 ps-3">
@@ -26,6 +37,6 @@ function Header() {
       </div>
     </>
   );
-}
+};
 
 export default Header;

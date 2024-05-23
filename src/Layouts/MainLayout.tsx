@@ -11,7 +11,7 @@ function MainLayout({ children }) {
         </aside>
       </div>
       <div className="w-full">
-        <Header />
+        <Header active={false} />
         <main>{children}</main>
       </div>
     </div>
