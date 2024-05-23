@@ -33,6 +33,12 @@ export default {
           400: "#5F5F5F",
         },
       },
+      boxShadow: {
+        custom: "0px 5px 20px 0px rgba(0, 0, 0, 0.1)",
+      },
+      border: {
+        input: "rgba(205, 212, 219, 1) 1px solid",
+      },
     },
     screens: {
       "2xl": { max: "1535px" },
@@ -48,5 +54,4 @@ export default {
       sm: { max: "639px" },
     },
   },
-  plugins: [require("preline/plugin")],
 };

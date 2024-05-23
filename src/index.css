@@ -44,41 +44,41 @@ body {
 .previous-btn:hover {
   background-color: rgba(230, 237, 254, 22);
 }
-.css-117w1su-MuiStepIcon-text {
+/* .css-117w1su-MuiStepIcon-text {
   fill: rgba(46, 66, 255, 1) !important;
-}
-.css-1hv8oq8-MuiStepLabel-label.Mui-active {
+} */
+.MuiStepLabel-labelContainer > .Mui-active {
   font-size: 16px;
   line-height: 22px;
   font-weight: 500;
   font-family: inter;
 }
-.css-ahj2mt-MuiTypography-root {
+.MuiStepLabel-label .Mui-completed {
   color: rgba(136, 137, 138, 1);
   font-size: 14px !important;
   font-weight: 400 !important;
   line-height: 22px !important;
 }
-.css-1u4zpwo-MuiSvgIcon-root-MuiStepIcon-root.Mui-completed {
+.MuiStepLabel-iconContainer svg.Mui-completed {
   color: rgba(2, 210, 90, 1) !important;
   border: rgba(2, 210, 90, 1) 1px solid;
 }
-.css-1hv8oq8-MuiStepLabel-label.Mui-completed {
+.MuiStepLabel-labelContainer > .Mui-completed {
   color: rgba(136, 137, 138, 1) !important;
   font-size: 20px !important;
 }
-.css-1u4zpwo-MuiSvgIcon-root-MuiStepIcon-root {
+.MuiStepLabel-iconContainer > .MuiSvgIcon-root {
   color: white !important;
   border: rgba(136, 137, 138, 1) 1px solid;
   border-radius: 50%;
 }
-.css-117w1su-MuiStepIcon-text {
+.Mui-disabled .css-vnkopk-MuiStepLabel-iconContainer > .MuiSvgIcon-root > text {
   fill: rgba(136, 137, 138, 1) !important;
 }
-.Mui-active.MuiStepIcon-root > .css-117w1su-MuiStepIcon-text {
+.Mui-active.MuiStepIcon-root > .MuiStepIcon-text {
   fill: rgba(46, 66, 255, 1) !important;
 }
-.css-8t49rw-MuiStepConnector-line {
+.MuiStepConnector-line {
   min-height: 42px !important;
 }
 .MuiAutocomplete-endAdornment {

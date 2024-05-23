@@ -1,9 +1,10 @@
 import { Link } from "react-router-dom";
-import aibuilder from "../../assets/ai-builder.png";
+import aibuilder from "../../assets/aibuilder.svg";
+import IntroLayout from "../../Layouts/IntroLayout";
 
 function Welcome() {
   return (
-    <>
+    <IntroLayout>
       <div className="bg-gl-gray-400 w-full min-h-[90vh]  flex items-center  font-['inter'] flex-1 p-6">
         <div className="flex w-full h-full items-center  top-1/2 align-middle flex-1 sm:flex-col">
           {/* 1 */}
@@ -44,7 +45,7 @@ function Welcome() {
           </div>
         </div>
       </div>
-    </>
+    </IntroLayout>
   );
 }
 

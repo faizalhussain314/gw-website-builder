@@ -1,7 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import "./index.css";
-import Header from "./global component/Header.tsx";
 import { HashRouter as Router, Routes, Route } from "react-router-dom";
 import Welcome from "./pages/welcome/Welcome.tsx";
 import ConnectAccount from "./pages/connectAccount/ConnectAccount.tsx";
@@ -10,10 +9,11 @@ import Sidebar from "./global component/Sidebar.tsx";
 import Category from "./pages/category/Category.tsx";
 import Name from "./pages/name/Name.tsx";
 import Description from "./pages/description/Description.tsx";
+import Images from "./pages/image/Images.tsx";
+import Contact from "./pages/contact/Contact.tsx";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <Header />
     <Router>
       <Routes>
         <Route path="/welcome" element={<Welcome />} />
@@ -24,6 +24,8 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
         <Route path="/category" element={<Category />} />
         <Route path="/name" element={<Name />} />
         <Route path="/description" element={<Description />} />
+        <Route path="/image" element={<Images />} />
+        <Route path="/contact" element={<Contact />} />
       </Routes>
     </Router>
   </React.StrictMode>
