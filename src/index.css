@@ -87,3 +87,6 @@ body {
 .MuiAutocomplete-input {
   padding-left: 25px !important;
 }
+.MuiStepLabel-iconContainer > .MuiSvgIcon-root > text {
+  color: rgba(136, 137, 138, 1) !important;
+}

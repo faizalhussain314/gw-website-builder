@@ -16,7 +16,17 @@ function Design() {
               </p>
             </div>
             <form className="sticky -top-1.5 z-10 pt-4 pb-4 bg-zip-app-light-bg px-5 md:px-10 lg:px-14 xl:px-15">
-              <div className="flex relative items-center"></div>
+              <div>
+                <div className="flex relative items-center">
+                  <div className="h-12 flex items-center mr-0">
+                    <div className="absolute left-3 flex items-center">
+                      <button className="w-auto h-auto p-0 flex items-center justify-center cursor-pointer bg-transparent border-0 focus:outline-none">
+                        button
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </form>
           </div>
         </div>
