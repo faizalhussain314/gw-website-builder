@@ -11,6 +11,7 @@ import Name from "./pages/name/Name.tsx";
 import Description from "./pages/description/Description.tsx";
 import Images from "./pages/image/Images.tsx";
 import Contact from "./pages/contact/Contact.tsx";
+import Design from "./pages/design/Design.tsx";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
@@ -26,6 +27,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
         <Route path="/description" element={<Description />} />
         <Route path="/image" element={<Images />} />
         <Route path="/contact" element={<Contact />} />
+        <Route path="/design" element={<Design />} />
       </Routes>
     </Router>
   </React.StrictMode>

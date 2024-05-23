@@ -82,7 +82,7 @@ function Contact() {
                     Previous
                   </button>
                 </Link>
-                <Link to={"/"}>
+                <Link to={"/design"}>
                   <button className=" tertiary px-[30px] py-[10px] text-lg sm:text-sm text-white mt-8 sm:mt-2 rounded-md w-[150px] ">
                     Continue
                   </button>

@@ -31,6 +31,7 @@ export default {
         },
         "txt-secondary": {
           400: "#5F5F5F",
+          500: "#555555",
         },
       },
       boxShadow: {
