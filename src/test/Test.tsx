@@ -1,4 +1,16 @@
+import axios from "axios";
+
 function Test() {
+  const sendDataToBackend = async () => {
+    try {
+      const response = await axios.post("/test-api", {
+        prompt: prompt,
+      });
+      console.log("Response:", response.data);
+    } catch (error) {
+      console.error("Error sending data to backend:", error);
+    }
+  };
   return (
     <div>
       <button
@@ -105,6 +117,10 @@ function Test() {
         </svg>
         Button
       </button>
+      <div>
+        <h1>test api </h1>
+        <button onClick={sendDataToBackend}>start api</button>
+      </div>
     </div>
   );
 }

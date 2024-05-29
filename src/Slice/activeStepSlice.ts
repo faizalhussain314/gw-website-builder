@@ -16,7 +16,7 @@ interface UserDataState {
   description2: string;
   images: Image[];
   designs: Design[];
-  templateid: string;
+  templateid: number;
   templatename: string;
   category: string | null;
 }
@@ -27,7 +27,7 @@ const initialState: UserDataState = {
   description2: "",
   images: [],
   designs: [],
-  templateid: "",
+  templateid: 0,
   templatename: "",
   category: null,
 };
@@ -51,7 +51,7 @@ export const userDataSlice = createSlice({
     removeImage: (state, action: PayloadAction<string>) => {
       state.images = state.images.filter((img) => img.url !== action.payload);
     },
-    setTemplateId: (state, action: PayloadAction<string>) => {
+    setTemplateId: (state, action: PayloadAction<number>) => {
       state.templateid = action.payload;
     },
     setTemplatename: (state, action: PayloadAction<string>) => {

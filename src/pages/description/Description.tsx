@@ -46,19 +46,22 @@ function Description() {
       const decoder = new TextDecoder("utf-8");
       let done = false;
 
-      while (!done) {
-        const { value, done: readerDone } = await reader.read();
-        done = readerDone;
-        const chunk = decoder.decode(value, { stream: true });
-        console.log("Chunk:", chunk); // Log the chunk to see the data being processed
+      if (reader) {
+        done = false;
 
-        if (type === "description1") {
-          setDescription1((prev) => prev + chunk);
-        } else {
-          setDescription2((prev) => prev + chunk);
+        while (!done) {
+          const { value, done: readerDone } = await reader.read();
+          done = readerDone;
+          const chunk = decoder.decode(value, { stream: true });
+          console.log("Chunk:", chunk); // Log the chunk to see the data being processed
+
+          if (type === "description1") {
+            setDescription1((prev) => prev + chunk);
+          } else {
+            setDescription2((prev) => prev + chunk);
+          }
         }
       }
-
       setLoader(false);
     } catch (error) {
       console.error("Error fetching streaming data:", error);

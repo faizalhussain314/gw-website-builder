@@ -1,4 +1,7 @@
-import Autocomplete from "@mui/material/Autocomplete";
+import Autocomplete, {
+  AutocompleteChangeReason,
+  AutocompleteChangeDetails,
+} from "@mui/material/Autocomplete";
 import TextField from "@mui/material/TextField";
 import { Link } from "react-router-dom";
 import MainLayout from "../../Layouts/MainLayout";
@@ -8,7 +11,7 @@ import { useDispatch } from "react-redux";
 import { setCategory } from "../../Slice/activeStepSlice";
 
 function Category() {
-  const [selectedCategory, setSelectedCategory] = useState<string | null>("");
+  const [_selectedCategory, setSelectedCategory] = useState<string | null>("");
   const dispatch = useDispatch();
 
   const categoryList: CategoryList[] = [
@@ -34,12 +37,16 @@ function Category() {
     { id: 20, name: "library" },
   ];
 
-  console.log("value from yengaiyo", selectedCategory);
-
   const handleCategoryChange = (
-    _event: React.ChangeEvent<Record<string, never>>,
-    value: string | null
+    event: React.SyntheticEvent<Element, Event>,
+    value: string | null,
+    reason: AutocompleteChangeReason,
+    details?: AutocompleteChangeDetails<string>
   ) => {
+    console.log("Event:", event);
+    console.log("Value:", value);
+    console.log("Reason:", reason);
+    console.log("Details:", details);
     setSelectedCategory(value);
     dispatch(setCategory(value));
   };

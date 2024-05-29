@@ -1,13 +1,12 @@
 import MainLayout from "../../Layouts/MainLayout";
 import { Website } from "../../types/Preview.type";
 import { useState, useEffect, useLayoutEffect } from "react";
-import axios from "axios";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import Skeleton from "@mui/material/Skeleton";
 import Box from "@mui/material/Box";
-import { Link, useNavigate } from "react-router-dom";
 import { RootState } from "../../store/store";
 import { useDispatch, useSelector } from "react-redux";
+import { setTemplateId, setTemplatename } from "../../Slice/activeStepSlice";
 
 const structure = {
   businessname: "write business name here",
@@ -75,50 +74,19 @@ function Design() {
 
   const [prompt, setPrompt] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(true);
-  const [isActive, setIsActive] = useState(false);
   const [selectedTemplateDetails, setSelectedTemplateDetails] = useState(
     webSiteList[0]
   );
   const dispatch = useDispatch();
-  const [Loader, setLoader] = useState(false);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
-  const [temLoader, settemLoader] = useState(false);
-  const [gptWebContent, setgptWebContent] = useState<typeof structure>();
+
+  // const [gptWebContent, setgptWebContent] = useState<typeof structure>();
   const businessName = useSelector(
     (state: RootState) => state.userData.businessName
   );
   const description = useSelector(
     (state: RootState) => state.userData.description1
   );
-  const userdetail = useSelector((state: RootState) => state.userData);
-  const templname = useSelector(
-    (state: RootState) => state.userData.templateid
-  );
-
-  useEffect(() => {
-    // Simulate a loading delay
-    setTimeout(() => {
-      setLoading(false);
-    }, 2000);
-  }, []);
-
-  const sendDataToBackend = async () => {
-    try {
-      const response = await axios.post(
-        "https://ai-builder-backend.onrender.com/",
-        {
-          prompt: prompt,
-        }
-      );
-      console.log("Response:", response.data);
-    } catch (error) {
-      console.error("Error sending data to backend:", error);
-    }
-  };
-
-  const setContent = (chatgptContent: typeof structure) => {
-    dispatch(setData(chatgptContent));
-  };
 
   const setDetails = () => {
     const tempid = selectedTemplateDetails.templateid;
@@ -165,17 +133,16 @@ function Design() {
       const chatgptContent = JSON.parse(data.response);
       console.log("chatgpt content:", chatgptContent);
 
-      setgptWebContent(chatgptContent);
+      // setgptWebContent(chatgptContent);
 
       sendMessageToChild(chatgptContent);
-
-      settemLoader(false);
+      setLoading(false);
     } catch (error) {
       console.info("Error:", error);
     }
   };
   useLayoutEffect(() => {
-    settemLoader(true);
+    setLoading(true);
 
     fetchData();
   }, []);
@@ -214,17 +181,22 @@ function Design() {
       }
     };
   }, []);
+  const handleBoxClick = async (index: number, list: Website) => {
+    setActiveIndex(index);
+    setSelectedTemplateDetails(list);
+    setDetails();
+  };
 
   return (
     <MainLayout>
       <div className="h-full w-full relative">
         <div className="w-full h-full flex flex-col items-center bg-app-light-background overflow-y-auto">
           <div className="mx-auto flex flex-col overflow-x-hidden w-full">
-            <div className="space-y-5 px-5 md:px-10 lg:px-14 xl:px-15 pt-12">
+            <div className="space-y-2 px-5 md:px-10 lg:px-14 xl:px-15 pt-12">
               <h1 className="text-3xl font-semibold">
                 Choose the structure for your website
               </h1>
-              <p className="text-base font-normal leading-6 text-app-text text-txt-secondary-500">
+              <p className="text-base font-normal leading-6 text-app-text  text-txt-secondary-500">
                 Select your preferred structure for your website from the
                 options below.
               </p>
@@ -344,9 +316,16 @@ function Design() {
                   : webSiteList.map((list: Website, index: number) => (
                       <div
                         key={index}
-                        className="w-full flex justify-center rounded-b-2xl"
+                        className="w-full flex justify-center rounded-b-2xl cursor-pointer"
                       >
-                        <div className="w-full border border-border-tertiary border-solid rounded-t-xl mb-8 rounded-b-lg">
+                        <div
+                          className={` w-full border border-border-tertiary border-solid rounded-t-xl mb-8 rounded-b-lg ${
+                            activeIndex === index
+                              ? "border-2 border-palatinate-blue-500  rounded-lg "
+                              : "border"
+                          } `}
+                          onClick={() => handleBoxClick(index, list)}
+                        >
                           <div className="w-full relative h-fit bg-zip-app-highlight-bg border-1">
                             <div className="w-full aspect-[164/179] relative overflow-hidden bg-neutral-300 rounded-xl">
                               <div className="w-full max-h-[calc(19_/_15_*_100%)] pt-[calc(19_/_15_*_100%)] select-none relative shadow-md overflow-hidden origin-top-left bg-neutral-300">

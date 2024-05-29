@@ -13,11 +13,12 @@ function Welcome() {
               <h3 className="font-semibold text-3xl sm:text-xl text-txt-black-600 leading-9 md:text-xl">
                 Building a website has never been this easy!
               </h3>
-              <span className="text-xl leading-7 font-medium text-txt-secondary-400 sm:text-lg md:text-base">
-                Here is how the AI Website Builder works:
-              </span>
+
               <div className="  font-normal text-lg text-txt-secondary-400 leading-7 sm:leading-6 sm:text-sm md:text-sm">
-                <ol>
+                <span className="text-xl leading-7 font-medium text-txt-secondary-400 sm:text-lg md:text-base">
+                  Here is how the AI Website Builder works:
+                </span>
+                <ol className=" font-normal  text-txt-secondary-400 leading-7 sm:leading-6 sm:text-sm md:text-sm">
                   <li>1.Create a free account on GravityWrite platform.</li>
                   <li>2.Describe your dream website in your own words.</li>
                   <li>3.watch as AI crafts your Wordpress website instantly</li>
