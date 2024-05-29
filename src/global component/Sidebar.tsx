@@ -13,7 +13,7 @@ function Sidebar() {
   return (
     <>
       <div
-        className={`bg-white min-h-screen w-[25vw] z-10 border-2 ${
+        className={`bg-white min-h-screen w-[20vw] z-10 border-2 ${
           active ? "hidden" : ""
         }`}
       >

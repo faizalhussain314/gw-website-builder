@@ -2,9 +2,16 @@ import Autocomplete from "@mui/material/Autocomplete";
 import TextField from "@mui/material/TextField";
 import { Link } from "react-router-dom";
 import MainLayout from "../../Layouts/MainLayout";
+import { CategoryList } from "../../types/Category.type";
+import { useState } from "react";
+import { useDispatch } from "react-redux";
+import { setCategory } from "../../Slice/activeStepSlice";
 
 function Category() {
-  const categoryList = [
+  const [selectedCategory, setSelectedCategory] = useState<string | null>("");
+  const dispatch = useDispatch();
+
+  const categoryList: CategoryList[] = [
     { id: 1, name: "restaurant" },
     { id: 2, name: "cafe" },
     { id: 3, name: "bakery" },
@@ -26,6 +33,17 @@ function Category() {
     { id: 19, name: "zoo" },
     { id: 20, name: "library" },
   ];
+
+  console.log("value from yengaiyo", selectedCategory);
+
+  const handleCategoryChange = (
+    _event: React.ChangeEvent<Record<string, never>>,
+    value: string | null
+  ) => {
+    setSelectedCategory(value);
+    dispatch(setCategory(value));
+  };
+
   return (
     <MainLayout>
       <div className="bg-[rgba(249, 252, 255, 1)] flex font-['inter']">
@@ -43,7 +61,10 @@ function Category() {
               id="free-solo-demo"
               freeSolo
               options={categoryList.map((option) => option.name)}
-              renderInput={(params) => <TextField {...params} label="" />}
+              renderInput={(params) => (
+                <TextField {...params} label="Category" />
+              )}
+              onChange={handleCategoryChange}
               className="bg-white rounded-md hover:border-palatinate-blue-500 border border-palatinate-blue-500 active:border-palatinate-blue-500 w-[720px] mt-4"
             />
             <Link to={"/name"}>
