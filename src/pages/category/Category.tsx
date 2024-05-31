@@ -3,16 +3,18 @@ import Autocomplete, {
   AutocompleteChangeDetails,
 } from "@mui/material/Autocomplete";
 import TextField from "@mui/material/TextField";
-import { Link } from "react-router-dom";
 import MainLayout from "../../Layouts/MainLayout";
 import { CategoryList } from "../../types/Category.type";
 import { useState } from "react";
 import { useDispatch } from "react-redux";
 import { setCategory } from "../../Slice/activeStepSlice";
+import { useNavigate } from "react-router-dom";
 
 function Category() {
   const [_selectedCategory, setSelectedCategory] = useState<string | null>("");
+  const [error, setError] = useState<string | null>(null);
   const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   const categoryList: CategoryList[] = [
     { id: 1, name: "restaurant" },
@@ -49,12 +51,22 @@ function Category() {
     console.log("Details:", details);
     setSelectedCategory(value);
     dispatch(setCategory(value));
+    if (value) {
+      setError(null);
+    }
+  };
+
+  const handleClick = () => {
+    if (_selectedCategory) {
+      navigate("/name");
+    } else {
+      setError("Please select a category before continuing.");
+    }
   };
 
   return (
     <MainLayout>
       <div className="bg-[rgba(249, 252, 255, 1)] flex font-['inter']">
-        {/* <Sidebar /> */}
         <div className="p-8">
           <div className="mt-8 ml-[50px] ">
             <h1 className="text-txt-black-600 leading-5 font-semibold text-3xl font-[inter] mb-4">
@@ -69,17 +81,24 @@ function Category() {
               freeSolo
               options={categoryList.map((option) => option.name)}
               renderInput={(params) => (
-                <TextField {...params} label="Category" />
+                <TextField
+                  {...params}
+                  label="Category"
+                  error={!!error}
+                  helperText={error}
+                />
               )}
               onChange={handleCategoryChange}
-              className="bg-white rounded-md hover:border-palatinate-blue-500 border border-palatinate-blue-500 active:border-palatinate-blue-500 w-[720px] mt-4"
+              className="bg-white rounded-md w-[720px] mt-4"
+              aria-required="true"
             />
-            <Link to={"/name"}>
-              {" "}
-              <button className=" tertiary px-[30px] py-[15px] text-lg sm:text-sm text-white mt-8 sm:mt-2 rounded-lg ">
-                Continue
-              </button>
-            </Link>
+            <button
+              onClick={handleClick}
+              type="submit"
+              className="tertiary px-[30px] py-[15px] text-lg sm:text-sm text-white mt-8 sm:mt-2 rounded-lg"
+            >
+              Continue
+            </button>
           </div>
         </div>
       </div>

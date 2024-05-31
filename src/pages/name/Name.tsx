@@ -1,5 +1,5 @@
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import MainLayout from "../../Layouts/MainLayout";
 import { useDispatch, useSelector } from "react-redux";
 import { useState } from "react";
@@ -8,20 +8,28 @@ import { RootState } from "../../store/store";
 
 function Name() {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const category = useSelector((state: RootState) => state.userData.category);
   const [name, setName] = useState<string>("");
-  let names;
-  const handleChange = (event: { target: { value: string } }) => {
-    names = event.target.value;
-    console.log(names);
-    setName(names);
-  };
+  const [error, setError] = useState<string | null>(null);
 
-  const setValue = () => {
-    if (name !== null) {
-      dispatch(setBusinessName(name));
+  const handleChange = (event: { target: { value: string } }) => {
+    const newName = event.target.value;
+    setName(newName);
+    if (newName) {
+      setError(null);
     }
   };
+
+  const handleClick = () => {
+    if (name) {
+      dispatch(setBusinessName(name));
+      navigate("/description");
+    } else {
+      setError("Please enter a business name.");
+    }
+  };
+
   return (
     <MainLayout>
       <div className="bg-[rgba(249, 252, 255, 1)] flex font-['inter']">
@@ -39,23 +47,25 @@ function Name() {
                 type="text"
                 value={name}
                 onChange={handleChange}
-                className="bg-white p-3 border border-[rgba(205, 212, 219, 1)] rounded-md w-[720px] mt-4 focus:border-palatinate-blue-500 active:border-palatinate-blue-500 active:outline-palatinate-blue-500 focus:outline-palatinate-blue-500"
+                className={`bg-white p-3 border ${
+                  error ? "border-red-500" : "border-[rgba(205, 212, 219, 1)]"
+                } rounded-md w-[720px] mt-4 focus:border-palatinate-blue-500 active:border-palatinate-blue-500 active:outline-palatinate-blue-500 focus:outline-palatinate-blue-500`}
               />
+              {error && <div className="mt-2 text-red-600">{error}</div>}
               <div className="flex gap-4">
                 <Link to={"/category"}>
-                  <button className=" previous-btn flex px-[10px] py-[13px] text-lg sm:text-sm text-white mt-8 sm:mt-2 rounded-md w-[150px] gap-3 justify-center">
+                  <button className="previous-btn flex px-[10px] py-[13px] text-lg sm:text-sm text-white mt-8 sm:mt-2 rounded-md w-[150px] gap-3 justify-center">
                     <ArrowBackIcon />
                     Previous
                   </button>
                 </Link>
-                <Link to={"/description"}>
-                  <button
-                    onClick={setValue}
-                    className=" tertiary px-[30px] py-[10px] text-lg sm:text-sm text-white mt-8 sm:mt-2 rounded-md w-[150px] "
-                  >
-                    Continue
-                  </button>
-                </Link>
+                <button
+                  type="button"
+                  onClick={handleClick}
+                  className="tertiary px-[30px] py-[10px] text-lg sm:text-sm text-white mt-8 sm:mt-2 rounded-md w-[150px]"
+                >
+                  Continue
+                </button>
               </div>
             </form>
           </div>

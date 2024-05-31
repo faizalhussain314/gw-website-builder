@@ -64,6 +64,9 @@ const SideStepper: React.FC = () => {
     if (stepIndex !== -1) {
       setActiveStep(stepIndex);
     }
+    if (path == "/processing") {
+      setActiveStep(7);
+    }
   }, [location.pathname]);
 
   const stepStyle = {

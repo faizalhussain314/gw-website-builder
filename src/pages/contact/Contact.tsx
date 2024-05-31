@@ -88,11 +88,13 @@ function Contact() {
                   </button>
                 </Link>
               </div>
-              <div className="mt-8 cursor-pointer flex items-center">
-                <span className="text-base text-[#6C777D] leading-5">
-                  Skip This Step
-                </span>
-              </div>
+              <Link to={"/design"}>
+                <div className="mt-8 cursor-pointer flex items-center">
+                  <span className="text-base text-[#6C777D] leading-5">
+                    Skip This Step
+                  </span>
+                </div>
+              </Link>
             </div>
           </div>
         </div>

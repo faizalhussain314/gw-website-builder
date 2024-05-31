@@ -17,7 +17,8 @@ function Description() {
   const category = useSelector((state: RootState) => state.userData.category);
   const [description1, setDescription1] = useState<string>("");
   const [description2, setDescription2] = useState<string>("");
-  const [Loader, setLoader] = useState<boolean>(false);
+  const [loader, setLoader] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -34,13 +35,16 @@ function Description() {
     }
 
     try {
-      const response = await fetch("http://localhost:8080/streamcontent", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ prompt }),
-      });
+      const response = await fetch(
+        "https://ai-builder-backend.onrender.com/streamcontent",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ prompt }),
+        }
+      );
 
       const reader = response?.body?.getReader();
       const decoder = new TextDecoder("utf-8");
@@ -70,9 +74,13 @@ function Description() {
   };
 
   const setReduxValue = () => {
-    dispatch(setDescriptionOne(description1));
-    dispatch(setDescriptionTwo(description2));
-    navigate("/image");
+    if (!description1 || !description2) {
+      setError("Both descriptions are required.");
+    } else {
+      dispatch(setDescriptionOne(description1));
+      dispatch(setDescriptionTwo(description2));
+      navigate("/image");
+    }
   };
 
   return (
@@ -81,12 +89,12 @@ function Description() {
         <div className="p-8">
           <div className="mt-8 ml-[50px] flex flex-col">
             <h1 className="text-txt-black-600 leading-5 font-semibold text-3xl font-[inter] mb-4">
-              What is {businessName}? Tell us more about the {businessName}?.
+              What is {businessName}? Tell us more about the {businessName}.
             </h1>
             <span className="mt-4 text-lg leading-6 text-txt-secondary-400">
               Please be as descriptive as you can. Share details such as a brief
               <br />
-              about the {businessName}?, specialty, menu, etc.
+              about the {businessName}, specialty, menu, etc.
             </span>
           </div>
           <div className="mt-8">
@@ -116,9 +124,14 @@ function Description() {
                 </label>
               </div>
               <textarea
-                className="bg-white p-4 border h-[100px]  border-[rgba(205, 212, 219, 1)]  w-[720px] mt-4 focus:border-palatinate-blue-500 active:border-palatinate-blue-500 active:outline-palatinate-blue-500 focus:outline-palatinate-blue-500 ml-[50px]"
+                className={`bg-white p-4 border h-[100px]  border-[rgba(205, 212, 219, 1)]  w-[720px] mt-4 ${
+                  error && "border-red-500 rounded-lg"
+                } focus:border-palatinate-blue-500 active:border-palatinate-blue-500 active:outline-palatinate-blue-500 focus:outline-palatinate-blue-500 ml-[50px]`}
                 value={description1}
-                onChange={(e) => setDescription1(e.target.value)}
+                onChange={(e) => {
+                  setDescription1(e.target.value);
+                  if (error) setError(null);
+                }}
               />
               <div className="mt-2 flex items-center gap-2 text-app-secondary hover:text-app-accent-hover cursor-pointer ml-[50px]">
                 <div className="flex justify-between w-full">
@@ -130,7 +143,7 @@ function Description() {
                     <span className="font-semibold text-sm transition duration-150 ease-in-out">
                       Write Using AI
                     </span>
-                    {Loader && (
+                    {loader && (
                       <button type="button" className=" " disabled>
                         <svg
                           className="text-palatinate-blue-600 animate-spin"
@@ -148,12 +161,11 @@ function Description() {
                             stroke-linejoin="round"
                           ></path>
                           <path
-                            d="M32 3C36.5778 3 41.0906 4.08374 45.1692 6.16256C49.2477 8.24138 52.7762 11.2562 55.466 14.9605C58.1558 18.6647 59.9304 22.9531 60.6448 27.4748C61.3591 31.9965 60.9928 36.6232 59.5759 40.9762"
-                            stroke="currentColor"
+                            d="M32 3C36.5778 3 41.0906 4.08374 45.1692 6.16256C49.2477 8.24138 52.7762 11.2562 55.466 14.9605C58.1558 18.6648 59.9313 22.9614 60.6315 27.4996"
+                            stroke="#E5E7EB"
                             stroke-width="5"
                             stroke-linecap="round"
                             stroke-linejoin="round"
-                            className="text-gray-100"
                           ></path>
                         </svg>
                       </button>
@@ -161,7 +173,7 @@ function Description() {
                   </div>
                 </div>
               </div>
-              <div className="flex gap-1 items-center ml-[20px] mt-4">
+              <div className="flex gap-1 items-center mt-6 ml-[20px]">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="26"
@@ -181,16 +193,21 @@ function Description() {
                     fill="#2E42FF"
                   />
                 </svg>
-                <label className="leading-6 font-semibold text-lg ">
+                <label className="leading-5 font-semibold text-lg">
                   What steps do customers need to take to start working with the
-                  business? what action
-                  <br /> visitor needs to take work with you?
+                  business?
+                  <br /> What actions do visitors need to take to work with you?
                 </label>
               </div>
               <textarea
-                className="bg-white p-4 border h-[100px]  border-[rgba(205, 212, 219, 1)]  w-[720px] mt-4 focus:border-palatinate-blue-500 active:border-palatinate-blue-500 active:outline-palatinate-blue-500 focus:outline-palatinate-blue-500 ml-[50px]"
+                className={`bg-white p-4 border h-[100px] border-[rgba(205, 212, 219, 1)] w-[720px]  scroll- mt-4 ${
+                  error && "border-red-500 rounded-lg"
+                } focus:border-palatinate-blue-500 active:border-palatinate-blue-500 active:outline-palatinate-blue-500 focus:outline-palatinate-blue-500 ml-[50px]`}
                 value={description2}
-                onChange={(e) => setDescription2(e.target.value)}
+                onChange={(e) => {
+                  setDescription2(e.target.value);
+                  if (error) setError(null);
+                }}
               />
               <div className="mt-2 flex items-center gap-2 text-app-secondary hover:text-app-accent-hover cursor-pointer ml-[50px]">
                 <div className="flex justify-between w-full">
@@ -202,7 +219,7 @@ function Description() {
                     <span className="font-semibold text-sm transition duration-150 ease-in-out">
                       Write Using AI
                     </span>
-                    {Loader && (
+                    {loader && (
                       <button type="button" className=" " disabled>
                         <svg
                           className="text-palatinate-blue-600 animate-spin"
@@ -220,12 +237,11 @@ function Description() {
                             stroke-linejoin="round"
                           ></path>
                           <path
-                            d="M32 3C36.5778 3 41.0906 4.08374 45.1692 6.16256C49.2477 8.24138 52.7762 11.2562 55.466 14.9605C58.1558 18.6647 59.9304 22.9531 60.6448 27.4748C61.3591 31.9965 60.9928 36.6232 59.5759 40.9762"
-                            stroke="currentColor"
+                            d="M32 3C36.5778 3 41.0906 4.08374 45.1692 6.16256C49.2477 8.24138 52.7762 11.2562 55.466 14.9605C58.1558 18.6648 59.9313 22.9614 60.6315 27.4996"
+                            stroke="#E5E7EB"
                             stroke-width="5"
                             stroke-linecap="round"
                             stroke-linejoin="round"
-                            className="text-gray-100"
                           ></path>
                         </svg>
                       </button>
@@ -233,22 +249,26 @@ function Description() {
                   </div>
                 </div>
               </div>
+              {error && (
+                <div className="text-red-500 font-semibold mt-4 ml-[50px]">
+                  {error}
+                </div>
+              )}
             </form>
-          </div>
-          <div className="flex gap-4 ml-[50px] mt-2">
-            <Link to={"/name"}>
-              <button className=" previous-btn flex px-[10px] py-[13px] text-lg sm:text-sm text-white mt-8 sm:mt-2 rounded-lg w-[150px] gap-3 justify-center">
-                <ArrowBackIcon />
-                Previous
+            <div className="flex gap-4 ml-[50px] mt-2">
+              <Link to="/category">
+                <button className="previous-btn flex px-[10px] py-[13px] text-lg sm:text-sm text-white mt-8 sm:mt-2 rounded-lg w-[150px] gap-3 justify-center">
+                  <ArrowBackIcon />
+                  Back
+                </button>
+              </Link>
+              <button
+                onClick={setReduxValue}
+                className="tertiary px-[30px] py-[10px] text-lg sm:text-sm text-white mt-8 sm:mt-2 rounded-md w-[150px]"
+              >
+                Next
               </button>
-            </Link>
-
-            <button
-              onClick={setReduxValue}
-              className=" tertiary px-[30px] py-[10px] text-lg sm:text-sm text-white mt-8 sm:mt-2 rounded-md w-[150px] "
-            >
-              Continue
-            </button>
+            </div>
           </div>
         </div>
       </div>

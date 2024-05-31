@@ -106,18 +106,28 @@ function Images() {
                   </div>
                 ))}
               </div>
-              <div className="flex gap-4">
-                <Link to={"/description"}>
-                  <button className=" previous-btn flex px-[10px] py-[13px] text-lg sm:text-sm text-white mt-8 sm:mt-2 rounded-md w-[150px] gap-3 justify-center">
-                    <ArrowBackIcon />
-                    Previous
-                  </button>
-                </Link>
-                <Link to={"/contact"}>
-                  <button className=" tertiary px-[30px] py-[10px] text-lg sm:text-sm text-white mt-8 sm:mt-2 rounded-md w-[150px] ">
-                    Continue
-                  </button>
-                </Link>
+              <div className="flex justify-between">
+                <div className="flex  gap-4">
+                  {" "}
+                  <Link to={"/description"}>
+                    <button className=" previous-btn flex px-[10px] py-[13px] text-lg sm:text-sm text-white mt-8 sm:mt-2 rounded-md w-[150px] gap-3 justify-center">
+                      <ArrowBackIcon />
+                      Previous
+                    </button>
+                  </Link>
+                  <Link to={"/contact"}>
+                    <button className=" tertiary px-[30px] py-[10px] text-lg sm:text-sm text-white mt-8 sm:mt-2 rounded-md w-[150px] ">
+                      Continue
+                    </button>
+                  </Link>
+                </div>
+                <div className="mt-8 cursor-pointer flex items-center">
+                  <Link to={"/contact"}>
+                    <span className="text-base text-[#6C777D] leading-5">
+                      Skip This Step
+                    </span>
+                  </Link>
+                </div>
               </div>
             </form>
           </div>

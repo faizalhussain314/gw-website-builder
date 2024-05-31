@@ -90,3 +90,13 @@ body {
 .MuiStepLabel-iconContainer > .MuiSvgIcon-root > text {
   color: rgba(136, 137, 138, 1) !important;
 }
+
+.spining-animation {
+  animation: spin 4s linear infinite;
+}
+
+/* .css-1j0qgw8-MuiAutocomplete-root.Mui-focused > */
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}

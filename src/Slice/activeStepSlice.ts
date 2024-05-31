@@ -29,7 +29,7 @@ const initialState: UserDataState = {
   designs: [],
   templateid: 0,
   templatename: "",
-  category: null,
+  category: "",
 };
 
 export const userDataSlice = createSlice({
@@ -74,7 +74,7 @@ export const userDataSlice = createSlice({
       state.description2 = "";
       state.images = [];
       state.designs = [];
-      state.category = null; // Clear category along with other data
+      state.category = ""; // Clear category along with other data
     },
   },
 });

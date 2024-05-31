@@ -14,6 +14,8 @@ import Contact from "./pages/contact/Contact.tsx";
 import Design from "./pages/design/Design.tsx";
 import { Provider } from "react-redux";
 import store from "./store/store.ts";
+import ProcessingScreen from "./pages/design/ProcessingScreen.tsx";
+import FinalPreview from "./pages/finalpreview/FinalPreview.tsx";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
@@ -31,6 +33,8 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
           <Route path="/image" element={<Images />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/design" element={<Design />} />
+          <Route path="/processing" element={<ProcessingScreen />} />
+          <Route path="/final-preview" element={<FinalPreview />} />
         </Routes>
       </Router>
     </Provider>
