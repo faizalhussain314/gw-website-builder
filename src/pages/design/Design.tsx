@@ -6,8 +6,13 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 // import Box from "@mui/material/Box";
 import { RootState } from "../../store/store";
 import { useDispatch, useSelector } from "react-redux";
-import { setTemplateId, setTemplatename } from "../../Slice/activeStepSlice";
+import {
+  setContent,
+  setTemplateId,
+  setTemplatename,
+} from "../../Slice/activeStepSlice";
 import { Link } from "react-router-dom";
+import Popup from "../../component/Popup";
 
 const structure = {
   businessname: "write business name here",
@@ -36,13 +41,13 @@ const structure = {
 function Design() {
   const webSiteList: Website[] = [
     {
-      link: "https://ai-builder-backend.onrender.com/Template%202.html",
+      link: "https://tours.mywpsite.org/demo/",
       option: "option 1",
       templateid: 1,
       templatename: "common tempate 1",
     },
     {
-      link: "https://ai-builder-backend.onrender.com/template3.html",
+      link: "http://localhost:8080/template3.html",
       option: "option 2",
       templateid: 2,
       templatename: "common tempate 2",
@@ -88,6 +93,9 @@ function Design() {
   const description = useSelector(
     (state: RootState) => state.userData.description1
   );
+  const description2 = useSelector(
+    (state: RootState) => state.userData.description2
+  );
   const category =
     useSelector((state: RootState) => state.userData.category) || "";
 
@@ -97,10 +105,16 @@ function Design() {
     dispatch(setTemplateId(tempid));
     dispatch(setTemplatename(tempname));
   };
+  const [showPopup, setShowPopup] = useState(false);
+
+  const setData = (chatgptContent: string[]) => {
+    dispatch(setContent(chatgptContent));
+  };
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const sendMessageToChild = (chatgptContent: any) => {
     const iframes = document.getElementsByTagName("iframe");
+
     // setContent(chatgptContent);
 
     for (let i = 0; i < iframes.length; i++) {
@@ -135,6 +149,7 @@ function Design() {
 
       const chatgptContent = JSON.parse(data.response);
       console.log("chatgpt content:", chatgptContent);
+      setData(chatgptContent);
 
       // setgptWebContent(chatgptContent);
 
@@ -144,11 +159,14 @@ function Design() {
       console.info("Error:", error);
     }
   };
-  useLayoutEffect(() => {
-    setLoading(true);
+  // useLayoutEffect(() => {
+  //   setLoading(true);
 
-    fetchData();
-  }, []);
+  //   fetchData();
+  // }, []);
+  const handlePopupClose = () => {
+    setShowPopup(false);
+  };
 
   useEffect(() => {
     const handleMouseEnter = (iframe: HTMLIFrameElement) => {
@@ -198,6 +216,14 @@ function Design() {
 
   return (
     <MainLayout>
+      {showPopup && (
+        <Popup
+          businessName={businessName}
+          description={description}
+          onClose={handlePopupClose}
+          secondDescription={description2}
+        />
+      )}
       <div className="h-full w-full relative">
         <div className="w-full h-full flex flex-col items-center bg-app-light-background overflow-y-auto">
           <div className="mx-auto flex flex-col overflow-x-hidden w-full">
@@ -338,10 +364,46 @@ function Design() {
                       <div className="w-full relative h-fit bg-zip-app-highlight-bg border-1">
                         <div className="w-full aspect-[164/179] relative overflow-hidden bg-neutral-300 rounded-xl">
                           <div className="w-full max-h-[calc(19_/_15_*_100%)] pt-[calc(19_/_15_*_100%)] select-none relative shadow-md overflow-hidden origin-top-left bg-neutral-300">
+                            {/* {_loading && (
+                              <button
+                                type="button"
+                                className="top-1/2 absolute right-1/2 flex"
+                                disabled
+                              >
+                                <svg
+                                  className="text-palatinate-blue-600 animate-spin"
+                                  viewBox="0 0 64 64"
+                                  fill="none"
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  width="36"
+                                  height="36"
+                                >
+                                  <path
+                                    d="M32 3C35.8083 3 39.5794 3.75011 43.0978 5.20749C46.6163 6.66488 49.8132 8.80101 52.5061 11.4939C55.199 14.1868 57.3351 17.3837 58.7925 20.9022C60.2499 24.4206 61 28.1917 61 32C61 35.8083 60.2499 39.5794 58.7925 43.0978C57.3351 46.6163 55.199 49.8132 52.5061 52.5061C49.8132 55.199 46.6163 57.3351 43.0978 58.7925C39.5794 60.2499 35.8083 61 32 61C28.1917 61 24.4206 60.2499 20.9022 58.7925C17.3837 57.3351 14.1868 55.199 11.4939 52.5061C8.801 49.8132 6.66487 46.6163 5.20749 43.0978C3.7501 39.5794 3 35.8083 3 32C3 28.1917 3.75011 24.4206 5.2075 20.9022C6.66489 17.3837 8.80101 14.1868 11.4939 11.4939C14.1868 8.80099 17.3838 6.66487 20.9022 5.20749C24.4206 3.7501 28.1917 3 32 3L32 3Z"
+                                    stroke="currentColor"
+                                    stroke-width="5"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                  ></path>
+                                  <path
+                                    d="M32 3C36.5778 3 41.0906 4.08374 45.1692 6.16256C49.2477 8.24138 52.7762 11.2562 55.466 14.9605C58.1558 18.6647 59.9304 22.9531 60.6448 27.4748C61.3591 31.9965 60.9928 36.6232 59.5759 40.9762"
+                                    stroke="currentColor"
+                                    stroke-width="5"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    className="text-gray-100"
+                                  ></path>
+                                </svg>
+                              </button>
+                            )} */}
                             <iframe
                               id="myIframe"
                               title="Child iFrame"
-                              className="scale-[0.33] w-[1200px] h-[1600px] absolute left-0 top-0 origin-top-left select-none"
+                              className={`scale-[0.33] w-[1200px] h-[1600px] absolute left-0 top-0 origin-top-left select-none `}
+                              //   ${
+                              //   _loading ? "opacity-0 " : "opacity-100"
+                              // }`
+                              //  ` }
                               src={list.link}
                             ></iframe>
                           </div>
@@ -382,15 +444,17 @@ function Design() {
             </div>
           </div>
         </div>
-        <div className="sticky bottom-0 pb-8 bg-app-light-background  px-10 lg:px-16 xl:px-36 z-50 bg-[#F9FCFF]">
+        <div className="sticky bottom-0 pb-8 bg-app-light-background  px-10 lg:px-16 xl:px-36 z-30 bg-[#F9FCFF]">
           <div className="flex xs:items-center items-start justify-between">
             <div className="flex flex-row xs:flex-row xs:items-center items-start gap-x-10 gap-y-10 xs:gap-y-0 flex-wrap">
-              <Link to={"/processing"}>
-                {" "}
-                <button className=" tertiary px-[30px] py-[10px] text-lg sm:text-sm text-white mt-8 sm:mt-2 rounded-md w-[150px]">
-                  <div className="flex justify-center items-center gap-x-2">
-                    <div>Continue</div>
-                    {/* {Loader && (
+              {" "}
+              <button
+                className=" tertiary px-[30px] py-[10px] text-lg sm:text-sm text-white mt-8 sm:mt-2 rounded-md w-[150px]"
+                onClick={() => setShowPopup(true)}
+              >
+                <div className="flex justify-center items-center gap-x-2">
+                  <div>Continue</div>
+                  {/* {Loader && (
                           <button
                             type="button"
                             class="bg-palatinate-blue-600 "
@@ -422,9 +486,8 @@ function Design() {
                             </svg>
                           </button>
                         )} */}
-                  </div>
-                </button>
-              </Link>
+                </div>
+              </button>
               <Link to={"/contact"}>
                 {" "}
                 <button className=" previous-btn flex px-[10px] py-[13px] text-lg sm:text-sm text-white mt-8 sm:mt-2 rounded-md w-[150px] gap-3 justify-center">

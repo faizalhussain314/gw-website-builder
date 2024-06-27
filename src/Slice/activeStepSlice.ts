@@ -10,6 +10,11 @@ interface Design {
   description: string;
 }
 
+interface Color {
+  primary: string;
+  secondary: string;
+}
+
 interface UserDataState {
   businessName: string;
   description1: string;
@@ -19,6 +24,9 @@ interface UserDataState {
   templateid: number;
   templatename: string;
   category: string | null;
+  content: string[];
+  color: Color; // Change to object
+  font: string;
 }
 
 const initialState: UserDataState = {
@@ -29,7 +37,10 @@ const initialState: UserDataState = {
   designs: [],
   templateid: 0,
   templatename: "",
-  category: "",
+  category: null,
+  content: [],
+  color: { primary: "", secondary: "" }, // Initialize as an object
+  font: "",
 };
 
 export const userDataSlice = createSlice({
@@ -57,6 +68,9 @@ export const userDataSlice = createSlice({
     setTemplatename: (state, action: PayloadAction<string>) => {
       state.templatename = action.payload;
     },
+    setContent: (state, action: PayloadAction<string[]>) => {
+      state.content = action.payload;
+    },
     addDesign: (state, action: PayloadAction<Design>) => {
       state.designs.push(action.payload);
     },
@@ -64,6 +78,12 @@ export const userDataSlice = createSlice({
       state.designs = state.designs.filter(
         (design) => design.templateId !== action.payload
       );
+    },
+    setFont: (state, action: PayloadAction<string>) => {
+      state.font = action.payload;
+    },
+    setColor: (state, action: PayloadAction<Color>) => {
+      state.color = action.payload;
     },
     setCategory: (state, action: PayloadAction<string | null>) => {
       state.category = action.payload;
@@ -74,7 +94,10 @@ export const userDataSlice = createSlice({
       state.description2 = "";
       state.images = [];
       state.designs = [];
-      state.category = ""; // Clear category along with other data
+      state.category = null;
+      state.content = [];
+      state.color = { primary: "", secondary: "" };
+      state.font = "";
     },
   },
 });
@@ -90,7 +113,10 @@ export const {
   clearUserData,
   setTemplatename,
   setTemplateId,
-  setCategory, // Export setCategory action
+  setCategory,
+  setContent,
+  setFont,
+  setColor,
 } = userDataSlice.actions;
 
 export default userDataSlice.reducer;

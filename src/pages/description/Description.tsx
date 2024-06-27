@@ -24,27 +24,26 @@ function Description() {
 
   const handleAIWrite = async (type: "description1" | "description2") => {
     setLoader(true);
+
     let prompt: string = ``;
     const prompt1: string = ` write for this brand ${businessName} and this category ${category} , What do you offer/sell? or what services do you provide? `;
     const prompt2: string = ` What steps do customers need to take to start working with the business? what action
-    visitor needs to take work with you? for this bussiness name: ${businessName} and this category ${category}`;
+    visitor needs to take work with you? for this bussiness name: ${businessName} and this category ${category} "${description1} this is the previous description provided by client you should add this description also"`;
     if (type == "description1") {
       prompt = prompt1;
+      setDescription1("");
     } else if (type == "description2") {
       prompt = prompt2;
     }
 
     try {
-      const response = await fetch(
-        "https://ai-builder-backend.onrender.com/streamcontent",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ prompt }),
-        }
-      );
+      const response = await fetch("http://localhost:8080/streamcontent", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ prompt }),
+      });
 
       const reader = response?.body?.getReader();
       const decoder = new TextDecoder("utf-8");

@@ -36,7 +36,7 @@ function Name() {
         <div className="p-8">
           <div className="mt-8 ml-[50px] flex flex-col">
             <h1 className="text-txt-black-600 leading-5 font-semibold text-3xl font-[inter] mb-4">
-              What is abc {category}? Tell us more about the {category}.
+              What is {name} {category}? Tell us more about the {category}.
             </h1>
             <span className="mt-4 text-lg leading-6 text-txt-secondary-400">
               Please be as descriptive as you can. Share details such as a brief

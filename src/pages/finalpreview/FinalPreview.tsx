@@ -1,26 +1,35 @@
 import GravityWriteLogo from "../../assets/logo.svg";
 import MenuIcon from "../../assets/menu.svg";
-import DesktopMacIcon from "@mui/icons-material/DesktopMac";
 import TabletMacIcon from "@mui/icons-material/TabletMac";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import PhoneIphoneIcon from "@mui/icons-material/PhoneIphone";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import { useSelector } from "react-redux";
+import { RootState } from "../../store/store";
+import PersonalVideoIcon from "@mui/icons-material/PersonalVideo";
+import CircularProgress from "@mui/material/CircularProgress";
 
 type Page = {
   name: string;
   status: string;
 };
 
-interface MyComponentProps {
-  selectedPage: any[];
-  page: Page;
-  togglePage: (...args: any[]) => void;
-}
-
 function FinalPreview() {
   const [isOpen, setIsOpen] = useState(false);
   const [viewMode, setViewMode] = useState("desktop");
+  const businessName = useSelector(
+    (state: RootState) => state.userData.businessName
+  );
+  const description = useSelector(
+    (state: RootState) => state.userData.description1
+  );
+  const fontFamily = useSelector((state: RootState) => state.userData.font);
+  const Color = useSelector((state: RootState) => state.userData.color);
+  const [selectedPage, setSelectedPage] = useState<string | null>("Home");
+  const [temLoader, setTemLoader] = useState(false);
+  const [loading, setLoading] = useState(true); // Set initial loading state to true
+  const [originalPrompts, setOriginalPrompts] = useState<any>({});
 
   const toggleDropdown = () => {
     setIsOpen(!isOpen);
@@ -31,14 +40,55 @@ function FinalPreview() {
     setIsOpen(false);
   };
 
+  const sendMessageToChild = (message: any) => {
+    const iframes = document.getElementsByTagName("iframe");
+    setTemLoader(true);
+    setLoading(true); // Show loading animation
+    for (let i = 0; i < iframes.length; i++) {
+      const iframe = iframes[i];
+      console.log("data sent to iframe", message);
+      iframe?.contentWindow?.postMessage(message, "*");
+    }
+  };
+
   const pages: Page[] = [
     { name: "Home", status: "Generated" },
-    { name: "About Us", status: null },
-    { name: "Services", status: null },
-    { name: "Blog", status: null },
-    { name: "Contact", status: null },
+    { name: "About Us", status: "" },
+    { name: "Services", status: "" },
+    { name: "Blog", status: "" },
+    { name: "Contact", status: "" },
   ];
-  const [selectedPage, setSelectedPage] = useState<string | null>("Home");
+
+  const handleRegenerate = () => {
+    sendMessageToChild({
+      type: "regenerate",
+      businessName,
+      description,
+      originalPrompts,
+    });
+  };
+
+  const onLoadMsg = () => {
+    sendMessageToChild({ type: "start" });
+    const iframes = document.getElementsByTagName("iframe");
+
+    console.log("font family:", fontFamily, "color:", Color);
+    for (let i = 0; i < iframes.length; i++) {
+      const iframe = iframes[i];
+      iframe?.contentWindow?.postMessage(
+        { type: "changeFont", font: fontFamily },
+        "*"
+      );
+      iframe?.contentWindow?.postMessage(
+        {
+          type: "changeGlobalColors",
+          primaryColor: Color.primary,
+          secondaryColor: Color.secondary,
+        },
+        "*"
+      );
+    }
+  };
 
   const togglePage = (page: string) => {
     setSelectedPage(selectedPage === page ? null : page);
@@ -60,8 +110,73 @@ function FinalPreview() {
     console.log("Generate All clicked");
   };
 
+  // useEffect(() => {
+  //   setTimeout(() => {
+  //     sendMessageToChild({
+  //       type: "start",
+  //       businessName,
+  //       description,
+  //       originalPrompts,
+  //     });
+  //     console.log("1");
+  //   }, 4000);
+  // }, [businessName, description]);
+
+  useEffect(() => {
+    setTimeout(() => {
+      const iframes = document.getElementsByTagName("iframe");
+      for (let i = 0; i < iframes.length; i++) {
+        const iframe = iframes[i];
+        iframe?.contentWindow?.postMessage({ type: "start" }, "*");
+      }
+    }, 300);
+  }, []);
+
+  useEffect(() => {
+    const receiveMessage = (event: MessageEvent) => {
+      if (event.data.type === "storePrompts") {
+        setOriginalPrompts(event.data.prompts);
+      } else if (event.data.type === "contentLoaded") {
+        console.log(event.data.isFetching, "this is isFetching");
+        setLoading(false); // Hide loading animation when content is loaded
+        setTemLoader(false);
+      }
+      // console.log("message event:", event);
+    };
+
+    window.addEventListener("message", receiveMessage);
+    return () => {
+      window.removeEventListener("message", receiveMessage);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (fontFamily && Color.primary && Color.secondary) {
+      setTimeout(() => {
+        const iframes = document.getElementsByTagName("iframe");
+
+        console.log("font family:", fontFamily, "color:", Color);
+        for (let i = 0; i < iframes.length; i++) {
+          const iframe = iframes[i];
+          iframe?.contentWindow?.postMessage(
+            { type: "changeFont", font: fontFamily },
+            "*"
+          );
+          iframe?.contentWindow?.postMessage(
+            {
+              type: "changeGlobalColors",
+              primaryColor: Color.primary,
+              secondaryColor: Color.secondary,
+            },
+            "*"
+          );
+        }
+      }, 1000);
+    }
+  }, [fontFamily, Color]);
+
   return (
-    <div className="h-screen flex font-[inter] w-screen ">
+    <div className="h-screen flex font-[inter] w-screen">
       <div className="w-[23%] lg:w-[30%]">
         <aside className="z-10 fixed">
           <div className="bg-white min-h-screen w-[23vw] lg:w-[30vw] z-10 border-2">
@@ -71,7 +186,7 @@ function FinalPreview() {
                 alt="gravity write logo"
                 className="h-10 p-2 rounded-md cursor-pointer hover:bg-palatinate-blue-50"
               />
-              <div className="relative cursor-pointer group">
+              <div className="relative border-gray-100 group flex items-center justify-between py-4 border-b cursor-pointer pr-7 ps-3 sidebar-header">
                 <img
                   src={MenuIcon}
                   alt="menu"
@@ -120,7 +235,12 @@ function FinalPreview() {
                         </div>
                         <div className="flex items-center">
                           {page.status === "Generated" && (
-                            <RefreshIcon className="ml-2 text-gray-500 cursor-pointer" />
+                            <RefreshIcon
+                              className={`ml-2 text-gray-500 cursor-pointer ${
+                                temLoader ? "animate-spin" : ""
+                              }`}
+                              onClick={handleRegenerate}
+                            />
                           )}
                           <ExpandMoreIcon
                             className="ml-2 text-gray-500 cursor-pointer"
@@ -130,10 +250,10 @@ function FinalPreview() {
                       </div>
                       {selectedPage === page.name && (
                         <div className="mt-3 flex justify-between text-sm">
-                          <button className="bg-white  text-black rounded px-3 py-1">
+                          <button className="bg-white text-black rounded px-3 py-1">
                             Keep & Next
                           </button>
-                          <button className="bg-white  text-black rounded px-3 py-1 opacity-50">
+                          <button className="bg-white text-black rounded px-3 py-1 opacity-50">
                             Skip Page
                           </button>
                         </div>
@@ -175,7 +295,12 @@ function FinalPreview() {
           </div>
         </aside>
       </div>
-      <div className="w-[80%] flex-last bg-[#F9FCFF] overflow-x-hidden">
+      <div className="w-[80%] flex-last bg-[#F9FCFF] overflow-x-hidden relative">
+        {/* {loading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-70 z-50">
+            <CircularProgress className="animate-spin text-gray-500" />
+          </div>
+        )} */}
         <main className="px-12">
           <div className="relative inline-block text-left my-4">
             <div>
@@ -187,7 +312,9 @@ function FinalPreview() {
                 aria-haspopup="true"
                 onClick={toggleDropdown}
               >
-                {viewMode === "desktop" && <DesktopMacIcon className="mr-2" />}
+                {viewMode === "desktop" && (
+                  <PersonalVideoIcon className="mr-2" />
+                )}
                 {viewMode === "tablet" && <TabletMacIcon className="mr-2" />}
                 {viewMode === "mobile" && <PhoneIphoneIcon className="mr-2" />}
                 {viewMode.charAt(0).toUpperCase() + viewMode.slice(1)}
@@ -220,7 +347,7 @@ function FinalPreview() {
                     role="menuitem"
                     onClick={() => handleViewChange("desktop")}
                   >
-                    <DesktopMacIcon className="mr-2" />
+                    <PersonalVideoIcon className="mr-2" />
                     Desktop
                   </a>
                   <a
@@ -245,9 +372,12 @@ function FinalPreview() {
           </div>
           <div className="w-full h-screen flex justify-center">
             <iframe
-              src="https://ai-builder-backend.onrender.com/template3.html"
+              // src="http://localhost:8080/template1.html"
+              src="https://tours.mywpsite.org/"
               title="website"
-              className={`w-full h-full shadow-lg rounded-lg ${
+              id="myIframe"
+              onLoad={onLoadMsg}
+              className={`h-full transition-fade shadow-lg rounded-lg ${
                 viewMode === "desktop"
                   ? "w-full h-full"
                   : viewMode === "tablet"
