@@ -3,8 +3,8 @@ import GravityWriteLogo from "../assets/logo.svg";
 import Autocomplete from "@mui/material/Autocomplete";
 import TextField from "@mui/material/TextField";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import { Link, useNavigate } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
 import { setFont, setColor } from "../Slice/activeStepSlice";
 
 type Font = {
@@ -24,7 +24,7 @@ type initialStyle = {
 
 const CustomizeSidebar: React.FC = () => {
   const [fonts, setFonts] = useState<Font[]>([]);
-  const [selectedFont, setSelectedFont] = useState<string>("Roboto");
+  const [_selectedFont, setSelectedFont] = useState<string>("Roboto");
   const [selectedColor, setSelectedColor] = useState<SelectedColor>({
     primary: "",
     secondary: "",
@@ -49,7 +49,7 @@ const CustomizeSidebar: React.FC = () => {
   }, []);
 
   const handleFontChange = (
-    event: React.SyntheticEvent,
+    _event: React.SyntheticEvent,
     value: string | null
   ) => {
     if (value) {

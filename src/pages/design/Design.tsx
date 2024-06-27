@@ -1,42 +1,14 @@
 import MainLayout from "../../Layouts/MainLayout";
 import { Website } from "../../types/Preview.type";
-import { useState, useEffect, useLayoutEffect } from "react";
+import { useState, useEffect } from "react";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 // import Skeleton from "@mui/material/Skeleton";
 // import Box from "@mui/material/Box";
 import { RootState } from "../../store/store";
 import { useDispatch, useSelector } from "react-redux";
-import {
-  setContent,
-  setTemplateId,
-  setTemplatename,
-} from "../../Slice/activeStepSlice";
+import { setTemplateId, setTemplatename } from "../../Slice/activeStepSlice";
 import { Link } from "react-router-dom";
 import Popup from "../../component/Popup";
-
-const structure = {
-  businessname: "write business name here",
-  shortIntro: "write here for a short intro",
-  heroHeading: "write here for a heroHeading",
-  shortDescription: "write here for a shortDescription",
-  whyChooseUsTitle: "write here for a whyChooseUsTitle",
-  whyChooseUsReason1: "write here for a whyChooseUsReason1",
-  whyChooseUsReason1ShortDescription:
-    "write here for a whyChooseUsReason1ShortDescription",
-  whyChooseUsReason2: "write here for a whyChooseUsReason2",
-  whyChooseUsReason2ShortDescription:
-    "write here for a whyChooseUsReason2ShortDescription",
-  whyChooseUsReason3: "write here for a whyChooseUsReason3",
-  whyChooseUsReason3ShortDescription:
-    "write here for a whyChooseUsReason3ShortDescription",
-  shortServiceShortIntro: "write here for a shortServiceShortIntro",
-  serviceIntro: "write here for a serviceIntro",
-  callUsTextDescription: "write here for a callUsTextDescription",
-  serviceDescription: "write here for a serviceDescription",
-  aboutUsHeading: "write here for a aboutUsHeading",
-  aboutUsDescription: "write here for a aboutUsDescription",
-  contactUsHeading: "write here for a contactUsHeading",
-};
 
 function Design() {
   const webSiteList: Website[] = [
@@ -79,7 +51,7 @@ function Design() {
   ];
 
   // const [_prompt, setPrompt] = useState<string | null>("");
-  const [_loading, setLoading] = useState<boolean>(true);
+  // const [_loading, setLoading] = useState<boolean>(true);
   const [selectedTemplateDetails, setSelectedTemplateDetails] = useState(
     webSiteList[0]
   );
@@ -107,58 +79,42 @@ function Design() {
   };
   const [showPopup, setShowPopup] = useState(false);
 
-  const setData = (chatgptContent: string[]) => {
-    dispatch(setContent(chatgptContent));
-  };
-
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const sendMessageToChild = (chatgptContent: any) => {
-    const iframes = document.getElementsByTagName("iframe");
 
-    // setContent(chatgptContent);
+  // const fetchData = async () => {
+  //   const prompt = JSON.stringify({
+  //     prompt: `Write content for a website with the structure ${JSON.stringify(
+  //       structure
+  //     )} for ${businessName} business, and the description is: ${description}.`,
+  //   });
+  //   try {
+  //     const response = await fetch(
+  //       "https://ai-builder-backend.onrender.com/get-description",
+  //       {
+  //         method: "POST",
+  //         headers: {
+  //           "Content-Type": "application/json",
+  //         },
+  //         body: prompt,
+  //       }
+  //     );
+  //     if (!response.ok) {
+  //       throw new Error("Network response was not ok");
+  //     }
+  //     const data = await response.json();
 
-    for (let i = 0; i < iframes.length; i++) {
-      const iframe = iframes[i];
+  //     const chatgptContent = JSON.parse(data.response);
+  //     console.log("chatgpt content:", chatgptContent);
+  //     setData(chatgptContent);
 
-      console.log("data sent to iframe", chatgptContent);
-      iframe.contentWindow?.postMessage(chatgptContent, "*");
-    }
-  };
+  //     // setgptWebContent(chatgptContent);
 
-  const fetchData = async () => {
-    const prompt = JSON.stringify({
-      prompt: `Write content for a website with the structure ${JSON.stringify(
-        structure
-      )} for ${businessName} business, and the description is: ${description}.`,
-    });
-    try {
-      const response = await fetch(
-        "https://ai-builder-backend.onrender.com/get-description",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: prompt,
-        }
-      );
-      if (!response.ok) {
-        throw new Error("Network response was not ok");
-      }
-      const data = await response.json();
-
-      const chatgptContent = JSON.parse(data.response);
-      console.log("chatgpt content:", chatgptContent);
-      setData(chatgptContent);
-
-      // setgptWebContent(chatgptContent);
-
-      sendMessageToChild(chatgptContent);
-      setLoading(false);
-    } catch (error) {
-      console.info("Error:", error);
-    }
-  };
+  //     sendMessageToChild(chatgptContent);
+  //     setLoading(false);
+  //   } catch (error) {
+  //     console.info("Error:", error);
+  //   }
+  // };
   // useLayoutEffect(() => {
   //   setLoading(true);
 

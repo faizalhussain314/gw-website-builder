@@ -8,7 +8,6 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { useSelector } from "react-redux";
 import { RootState } from "../../store/store";
 import PersonalVideoIcon from "@mui/icons-material/PersonalVideo";
-import CircularProgress from "@mui/material/CircularProgress";
 
 type Page = {
   name: string;
@@ -28,7 +27,7 @@ function FinalPreview() {
   const Color = useSelector((state: RootState) => state.userData.color);
   const [selectedPage, setSelectedPage] = useState<string | null>("Home");
   const [temLoader, setTemLoader] = useState(false);
-  const [loading, setLoading] = useState(true); // Set initial loading state to true
+  const [_loading, setLoading] = useState(true); // Set initial loading state to true
   const [originalPrompts, setOriginalPrompts] = useState<any>({});
 
   const toggleDropdown = () => {
