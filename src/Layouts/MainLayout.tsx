@@ -9,13 +9,14 @@ interface MainLayoutProps {
 const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   return (
     <div className="h-screen flex font-[inter]">
-      <div className="w-[20%] ">
+      <div className=" mac:w-[20%] w-[25%]">
         <aside className="z-10 fixed">
           <Sidebar />
         </aside>
       </div>
-      <div className="w-[80%]">
+      <div className="mac:w-[80%] w-[75%]">
         <Header active={false} />
+
         <main>{children}</main>
       </div>
     </div>

@@ -66,13 +66,17 @@ const SideStepper: React.FC = () => {
     }
     if (path == "/processing") {
       setActiveStep(7);
+    } else if (path == "/success") {
+      setActiveStep(7);
     }
   }, [location.pathname]);
 
   const stepStyle = {
     backgroundColor: "#fff",
-    padding: "30px",
-
+    padding: "10px",
+    "@media (min-width: 1280px)": {
+      padding: "30px",
+    },
     "& .Mui-active": {
       "&.MuiStepIcon-root": {
         color: "white",
@@ -89,8 +93,13 @@ const SideStepper: React.FC = () => {
   };
 
   return (
-    <Box sx={{ maxWidth: 400 }}>
-      <Stepper activeStep={activeStep} orientation="vertical" sx={stepStyle}>
+    <div style={{ maxWidth: 400 }}>
+      <Stepper
+        activeStep={activeStep}
+        orientation="vertical"
+        sx={stepStyle}
+        className=""
+      >
         {steps.map((step, index) => (
           <Step key={step.label}>
             <StepLabel
@@ -117,7 +126,7 @@ const SideStepper: React.FC = () => {
           </Button>
         </Paper>
       )}
-    </Box>
+    </div>
   );
 };
 

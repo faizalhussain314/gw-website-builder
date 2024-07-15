@@ -34,6 +34,11 @@ export default {
           500: "#555555",
         },
       },
+      backgroundImage: {
+        "gradient-to-r": "linear-gradient(to right, var(--tw-gradient-stops))", // default
+        "blue-gradient":
+          "linear-gradient(132deg, #963fff -9.83%, #2e42ff 91.64%)",
+      },
       boxShadow: {
         custom: "0px 5px 20px 0px rgba(0, 0, 0, 0.1)",
       },
@@ -54,6 +59,7 @@ export default {
       // => @media (max-width: 767px) { ... }
 
       sm: { max: "639px" },
+      mac: { min: "1280px" },
     },
   },
 };

@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import MainLayout from "../../Layouts/MainLayout";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Sparkle from "../../assets/sparkle.svg";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../../store/store";
@@ -9,59 +9,86 @@ import {
   setDescriptionOne,
   setDescriptionTwo,
 } from "../../Slice/activeStepSlice";
+import { fetchDescriptionStream } from "../../infrastructure/api/description.api";
 
 function Description() {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
   const businessName = useSelector(
     (state: RootState) => state.userData.businessName
   );
   const category = useSelector((state: RootState) => state.userData.category);
-  const [description1, setDescription1] = useState<string>("");
-  const [description2, setDescription2] = useState<string>("");
+  const initialDescription1 = useSelector(
+    (state: RootState) => state.userData.description1
+  );
+  const initialDescription2 = useSelector(
+    (state: RootState) => state.userData.description2
+  );
+
+  const [description1, setDescription1] = useState<string>(
+    initialDescription1 || ""
+  );
+  const [description2, setDescription2] = useState<string>(
+    initialDescription2 || ""
+  );
   const [loader, setLoader] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const dispatch = useDispatch();
-  const navigate = useNavigate();
 
-  const handleAIWrite = async (type: "description1" | "description2") => {
-    setLoader(true);
+  useEffect(() => {
+    setDescription1(initialDescription1 || "");
+    setDescription2(initialDescription2 || "");
+  }, [initialDescription1, initialDescription2]);
 
-    let prompt: string = ``;
-    const prompt1: string = ` write for this brand ${businessName} and this category ${category} , What do you offer/sell? or what services do you provide? `;
-    const prompt2: string = ` What steps do customers need to take to start working with the business? what action
-    visitor needs to take work with you? for this bussiness name: ${businessName} and this category ${category} "${description1} this is the previous description provided by client you should add this description also"`;
-    if (type == "description1") {
-      prompt = prompt1;
-      setDescription1("");
-    } else if (type == "description2") {
-      prompt = prompt2;
+  const handleAIWrite = async (type: 1 | 2) => {
+    if (type === 2 && !description1) {
+      setError("Description 1 is required before generating Description 2.");
+      return;
     }
+    setLoader(true);
+    setError(null);
 
     try {
-      const response = await fetch("http://localhost:8080/streamcontent", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ prompt }),
-      });
+      const reader = await fetchDescriptionStream(
+        businessName,
+        category,
+        type,
+        type === 2 ? description1 : undefined
+      );
 
-      const reader = response?.body?.getReader();
       const decoder = new TextDecoder("utf-8");
       let done = false;
+      let buffer = "";
 
-      if (reader) {
-        done = false;
+      while (!done) {
+        const { value, done: readerDone } = await reader.read();
+        done = readerDone;
+        buffer += decoder.decode(value, { stream: true });
 
-        while (!done) {
-          const { value, done: readerDone } = await reader.read();
-          done = readerDone;
-          const chunk = decoder.decode(value, { stream: true });
-          console.log("Chunk:", chunk); // Log the chunk to see the data being processed
+        const lines = buffer.split("\n");
+        buffer = lines.pop()!;
 
-          if (type === "description1") {
-            setDescription1((prev) => prev + chunk);
-          } else {
-            setDescription2((prev) => prev + chunk);
+        for (const line of lines) {
+          if (line.trim()) {
+            try {
+              const json = JSON.parse(line.replace(/^data: /, ""));
+              const deltaContent = json.choices[0]?.delta?.content || "";
+
+              if (type === 1) {
+                setDescription1((prev) => {
+                  const newDescription = prev + deltaContent;
+                  dispatch(setDescriptionOne(newDescription));
+                  return newDescription;
+                });
+              } else {
+                setDescription2((prev) => {
+                  const newDescription = prev + deltaContent;
+                  dispatch(setDescriptionTwo(newDescription));
+                  return newDescription;
+                });
+              }
+            } catch (err) {
+              console.error("Error parsing JSON:", err);
+            }
           }
         }
       }
@@ -128,7 +155,9 @@ function Description() {
                 } focus:border-palatinate-blue-500 active:border-palatinate-blue-500 active:outline-palatinate-blue-500 focus:outline-palatinate-blue-500 ml-[50px]`}
                 value={description1}
                 onChange={(e) => {
-                  setDescription1(e.target.value);
+                  const newDescription = e.target.value;
+                  setDescription1(newDescription);
+                  dispatch(setDescriptionOne(newDescription));
                   if (error) setError(null);
                 }}
               />
@@ -136,7 +165,7 @@ function Description() {
                 <div className="flex justify-between w-full">
                   <div
                     className="flex gap-2  text-palatinate-blue-600 hover:text-palatinate-blue-800 "
-                    onClick={() => handleAIWrite("description1")}
+                    onClick={() => handleAIWrite(1)}
                   >
                     <img src={Sparkle} />
                     <span className="font-semibold text-sm transition duration-150 ease-in-out">
@@ -204,7 +233,9 @@ function Description() {
                 } focus:border-palatinate-blue-500 active:border-palatinate-blue-500 active:outline-palatinate-blue-500 focus:outline-palatinate-blue-500 ml-[50px]`}
                 value={description2}
                 onChange={(e) => {
-                  setDescription2(e.target.value);
+                  const newDescription = e.target.value;
+                  setDescription2(newDescription);
+                  dispatch(setDescriptionTwo(newDescription));
                   if (error) setError(null);
                 }}
               />
@@ -212,7 +243,7 @@ function Description() {
                 <div className="flex justify-between w-full">
                   <div
                     className="flex gap-2  text-palatinate-blue-600 hover:text-palatinate-blue-800 "
-                    onClick={() => handleAIWrite("description2")}
+                    onClick={() => handleAIWrite(2)}
                   >
                     <img src={Sparkle} />
                     <span className="font-semibold text-sm transition duration-150 ease-in-out">
@@ -255,7 +286,7 @@ function Description() {
               )}
             </form>
             <div className="flex gap-4 ml-[50px] mt-2">
-              <Link to="/category">
+              <Link to="/name">
                 <button className="previous-btn flex px-[10px] py-[13px] text-lg sm:text-sm text-white mt-8 sm:mt-2 rounded-lg w-[150px] gap-3 justify-center">
                   <ArrowBackIcon />
                   Back

@@ -5,59 +5,55 @@ import Autocomplete, {
 import TextField from "@mui/material/TextField";
 import MainLayout from "../../Layouts/MainLayout";
 import { CategoryList } from "../../types/Category.type";
-import { useState } from "react";
-import { useDispatch } from "react-redux";
+import { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { setCategory } from "../../Slice/activeStepSlice";
 import { useNavigate } from "react-router-dom";
+import { fetchCategoryList } from "../../infrastructure/api/categorylist.api";
+import { RootState } from "../../store/store";
 
 function Category() {
-  const [_selectedCategory, setSelectedCategory] = useState<string | null>("");
-  const [error, setError] = useState<string | null>(null);
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const categoryList: CategoryList[] = [
-    { id: 1, name: "restaurant" },
-    { id: 2, name: "cafe" },
-    { id: 3, name: "bakery" },
-    { id: 4, name: "bar" },
-    { id: 5, name: "grocery store" },
-    { id: 6, name: "supermarket" },
-    { id: 7, name: "bookstore" },
-    { id: 8, name: "clothing store" },
-    { id: 9, name: "electronics store" },
-    { id: 10, name: "furniture store" },
-    { id: 11, name: "gym" },
-    { id: 12, name: "pharmacy" },
-    { id: 13, name: "hair salon" },
-    { id: 14, name: "nail salon" },
-    { id: 15, name: "barber shop" },
-    { id: 16, name: "movie theater" },
-    { id: 17, name: "museum" },
-    { id: 18, name: "park" },
-    { id: 19, name: "zoo" },
-    { id: 20, name: "library" },
-  ];
+  const selectedCategory = useSelector(
+    (state: RootState) => state.userData.category
+  );
+  const [categoryList, setCategoryList] = useState<CategoryList[]>([]);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const getCategoryList = async () => {
+      try {
+        const categories = await fetchCategoryList();
+        setCategoryList(categories);
+      } catch (error) {
+        console.error("Failed to fetch categories:", error);
+        setError("Failed to load categories. Please try again later.");
+      }
+    };
+
+    getCategoryList();
+  }, []);
 
   const handleCategoryChange = (
-    event: React.SyntheticEvent<Element, Event>,
+    _event: React.SyntheticEvent<Element, Event>,
     value: string | null,
-    reason: AutocompleteChangeReason,
-    details?: AutocompleteChangeDetails<string>
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _reason: AutocompleteChangeReason,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _details?: AutocompleteChangeDetails<string>
   ) => {
-    console.log("Event:", event);
-    console.log("Value:", value);
-    console.log("Reason:", reason);
-    console.log("Details:", details);
-    setSelectedCategory(value);
-    dispatch(setCategory(value));
     if (value) {
+      dispatch(setCategory(value));
       setError(null);
+    } else {
+      dispatch(setCategory(null));
     }
   };
 
   const handleClick = () => {
-    if (_selectedCategory) {
+    if (selectedCategory) {
       navigate("/name");
     } else {
       setError("Please select a category before continuing.");
@@ -79,6 +75,7 @@ function Category() {
             <Autocomplete
               id="free-solo-demo"
               freeSolo
+              value={selectedCategory}
               options={categoryList.map((option) => option.name)}
               renderInput={(params) => (
                 <TextField

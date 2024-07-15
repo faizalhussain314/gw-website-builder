@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from "react";
 import GravityWriteLogo from "../assets/logo.svg";
-import Autocomplete from "@mui/material/Autocomplete";
-import TextField from "@mui/material/TextField";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { setFont, setColor } from "../Slice/activeStepSlice";
+import Autocomplete from "@mui/material/Autocomplete";
+import TextField from "@mui/material/TextField";
 
-type Font = {
-  family: string;
+type FontCombination = {
+  label: string;
+  primaryFont: string;
 };
 
 type SelectedColor = {
@@ -22,45 +23,49 @@ type initialStyle = {
   fontFamily: string;
 };
 
+const fontCombinations: FontCombination[] = [
+  { label: "Lora/Lato", primaryFont: "Lora" },
+  { label: "Lato/Inter", primaryFont: "Lato" },
+  { label: "Manrope/Inter", primaryFont: "Manrope" },
+  { label: "Red Hat Display/Inter", primaryFont: "Red Hat Display" },
+  { label: "Merriweather/Inter", primaryFont: "Merriweather" },
+  { label: "PT Serif/Inter", primaryFont: "PT Serif" },
+  { label: "Montserrat/Inter", primaryFont: "Montserrat" },
+  { label: "Plus Jakarta Sans/Inter", primaryFont: "Plus Jakarta Sans" },
+  { label: "Open Sans/Inter", primaryFont: "Open Sans" },
+  { label: "Work Sans/Inter", primaryFont: "Work Sans" },
+  { label: "Rubik/Inter", primaryFont: "Rubik" },
+  { label: "Mulish/Inter", primaryFont: "Mulish" },
+  { label: "kaushan Script/inter", primaryFont: "Kaushan Script" },
+];
+
 const CustomizeSidebar: React.FC = () => {
-  const [fonts, setFonts] = useState<Font[]>([]);
-  const [_selectedFont, setSelectedFont] = useState<string>("Roboto");
   const [selectedColor, setSelectedColor] = useState<SelectedColor>({
     primary: "",
     secondary: "",
   });
+  const [selectedFont, setSelectedFont] = useState<FontCombination | null>(
+    null
+  );
   const navigate = useNavigate();
   const dispatch = useDispatch();
-
-  useEffect(() => {
-    const fetchGoogleFonts = async () => {
-      try {
-        const response = await fetch(
-          `https://www.googleapis.com/webfonts/v1/webfonts?key=AIzaSyC7Pgm6Bf7aiTG8Qs92Qx0M8c2p1kOTOMc`
-        );
-        const data = await response.json();
-        setFonts(data.items);
-      } catch (error) {
-        console.error("Error fetching Google Fonts:", error);
-      }
-    };
-
-    fetchGoogleFonts();
-  }, []);
 
   const handleFontChange = (
     _event: React.SyntheticEvent,
     value: string | null
   ) => {
-    if (value) {
-      setSelectedFont(value);
-      dispatch(setFont(value));
+    const selectedFontCombination = fontCombinations.find(
+      (font) => font.label === value
+    );
+    if (selectedFontCombination) {
+      setSelectedFont(selectedFontCombination);
+      dispatch(setFont(selectedFontCombination.primaryFont));
       // Send message to iframe to change the font
       const iframes = document.getElementsByTagName("iframe");
       for (let i = 0; i < iframes.length; i++) {
         const iframe = iframes[i];
         iframe?.contentWindow?.postMessage(
-          { type: "changeFont", font: value },
+          { type: "changeFont", font: selectedFontCombination.primaryFont },
           "*"
         );
       }
@@ -98,7 +103,7 @@ const CustomizeSidebar: React.FC = () => {
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       if (event.data.type === "initialStyles") {
-        console.log("data from iframe inital load", event.data);
+        console.log("data from iframe initial load", event.data);
         setInitialStyles({
           primaryColor: event.data.primaryColor,
           secondaryColor: event.data.secondaryColor,
@@ -146,7 +151,7 @@ const CustomizeSidebar: React.FC = () => {
       <div className={`p-4 block lg:block`}>
         <h2 className="text-xl font-bold">Customize</h2>
         <p className="text-sm text-gray-500">
-          Add your own Logo, Changes Color and Fonts
+          Add your own Logo, Change Color and Fonts
         </p>
         <div className="mt-4">
           <label className="block text-sm font-medium mb-2">Site Logo</label>
@@ -154,10 +159,9 @@ const CustomizeSidebar: React.FC = () => {
         </div>
         <div className="mt-6">
           <div className="flex w-full justify-between">
-            {" "}
             <label className="block text-base font-medium mb-2">
-              Font
-            </label>{" "}
+              Font Pair
+            </label>
             <span
               onClick={resetStyles}
               className="text-gray-400 text-base font-medium leading-5 cursor-pointer"
@@ -166,15 +170,18 @@ const CustomizeSidebar: React.FC = () => {
             </span>
           </div>
           <Autocomplete
-            id="free-solo-demo"
-            freeSolo
-            options={fonts.map((option) => option.family)}
+            id="font-pair"
+            options={fontCombinations.map((option) => option.label)}
             renderInput={(params) => (
-              <TextField {...params} label="Choose Your Font" />
+              <TextField
+                {...params}
+                label="Choose Your Font"
+                variant="outlined"
+              />
             )}
             onChange={handleFontChange}
+            freeSolo // Ensures the list is shown when the input is focused
             className="bg-white rounded-md mt-1 active:border-palatinate-blue-500 focus:border-palatinate-blue-500"
-            aria-required="true"
           />
         </div>
         <div className="mt-4">

@@ -2,6 +2,7 @@ import Stepper from "../component/SideStepper";
 import GravityWriteLogo from "../assets/logo.svg";
 import MenuIcon from "../assets/menu.svg";
 import { useState } from "react";
+import ProfileSection from "../component/ProfileSection";
 
 function Sidebar() {
   const [active, setActive] = useState<boolean>(false);
@@ -13,7 +14,7 @@ function Sidebar() {
   return (
     <>
       <div
-        className={`bg-white min-h-screen w-[20vw] z-10 border-2 ${
+        className={`bg-white min-h-screen w-[25vw] mac:w-[20vw] z-10 border-2 ${
           active ? "hidden" : ""
         }`}
       >
@@ -33,6 +34,7 @@ function Sidebar() {
         </div>
 
         <Stepper />
+        <ProfileSection />
       </div>
     </>
   );

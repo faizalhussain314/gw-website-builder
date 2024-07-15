@@ -2,7 +2,7 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { Link, useNavigate } from "react-router-dom";
 import MainLayout from "../../Layouts/MainLayout";
 import { useDispatch, useSelector } from "react-redux";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { setBusinessName } from "../../Slice/activeStepSlice";
 import { RootState } from "../../store/store";
 
@@ -10,8 +10,17 @@ function Name() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const category = useSelector((state: RootState) => state.userData.category);
-  const [name, setName] = useState<string>("");
+  const initialName = useSelector(
+    (state: RootState) => state.userData.businessName
+  );
+  const [name, setName] = useState<string>(initialName || "");
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (initialName) {
+      setName(initialName);
+    }
+  }, [initialName]);
 
   const handleChange = (event: { target: { value: string } }) => {
     const newName = event.target.value;
@@ -36,7 +45,7 @@ function Name() {
         <div className="p-8">
           <div className="mt-8 ml-[50px] flex flex-col">
             <h1 className="text-txt-black-600 leading-5 font-semibold text-3xl font-[inter] mb-4">
-              What is {name} {category}? Tell us more about the {category}.
+              What is {name || category}? Tell us more about the {category}.
             </h1>
             <span className="mt-4 text-lg leading-6 text-txt-secondary-400">
               Please be as descriptive as you can. Share details such as a brief
