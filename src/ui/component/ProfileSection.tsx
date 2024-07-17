@@ -1,9 +1,9 @@
 import React, { useState } from "react";
-import Profilepic from "../assets/profilepic.svg";
-import ProfileArrowIcon from "../assets/icons/profile-arrow-icon.svg";
-import CrownIcon from "../assets/icons/crown.svg";
-import AiGenerate from "../assets/icons/aigenerate.svg";
-import LogoutIcon from "../assets/icons/logout.svg";
+import Profilepic from "../../assets/profilepic.svg";
+import ProfileArrowIcon from "../../assets/icons/profile-arrow-icon.svg";
+import CrownIcon from "../../assets/icons/crown.svg";
+import AiGenerate from "../../assets/icons/aigenerate.svg";
+import LogoutIcon from "../../assets/icons/logout.svg";
 
 const ProfileSection: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);

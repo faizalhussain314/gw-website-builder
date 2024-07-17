@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
-import GravityWriteLogo from "../assets/logo.svg";
+import GravityWriteLogo from "../../assets/logo.svg";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
-import { setFont, setColor } from "../Slice/activeStepSlice";
+import { setFont, setColor } from "../../Slice/activeStepSlice";
 import Autocomplete from "@mui/material/Autocomplete";
 import TextField from "@mui/material/TextField";
 
@@ -44,6 +44,7 @@ const CustomizeSidebar: React.FC = () => {
     primary: "",
     secondary: "",
   });
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [selectedFont, setSelectedFont] = useState<FontCombination | null>(
     null
   );

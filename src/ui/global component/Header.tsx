@@ -1,5 +1,5 @@
 import React from "react";
-import GravityWriteLogo from "../assets/logo.svg";
+import GravityWriteLogo from "../../assets/logo.svg";
 
 interface HeaderProps {
   active: boolean;

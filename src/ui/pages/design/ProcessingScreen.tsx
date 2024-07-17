@@ -1,6 +1,6 @@
 import MainLayout from "../../Layouts/MainLayout";
-import LoaderBg from "../../assets/loaderbg.svg";
-import Loadingimg from "../../assets/Loaderimage.svg";
+import LoaderBg from "../../../assets/loaderbg.svg";
+import Loadingimg from "../../../assets/Loaderimage.svg";
 
 function ProcessingScreen() {
   return (

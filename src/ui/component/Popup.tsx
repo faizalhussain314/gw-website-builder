@@ -1,7 +1,7 @@
 import React from "react";
 import CloseIcon from "@mui/icons-material/Close";
 import { Link } from "react-router-dom";
-import partyImoji from "../assets/partyemoji.svg";
+import partyImoji from "../../assets/partyemoji.svg";
 
 interface PopupProps {
   businessName: string;

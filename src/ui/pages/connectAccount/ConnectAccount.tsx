@@ -1,4 +1,4 @@
-import Connectlogo from "../../assets/connect.svg";
+import Connectlogo from "../../../assets/connect.svg";
 import { Link } from "react-router-dom";
 
 function ConnectAccount() {

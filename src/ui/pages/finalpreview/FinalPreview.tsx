@@ -1,20 +1,19 @@
 import React, { useState, useEffect, useRef } from "react";
-import GravityWriteLogo from "../../assets/logo.svg";
-import MenuIcon from "../../assets/menu.svg";
+import GravityWriteLogo from "../../../assets/logo.svg";
+import MenuIcon from "../../../assets/menu.svg";
 import TabletMacIcon from "@mui/icons-material/TabletMac";
 import PhoneIphoneIcon from "@mui/icons-material/PhoneIphone";
 import CachedIcon from "@mui/icons-material/Cached";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { useSelector } from "react-redux";
-import { RootState } from "../../store/store";
+import { RootState } from "../../../store/store";
 import PersonalVideoIcon from "@mui/icons-material/PersonalVideo";
-import popupimg from "../../assets/popupimg.svg";
+import popupimg from "../../../assets/popupimg.svg";
 import CloseIcon from "@mui/icons-material/Close";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import UpgradePopup from "../../component/UpgradePopup";
-import ProfileSection from "../../component/ProfileSection";
 
 type Page = {
   name: string;
@@ -42,7 +41,7 @@ function FinalPreview() {
   const businessName = useSelector(
     (state: RootState) => state.userData.businessName
   );
-  const description = useSelector(
+  const Description = useSelector(
     (state: RootState) => state.userData.description1
   );
   const fontFamily = useSelector((state: RootState) => state.userData.font);
@@ -60,8 +59,8 @@ function FinalPreview() {
   ]);
   const [pageContents, setPageContents] = useState<any>({});
   const [showPopup, setShowPopup] = useState(false);
-  const [isContentGenerating, setIsContentGenerating] = useState(false); // Track content generation status
-  const [previousClicked, setPreviousClicked] = useState(false); // Track if the previous button was clicked
+  const [isContentGenerating, setIsContentGenerating] = useState(false);
+  const [previousClicked, setPreviousClicked] = useState(false);
 
   const [generatedContent, setGeneratedContent] = useState<GeneratedContent>({
     template: "plumber",
@@ -73,8 +72,8 @@ function FinalPreview() {
     },
   });
 
-  const [regenerateCount, setRegenerateCount] = useState(0); // Track regenerate clicks
-  const [showUpgradePopup, setShowUpgradePopup] = useState(false); // State for the upgrade popup
+  const [regenerateCount, setRegenerateCount] = useState(0);
+  const [showUpgradePopup, setShowUpgradePopup] = useState(false);
 
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
@@ -157,6 +156,7 @@ function FinalPreview() {
             type: "start",
             templateName: "plumber",
             pageName: currentPage.slug,
+            description: Description,
           },
           "*"
         );
@@ -408,7 +408,6 @@ function FinalPreview() {
                           ? "border-palatinate-blue-500 border-2 bg-palatinate-blue-50"
                           : ""
                       }`}
-                      onClick={() => togglePage(page.name)}
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center">

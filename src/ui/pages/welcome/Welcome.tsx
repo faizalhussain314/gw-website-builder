@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import aibuilder from "../../assets/aibuilder.svg";
+import aibuilder from "../../../assets/aibuilder.svg";
 import IntroLayout from "../../Layouts/IntroLayout";
 
 function Welcome() {

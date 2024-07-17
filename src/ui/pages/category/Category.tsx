@@ -4,13 +4,13 @@ import Autocomplete, {
 } from "@mui/material/Autocomplete";
 import TextField from "@mui/material/TextField";
 import MainLayout from "../../Layouts/MainLayout";
-import { CategoryList } from "../../types/Category.type";
+import { CategoryList } from "../../../types/Category.type";
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { setCategory } from "../../Slice/activeStepSlice";
+import { setCategory } from "../../../Slice/activeStepSlice";
 import { useNavigate } from "react-router-dom";
-import { fetchCategoryList } from "../../infrastructure/api/categorylist.api";
-import { RootState } from "../../store/store";
+import { fetchCategoryList } from "../../../infrastructure/api/categorylist.api";
+import { RootState } from "../../../store/store";
 
 function Category() {
   const dispatch = useDispatch();

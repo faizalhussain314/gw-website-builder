@@ -1,0 +1,425 @@
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const API_BASE_URL = "https://dev.gravitywrite.com/api";
+    let selectors = [];
+    let streamedContent = "";
+    let currentIndex = 0;
+    let generatedContent = {};
+    let defaultContent = {};
+    let isFetching = false; // Flag to prevent multiple fetch calls
+
+    // Fetch selectors list
+    function fetchSelectorsList(templateName, pageName) {
+      if (isFetching) return; // Prevent multiple fetch calls
+      isFetching = true;
+      return fetch(
+        `${API_BASE_URL}/ai/builder/getPageSelector?templatename=${templateName}&page=${pageName}`
+      )
+        .then((response) => response.json())
+        .then((data) => {
+          console.log("data's value", data);
+          isFetching = false; // Reset fetching flag
+          return data.map((selector) => selector.trim());
+        })
+        .catch((error) => {
+          console.error("Error fetching selectors:", error);
+          isFetching = false; // Reset fetching flag
+          return [];
+        });
+    }
+
+    // Function to update element with content
+    function updateElement(selector, content) {
+      const element = document.querySelector(selector);
+      if (!element) {
+        console.log(`Element with selector "${selector}" not found.`);
+        return;
+      }
+
+      // Capture the default content if not already captured
+      if (!defaultContent[selector]) {
+        defaultContent[selector] = element.textContent.trim();
+      }
+
+      // Remove the word "data" from the content and also remove newlines
+      const cleanedContent = content.replace(/data:/g, "").replace(/\\n/g, "");
+      element.textContent = " ";
+      element.textContent = cleanedContent;
+
+      // Store the generated content using default content as the key
+      generatedContent[defaultContent[selector]] = cleanedContent;
+    }
+
+    // Function to automatically scroll to a specific element
+    function autoScrollToSelector(selector) {
+      const element = document.querySelector(selector);
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth", block: "center" });
+      } else {
+        console.log(`Element with selector "${selector}" not found.`);
+      }
+    }
+
+    // Fetch and stream content
+    function fetchStreamedContent(
+      templateName,
+      pageName,
+      businessName,
+      description
+    ) {
+      const prompt = `write website content for ${businessName} and it's description was "${description}", the example is inside the exampleContent tag <exampleContent>Expert Plumbing Services In Chennai- Fast, Reliable, Affordable;At abc plumber, we provide top-notch plumbing services to ensure your home or business is running smoothly. From emergency repairs to routine maintenance, our experienced team is here to help.;Expert Plumbing Services Your Trusted Plumbing Company;In this part, we will introduce you or your business to website visitors. We’ll write about you, your organization, the products or services you offer, and why your company exists.;Our Service;We provide an extensive range of plumbing services. We offer a comprehensive range of plumbing services to meet all your needs.;Emergency Plumbing;Looking for a unique vacation destination? Then maybe a trip to one of the 10 most unique tourist destinations might.;Residential Plumbing;Looking for a unique vacation destination? Then maybe a trip to one of the 10 most unique tourist destinations might.;Water Heater Services;Looking for a unique vacation destination? Then maybe a trip to one of the 10 most unique tourist destinations might.;Commercial Plumbing;Looking for a unique vacation destination? Then maybe a trip to one of the 10 most unique tourist destinations might.;Drain Cleaning;Looking for a unique vacation destination? Then maybe a trip to one of the 10 most unique tourist destinations might.;Bathroom Remodeling;Looking for a unique vacation destination? Then maybe a trip to one of the 10 most unique tourist destinations might.;Why Choose Us;When you choose abc plumber, you’re choosing a company that values;Experience;Years of industry experience ensure we handle any plumbing issue with confidence.;24/7 Availability;Plumbing emergencies don’t wait, and neither do we. Our team is available around the clock to assist you.;Competitive Pricing;We offer top-quality services at prices that fit your budget, without compromising on quality.;What Our Trusted Clients Say;\nCommunity development is often linked with community work or community planning, and may involve stakeholders, foundations,;\"Excellent service! The team was professional, timely, and resolved our plumbing issue quickly. Highly recommend!\";Sarah;Founder;\"I've used for several years and have always been impressed with their work and customer service. They are the best in the business!\";Mark;Founder;\"Their attention to detail and commitment to quality is unmatched. I wouldn't trust anyone else with my plumbing needs.\";Emily W;Founder;\"Their attention to detail and commitment to quality is unmatched. I wouldn't trust anyone else with my plumbing needs.\";Brian;Founder;Need Immediate Plumbing Assistance?;Our team is available 24/7 to provide fast and reliable plumbing services whenever you need them.;</exampleContent>`;
+
+      if (isFetching) return; // Prevent multiple fetch calls
+      isFetching = true;
+      fetch(`https://ai-builder-backend.onrender.com/StreamIframeController`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt }),
+      })
+        .then((response) => response.body.getReader())
+        .then((reader) => {
+          const decoder = new TextDecoder("utf-8");
+
+          function processText({ done, value }) {
+            if (done) {
+              window.parent.postMessage(
+                { type: "generationStatus", isGenerating: false },
+                "*"
+              );
+              window.parent.postMessage(
+                {
+                  type: "generatedContent",
+                  content: generatedContent,
+                  pageName,
+                },
+                "*"
+              );
+              isFetching = false; // Reset fetching flag
+              return;
+            }
+
+            streamedContent += decoder.decode(value, { stream: true });
+            const contentParts = streamedContent.split(";");
+
+            // First, update all elements with their content
+            contentParts.forEach((contentPart, index) => {
+              if (index < selectors.length) {
+                updateElement(selectors[index], contentPart.trim());
+              }
+            });
+
+            // Then, handle scrolling sequentially
+            if (
+              currentIndex < selectors.length &&
+              currentIndex < contentParts.length
+            ) {
+              updateElement(
+                selectors[currentIndex],
+                contentParts[currentIndex].trim()
+              );
+              autoScrollToSelector(selectors[currentIndex]);
+              currentIndex++;
+            }
+
+            // Notify parent that generation is in progress
+            window.parent.postMessage(
+              { type: "generationStatus", isGenerating: true },
+              "*"
+            );
+
+            // Continue reading the stream
+            reader.read().then(processText);
+          }
+
+          reader.read().then(processText);
+        })
+        .catch((error) => {
+          console.error("Error fetching streaming content:", error);
+          isFetching = false; // Reset fetching flag
+        });
+    }
+
+    // Start content generation
+    function startContentGeneration(
+      templateName,
+      pageName,
+      businessName,
+      description
+    ) {
+      fetchSelectorsList(templateName, pageName).then((fetchedSelectors) => {
+        selectors = fetchedSelectors;
+        console.log("Fetched selectors:", selectors);
+        currentIndex = 0; // Reset currentIndex when starting
+        generatedContent = {}; // Reset generated content
+        defaultContent = {}; // Reset default content
+        fetchStreamedContent(templateName, pageName, businessName, description);
+      });
+    }
+
+    // Function to regenerate content
+    function regenerateContent(
+      templateName,
+      pageName,
+      businessName,
+      description
+    ) {
+      console.log("Regenerating content based on initial selectors.");
+      for (const selector in defaultContent) {
+        if (defaultContent.hasOwnProperty(selector)) {
+          const element = document.querySelector(selector);
+          console.log("element's value:", element);
+          if (element) {
+            element.textContent = defaultContent[selector]; // Reset to initial content before regeneration
+          }
+        }
+      }
+      window.parent.postMessage(
+        { type: "regenerateComplete", defaultContent, generatedContent },
+        "*"
+      );
+      fetchStreamedContent(templateName, pageName, businessName, description); // Trigger regeneration
+    }
+
+    // Listen for messages from parent
+    window.addEventListener("message", function (event) {
+      if (event.data.type === "start") {
+        const { templateName, pageName, businessName, description } =
+          event.data;
+        startContentGeneration(
+          templateName,
+          pageName,
+          businessName,
+          description
+        );
+      } else if (event.data.type === "regenerate") {
+        regenerateContent(
+          event.data.templateName,
+          event.data.pageName,
+          event.data.businessName,
+          event.data.description
+        );
+      } else if (event.data.type === "changeFont") {
+        const link = document.createElement("link");
+        link.href = `https://fonts.googleapis.com/css2?family=${event.data.font.replace(
+          / /g,
+          "+"
+        )}&display=swap`;
+        link.rel = "stylesheet";
+        document.head.appendChild(link);
+        document.body.style.fontFamily = event.data.font;
+        document.body.setAttribute(
+          "style",
+          `font-family: ${event.data.font} !important;`
+        );
+      }
+    });
+
+    function updateCSSVariable(variable, value) {
+      for (let sheet of document.styleSheets) {
+        try {
+          for (let rule of sheet.cssRules || sheet.rules) {
+            if (rule.style && rule.style.getPropertyValue(variable)) {
+              rule.style.setProperty(variable, value);
+              return true;
+            }
+          }
+        } catch (e) {
+          continue;
+        }
+      }
+      return false;
+    }
+
+    window.addEventListener("message", (event) => {
+      if (event.data.type === "changeFont") {
+        console.log("Font change event triggered");
+        const primaryFontFamilyUpdated = updateCSSVariable(
+          "--e-global-typography-primary-font-family",
+          event.data.font
+        );
+        if (primaryFontFamilyUpdated) {
+          console.log("Primary font family updated to:", event.data.font);
+        } else {
+          console.log("Primary font family variable not found.");
+        }
+        document.documentElement.style.setProperty(
+          "--gw-primary-font",
+          `${event.data.font} !important`
+        );
+      } else if (event.data.type === "changeGlobalColors") {
+        console.log("Color change event triggered");
+        const primaryColorUpdated = updateCSSVariable(
+          "--e-global-color-primary",
+          event.data.primaryColor
+        );
+        if (primaryColorUpdated) {
+          console.log("Primary color updated to:", event.data.primaryColor);
+        } else {
+          console.log("Primary color variable not found.");
+        }
+        const secondaryColorUpdated = updateCSSVariable(
+          "--e-global-color-secondary",
+          event.data.secondaryColor
+        );
+        if (secondaryColorUpdated) {
+          console.log("Secondary color updated to:", event.data.secondaryColor);
+        } else {
+          console.log("Secondary color variable not found.");
+        }
+        document.documentElement.style.setProperty(
+          "--e-global-color-primary",
+          `${event.data.primaryColor} !important`
+        );
+        document.documentElement.style.setProperty(
+          "--e-global-color-secondary",
+          `${event.data.secondaryColor} !important`
+        );
+      }
+    });
+
+    window.onload = function () {
+      const initialStyles = {
+        type: "initialStyles",
+        primaryColor: getComputedStyle(document.documentElement)
+          .getPropertyValue("--e-global-color-primary")
+          .trim(),
+        secondaryColor: getComputedStyle(document.documentElement)
+          .getPropertyValue("--e-global-color-secondary")
+          .trim(),
+        fontFamily: getComputedStyle(document.documentElement)
+          .getPropertyValue("--e-global-typography-primary-font-family")
+          .trim(),
+      };
+      window.parent.postMessage(initialStyles, "*");
+    };
+  });
+</script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const API_BASE_URL = "https://dev.gravitywrite.com/api";
+    let selectors = [];
+    let streamedContent = "";
+    let currentIndex = 0;
+    let generatedContent = {};
+    let defaultContent = {};
+    let isFetching = false; // Flag to prevent multiple fetch calls
+
+    function fetchSelectorsList(templateName, pageName) {
+      if (isFetching) return Promise.resolve([]); // Handle multiple fetch calls gracefully
+      isFetching = true;
+      return fetch(
+        `${API_BASE_URL}/ai/builder/getPageSelector?templatename=${templateName}&page=${pageName}`
+      )
+        .then((response) => response.json())
+        .then((data) => {
+          isFetching = false;
+          return data.map((selector) => selector.trim());
+        })
+        .catch((error) => {
+          console.error("Error fetching selectors:", error);
+          isFetching = false;
+          return [];
+        });
+    }
+
+    function updateElement(selector, content) {
+      const element = document.querySelector(selector);
+      if (!element) {
+        console.log(`Element with selector "${selector}" not found.`);
+        return;
+      }
+      if (!defaultContent[selector]) {
+        defaultContent[selector] = element.textContent.trim();
+      }
+      // 	   autoScrollToSelector(selector);
+      element.textContent = "";
+      // 	  console.log("this is the content",content);
+      element.textContent = content;
+      generatedContent[defaultContent[selector]] = content;
+    }
+
+    function autoScrollToSelector(selector) {
+      const element = document.querySelector(selector);
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth", block: "center" });
+        console.log("autoscroll current element", selector);
+      } else {
+        console.log("Element with selector `${selector}` not found.");
+      }
+    }
+
+    function fetchStreamedContent(
+      templateName,
+      pageName,
+      businessName,
+      description
+    ) {
+      if (isFetching) return;
+      isFetching = true;
+      const url = `${API_BASE_URL}/ai/builder/streamcontent?businessName=${encodeURIComponent(
+        businessName
+      )}&page_name=${pageName}&description=${description}`;
+
+      const eventSource = new EventSource(url);
+      eventSource.onmessage = function (event) {
+        const json = JSON.parse(event.data);
+        const content = json.choices[0].delta.content; // Extract the content from delta object
+        streamedContent += content; // Append new content with a semicolon
+
+        const contentParts = streamedContent.split(";"); // Split content based on semicolons
+        contentParts.forEach((part, index) => {
+          if (index < selectors.length) {
+            updateElement(selectors[index], part.trim());
+            let selector = selectors[index];
+
+            autoScrollToSelector(selector);
+          }
+        });
+        currentIndex = (currentIndex + 1) % selectors.length; // Move to the next selector cyclically
+      };
+
+      eventSource.onerror = function () {
+        console.error("Stream encountered an error");
+        isFetching = false;
+        eventSource.close();
+      };
+    }
+
+    window.addEventListener("message", function (event) {
+      if (event.data.type === "start") {
+        const { templateName, pageName, businessName, description } =
+          event.data;
+        console.log("description", description);
+        fetchSelectorsList(templateName, pageName).then((fetchedSelectors) => {
+          selectors = fetchedSelectors;
+          currentIndex = 0;
+          generatedContent = {};
+          defaultContent = {};
+          fetchStreamedContent(
+            templateName,
+            pageName,
+            businessName,
+            description
+          );
+        });
+      }
+    });
+
+    window.onload = function () {
+      const initialStyles = {
+        type: "initialStyles",
+        primaryColor: getComputedStyle(document.documentElement)
+          .getPropertyValue("--e-global-color-primary")
+          .trim(),
+        secondaryColor: getComputedStyle(document.documentElement)
+          .getPropertyValue("--e-global-color-secondary")
+          .trim(),
+        fontFamily: getComputedStyle(document.documentElement)
+          .getPropertyValue("--e-global-typography-primary-font-family")
+          .trim(),
+      };
+      window.parent.postMessage(initialStyles, "*");
+    };
+  });
+</script>

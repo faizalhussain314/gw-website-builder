@@ -2,14 +2,14 @@ import { Link, useNavigate } from "react-router-dom";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import MainLayout from "../../Layouts/MainLayout";
 import { useState, useEffect } from "react";
-import Sparkle from "../../assets/sparkle.svg";
+import Sparkle from "../../../assets/sparkle.svg";
 import { useDispatch, useSelector } from "react-redux";
-import { RootState } from "../../store/store";
+import { RootState } from "../../../store/store";
 import {
   setDescriptionOne,
   setDescriptionTwo,
-} from "../../Slice/activeStepSlice";
-import { fetchDescriptionStream } from "../../infrastructure/api/description.api";
+} from "../../../Slice/activeStepSlice";
+import { fetchDescriptionStream } from "../../../infrastructure/api/description.api";
 
 function Description() {
   const dispatch = useDispatch();

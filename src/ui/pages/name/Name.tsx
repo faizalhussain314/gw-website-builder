@@ -3,8 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 import MainLayout from "../../Layouts/MainLayout";
 import { useDispatch, useSelector } from "react-redux";
 import { useState, useEffect } from "react";
-import { setBusinessName } from "../../Slice/activeStepSlice";
-import { RootState } from "../../store/store";
+import { setBusinessName } from "../../../Slice/activeStepSlice";
+import { RootState } from "../../../store/store";
 
 function Name() {
   const dispatch = useDispatch();

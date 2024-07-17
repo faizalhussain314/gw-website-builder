@@ -1,0 +1,128 @@
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const API_BASE_URL = "https://dev.gravitywrite.com/api";
+    let selectors = [];
+    let streamedContent = "";
+    let currentIndex = 0;
+    let generatedContent = {};
+    let defaultContent = {};
+    let isFetching = false; // Flag to prevent multiple fetch calls
+
+    function fetchSelectorsList(templateName, pageName) {
+      if (isFetching) return Promise.resolve([]); // Handle multiple fetch calls gracefully
+      isFetching = true;
+      return fetch(
+        `${API_BASE_URL}/ai/builder/getPageSelector?templatename=${templateName}&page=${pageName}`
+      )
+        .then((response) => response.json())
+        .then((data) => {
+          isFetching = false;
+          return data.map((selector) => selector.trim());
+        })
+        .catch((error) => {
+          console.error("Error fetching selectors:", error);
+          isFetching = false;
+          return [];
+        });
+    }
+
+    function updateElement(selector, content) {
+      const element = document.querySelector(selector);
+      if (!element) {
+        console.log(`Element with selector "${selector}" not found.`);
+        return;
+      }
+      if (!defaultContent[selector]) {
+        defaultContent[selector] = element.textContent.trim();
+      }
+      // 	   autoScrollToSelector(selector);
+      element.textContent = "";
+      // 	  console.log("this is the content",content);
+      element.textContent = content;
+      generatedContent[defaultContent[selector]] = content;
+    }
+
+    function autoScrollToSelector(selector) {
+      const element = document.querySelector(selector);
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth", block: "center" });
+        console.log("autoscroll current element", selector);
+      } else {
+        console.log("Element with selector `${selector}` not found.");
+      }
+    }
+
+    function fetchStreamedContent(
+      templateName,
+      pageName,
+      businessName,
+      description
+    ) {
+      if (isFetching) return;
+      isFetching = true;
+      const url = `${API_BASE_URL}/ai/builder/streamcontent?businessName=${encodeURIComponent(
+        businessName
+      )}&page_name=${pageName}&description=${description}`;
+
+      const eventSource = new EventSource(url);
+      eventSource.onmessage = function (event) {
+        const json = JSON.parse(event.data);
+        const content = json.choices[0].delta.content; // Extract the content from delta object
+        streamedContent += content; // Append new content with a semicolon
+
+        const contentParts = streamedContent.split(";"); // Split content based on semicolons
+        contentParts.forEach((part, index) => {
+          if (index < selectors.length) {
+            updateElement(selectors[index], part.trim());
+            let selector = selectors[index];
+
+            autoScrollToSelector(selector);
+          }
+        });
+        currentIndex = (currentIndex + 1) % selectors.length; // Move to the next selector cyclically
+      };
+
+      eventSource.onerror = function () {
+        console.error("Stream encountered an error");
+        isFetching = false;
+        eventSource.close();
+      };
+    }
+
+    window.addEventListener("message", function (event) {
+      if (event.data.type === "start") {
+        const { templateName, pageName, businessName, description } =
+          event.data;
+        console.log("description", description);
+        fetchSelectorsList(templateName, pageName).then((fetchedSelectors) => {
+          selectors = fetchedSelectors;
+          currentIndex = 0;
+          generatedContent = {};
+          defaultContent = {};
+          fetchStreamedContent(
+            templateName,
+            pageName,
+            businessName,
+            description
+          );
+        });
+      }
+    });
+
+    window.onload = function () {
+      const initialStyles = {
+        type: "initialStyles",
+        primaryColor: getComputedStyle(document.documentElement)
+          .getPropertyValue("--e-global-color-primary")
+          .trim(),
+        secondaryColor: getComputedStyle(document.documentElement)
+          .getPropertyValue("--e-global-color-secondary")
+          .trim(),
+        fontFamily: getComputedStyle(document.documentElement)
+          .getPropertyValue("--e-global-typography-primary-font-family")
+          .trim(),
+      };
+      window.parent.postMessage(initialStyles, "*");
+    };
+  });
+</script>

@@ -1,21 +1,17 @@
 import MainLayout from "../../Layouts/MainLayout";
-import { templatelist } from "../../types/Preview.type";
-import { useState, useEffect } from "react";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import { RootState } from "../../store/store";
+import { RootState } from "../../../store/store";
 import { useDispatch, useSelector } from "react-redux";
-import { setTemplateId, setTemplatename } from "../../Slice/activeStepSlice";
+import { setTemplateId, setTemplatename } from "../../../Slice/activeStepSlice";
 import { Link } from "react-router-dom";
 import Popup from "../../component/Popup";
-import { fetchtemplateList } from "../../infrastructure/api/templatelist.api";
+import useTemplateList from "../../../hooks/useTemplateList";
+import { useState, useEffect } from "react";
 
 function Design() {
   const dispatch = useDispatch();
-  const [activeIndex, setActiveIndex] = useState<number | null>(null);
-  const [TemplateList, setTemplateList] = useState<templatelist[]>([]);
-  const [selectedTemplateDetails, setSelectedTemplateDetails] = useState(
-    TemplateList[0]
-  );
+  const { templateList, activeIndex, selectedTemplateDetails, handleBoxClick } =
+    useTemplateList();
 
   const businessName = useSelector(
     (state: RootState) => state.userData.businessName
@@ -29,18 +25,23 @@ function Design() {
   const category =
     useSelector((state: RootState) => state.userData.category) || "";
 
-  const setDetails = () => {
-    const tempid = selectedTemplateDetails.templateid;
-    const tempname = selectedTemplateDetails.templatename;
-    dispatch(setTemplateId(tempid));
-    dispatch(setTemplatename(tempname));
-  };
-
   const [showPopup, setShowPopup] = useState(false);
 
   const handlePopupClose = () => {
     setShowPopup(false);
   };
+
+  const setDetails = () => {
+    if (selectedTemplateDetails) {
+      const { templateid, templatename } = selectedTemplateDetails;
+      dispatch(setTemplateId(templateid));
+      dispatch(setTemplatename(templatename));
+    }
+  };
+
+  useEffect(() => {
+    setDetails();
+  }, [selectedTemplateDetails]);
 
   useEffect(() => {
     const handleMouseEnter = (iframe: HTMLIFrameElement) => {
@@ -77,25 +78,6 @@ function Design() {
         iframe.removeEventListener("mouseleave", onMouseLeave);
       }
     };
-  }, []);
-
-  const handleBoxClick = async (index: number, list: templatelist) => {
-    setActiveIndex(index);
-    setSelectedTemplateDetails(list);
-    setDetails();
-  };
-
-  useEffect(() => {
-    const templateList = async () => {
-      try {
-        const templatelist = await fetchtemplateList();
-        setTemplateList(templatelist || []);
-      } catch (error) {
-        console.error("error occured while api fetching", error);
-      }
-    };
-
-    templateList();
   }, []);
 
   return (
@@ -148,6 +130,7 @@ function Design() {
                     <input
                       className=" w-full h-12  placeholder:zw-placeholder zw-input rounded-md px-3 border focus:border-2  outline-none  shadow-sm  border-app-border focus:border-app-secondary focus:ring-transparent pl-11 false "
                       value={category}
+                      readOnly
                     />
                   </div>
                 </div>
@@ -156,7 +139,7 @@ function Design() {
 
             <div className="custom-confirmation-modal-scrollbar relative px-5 md:px-10 lg:px-14 xl:px-15 xl:max-w-full">
               <div className="grid grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 auto-rows-auto items-start justify-center gap-6 mb-10">
-                {TemplateList.map((list: templatelist, index: number) => (
+                {templateList.map((list: templatelist, index: number) => (
                   <div
                     key={index}
                     className="w-full flex justify-center rounded-b-2xl cursor-pointer"

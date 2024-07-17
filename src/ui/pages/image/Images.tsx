@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { useState } from "react";
-import { Keyword, Image } from "../../types/Image.type";
+import { Keyword, Image } from "../../../types/Image.type";
 import MainLayout from "../../Layouts/MainLayout";
 
 function Images() {
