@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export interface Website {
   link: string;
   option: string;
@@ -15,5 +16,17 @@ export interface templatelist {
     services: string;
     blog: string;
     contact: string;
+  };
+}
+
+export interface selectedTem {
+  link: string;
+  templateid: number;
+  templatename: string;
+  templatepages: {
+    link: string;
+    templateid: number;
+    templatename: string;
+    templatepages: { unknown: any };
   };
 }

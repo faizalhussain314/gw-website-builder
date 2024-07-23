@@ -423,3 +423,241 @@
     };
   });
 </script>
+
+//working
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const API_BASE_URL = "https://dev.gravitywrite.com/api";
+    let selectors = [];
+    let streamedContent = "";
+    let currentIndex = 0;
+    let generatedContent = {};
+    let defaultContent = {};
+    let isFetching = false; // Flag to prevent multiple fetch calls
+    let lastScrolledSelector = "";
+
+    function fetchSelectorsList(templateName, pageName) {
+      if (isFetching) return Promise.resolve([]); // Handle multiple fetch calls gracefully
+      isFetching = true;
+      return fetch(
+        ${API_BASE_URL}/ai/builder/getPageSelector?templatename=${templateName}&page=${pageName}
+      )
+        .then((response) => response.json())
+        .then((data) => {
+          isFetching = false;
+          return data.map((selector) => selector.trim());
+        })
+        .catch((error) => {
+          console.error("Error fetching selectors:", error);
+          isFetching = false;
+          return [];
+        });
+    }
+
+    function updateElement(selector, content) {
+      const element = document.querySelector(selector);
+      if (!element) {
+        console.log(Element with selector "${selector}" not found.);
+        return;
+      }
+      if (!defaultContent[selector]) {
+        defaultContent[selector] = element.textContent.trim();
+      }
+      if (selector !== lastScrolledSelector) {
+        autoScrollToSelector(selector);
+        lastScrolledSelector = selector; // Update the last scrolled selector
+      }
+
+      element.textContent = "";
+      element.textContent = content;
+      generatedContent[defaultContent[selector]] = content;
+    }
+
+    function autoScrollToSelector(selector) {
+      const element = document.querySelector(selector);
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth", block: "center" });
+        console.log("autoscroll current element", selector);
+      } else {
+        console.log(Element with selector "${selector}" not found.);
+      }
+    }
+
+    function fetchStreamedContent(
+      templateName,
+      pageName,
+      businessName,
+      description
+    ) {
+      if (isFetching) return;
+      isFetching = true;
+      window.parent.postMessage(
+        { type: "generationStatus", isGenerating: true },
+        "*"
+      );
+      const url = ${API_BASE_URL}/ai/builder/streamcontent?businessName=${encodeURIComponent(
+        businessName
+      )}&page_name=${pageName}&description=${encodeURIComponent(description)};
+
+      const eventSource = new EventSource(url);
+      eventSource.onmessage = function (event) {
+        const json = JSON.parse(event.data);
+        const content = json.choices[0].delta.content; // Extract the content from delta object
+        streamedContent += content; // Append new content with a semicolon
+
+        const contentParts = streamedContent.split(";"); // Split content based on semicolons
+        contentParts.forEach((part, index) => {
+          if (index < selectors.length) {
+            updateElement(selectors[index], part.trim());
+            let selector = selectors[index];
+          }
+        });
+        currentIndex = (currentIndex + 1) % selectors.length; // Move to the next selector cyclically
+      };
+
+      eventSource.onerror = function () {
+        console.error("Stream encountered an error");
+        isFetching = false;
+        eventSource.close();
+        window.parent.postMessage(
+          { type: "generationStatus", isGenerating: false },
+          "*"
+        );
+        window.parent.postMessage(
+          { type: "generatedContent", content: generatedContent, pageName },
+          "*"
+        );
+      };
+
+      eventSource.onopen = function () {
+        window.parent.postMessage(
+          { type: "generationStatus", isGenerating: true },
+          "*"
+        );
+      };
+
+      eventSource.onclose = function () {
+        window.parent.postMessage(
+          { type: "generationStatus", isGenerating: false },
+          "*"
+        );
+        window.parent.postMessage(
+          { type: "generatedContent", content: generatedContent, pageName },
+          "*"
+        );
+      };
+    }
+
+    window.addEventListener("message", function (event) {
+      if (event.data.type === "start") {
+        const { templateName, pageName, businessName, description } =
+          event.data;
+        console.log("description", description);
+        fetchSelectorsList(templateName, pageName).then((fetchedSelectors) => {
+          selectors = fetchedSelectors;
+          currentIndex = 0;
+          generatedContent = {};
+          defaultContent = {};
+          fetchStreamedContent(
+            templateName,
+            pageName,
+            businessName,
+            description
+          );
+        });
+      } else if (event.data.type === "restoreContent") {
+        const { content } = event.data;
+        Object.keys(content).forEach((oldContent) => {
+          const selector = Object.keys(defaultContent).find(
+            (key) => defaultContent[key] === oldContent
+          );
+          if (selector) {
+            updateElement(selector, content[oldContent]);
+          }
+        });
+      }
+    });
+
+    function updateCSSVariable(variable, value) {
+      for (let sheet of document.styleSheets) {
+        try {
+          for (let rule of sheet.cssRules || sheet.rules) {
+            if (rule.style && rule.style.getPropertyValue(variable)) {
+              rule.style.setProperty(variable, value);
+              return true;
+            }
+          }
+        } catch (e) {
+          continue;
+        }
+      }
+      return false;
+    }
+
+    window.addEventListener("message", (event) => {
+      if (event.data.type === "changeFont") {
+        console.log("Font change event triggered");
+        const primaryFontFamilyUpdated = updateCSSVariable(
+          "--e-global-typography-primary-font-family",
+          event.data.font
+        );
+        if (primaryFontFamilyUpdated) {
+          console.log("Primary font family updated to:", event.data.font);
+        } else {
+          console.log("Primary font family variable not found.");
+          document.body.style.fontFamily = event.data.font;
+        }
+        document.documentElement.style.setProperty(
+          "--gw-primary-font",
+          ${event.data.font} !important
+        );
+        document.body.style.fontFamily = event.data.font; // Hardcode the font family if CSS variable not found
+      } else if (event.data.type === "changeGlobalColors") {
+        console.log("Color change event triggered");
+        const primaryColorUpdated = updateCSSVariable(
+          "--e-global-color-primary",
+          event.data.primaryColor
+        );
+        if (primaryColorUpdated) {
+          console.log("Primary color updated to:", event.data.primaryColor);
+        } else {
+          console.log("Primary color variable not found.");
+        }
+        const secondaryColorUpdated = updateCSSVariable(
+          "--e-global-color-secondary",
+          event.data.secondaryColor
+        );
+        if (secondaryColorUpdated) {
+          console.log("Secondary color updated to:", event.data.secondaryColor);
+        } else {
+          console.log("Secondary color variable not found.");
+        }
+        document.documentElement.style.setProperty(
+          "--e-global-color-primary",
+          ${event.data.primaryColor} !important
+        );
+        document.documentElement.style.setProperty(
+          "--e-global-color-secondary",
+          ${event.data.secondaryColor} !important
+        );
+      }
+    });
+
+    window.onload = function () {
+      const initialStyles = {
+        type: "initialStyles",
+        primaryColor: getComputedStyle(document.documentElement)
+          .getPropertyValue("--e-global-color-primary")
+          .trim(),
+        secondaryColor: getComputedStyle(document.documentElement)
+          .getPropertyValue("--e-global-color-secondary")
+          .trim(),
+        fontFamily: getComputedStyle(document.documentElement)
+          .getPropertyValue("--e-global-typography-primary-font-family")
+          .trim(),
+      };
+      window.parent.postMessage(initialStyles, "*");
+    };
+  });
+</script>

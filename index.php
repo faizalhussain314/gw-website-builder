@@ -15,6 +15,7 @@ class ViteReactPlugin {
         add_action('admin_menu', array($this, 'add_admin_menu'));
         add_action('admin_enqueue_scripts', array($this, 'enqueue_scripts'));
         add_action('admin_head', array($this, 'custom_admin_style'));
+        add_action('rest_api_init', array($this, 'register_api_endpoints'));
     }
 
     public function add_admin_menu() {
@@ -50,12 +51,18 @@ class ViteReactPlugin {
 
         wp_enqueue_script('vite-react-app-js', $script_path_js, array(), '1.0', true);
         wp_enqueue_style('vite-react-app-css', $script_path_css, array(), '1.0', 'all');
+
+        // Pass REST API URL and nonce to the React app
+        wp_localize_script('vite-react-app-js', 'viteReactPluginData', array(
+            'api_url' => esc_url_raw(rest_url('vite-react-plugin/v1')),
+            'nonce' => wp_create_nonce('wp_rest'),
+        ));
     }
 
     public function custom_admin_style() {
         // Only apply custom styles on the specific admin page for your plugin
         global $pagenow;
-        if ($pagenow == 'admin.php' && $_GET['page'] == 'vite-react-plugin') {
+        if ($pagenow == 'admin.php' && isset($_GET['page']) && $_GET['page'] == 'vite-react-plugin') {
             echo '<style>
                 #wpwrap { position: absolute; width: 100%; }
                 #adminmenu, #wpadminbar, #adminmenuback, #adminmenuwrap, #wpfooter { display: none; }
@@ -63,8 +70,30 @@ class ViteReactPlugin {
                 html.wp-toolbar{padding:0px 0px !important;}
                 #update-nag, .update-nag{display:none !important;}
                 #wpcontent,#wpbody-content{margin:0px !important;padding:0px !important;}
-                
             </style>';
+        }
+    }
+
+    public function register_api_endpoints() {
+        register_rest_route('vite-react-plugin/v1', '/save-content', array(
+            'methods' => 'POST',
+            'callback' => array($this, 'save_content'),
+            'permission_callback' => '__return_true', // Adjust based on your security needs
+        ));
+    }
+
+    public function save_content($request) {
+        $params = $request->get_json_params();
+
+        if (isset($params['template']) && isset($params['pages']) && isset($params['style'])) {
+            // Save the data in the database
+            update_option('vite_react_plugin_template', sanitize_text_field($params['template']));
+            update_option('vite_react_plugin_pages', $params['pages']);
+            update_option('vite_react_plugin_style', $params['style']);
+
+            return new WP_REST_Response(array('success' => true, 'message' => 'Content saved successfully'), 200);
+        } else {
+            return new WP_REST_Response(array('success' => false, 'message' => 'Invalid data'), 400);
         }
     }
 
@@ -104,4 +133,5 @@ function vite_react_plugin_redirect() {
         }
     }
 }
+
 ?>

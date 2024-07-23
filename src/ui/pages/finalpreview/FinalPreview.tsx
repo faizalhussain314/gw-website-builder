@@ -14,6 +14,7 @@ import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import UpgradePopup from "../../component/UpgradePopup";
+import { useNavigate } from "react-router-dom";
 
 type Page = {
   name: string;
@@ -44,6 +45,9 @@ function FinalPreview() {
   const Description = useSelector(
     (state: RootState) => state.userData.description1
   );
+  const templateName: string = useSelector(
+    (state: RootState) => state.userData.templatename
+  );
   const fontFamily = useSelector((state: RootState) => state.userData.font);
   const Color = useSelector((state: RootState) => state.userData.color);
   const [selectedPage, setSelectedPage] = useState<string | null>("Home");
@@ -61,6 +65,7 @@ function FinalPreview() {
   const [showPopup, setShowPopup] = useState(false);
   const [isContentGenerating, setIsContentGenerating] = useState(false);
   const [previousClicked, setPreviousClicked] = useState(false);
+  const navigate = useNavigate();
 
   const [generatedContent, setGeneratedContent] = useState<GeneratedContent>({
     template: "plumber",
@@ -101,18 +106,6 @@ function FinalPreview() {
   };
 
   const handleRegenerate = () => {
-    // Here you can check for some condition to show the upgrade popup
-    // const canRegenerate = false; // Set your condition here
-    // if (!canRegenerate) {
-    //   setShowUpgradePopup(true);
-    //   return;
-    // }
-    // if (regenerateCount <= 2) {
-    //   // Assuming free users can regenerate only once
-    //   setShowUpgradePopup(true);
-    //   return;
-    // }
-
     setRegenerateCount(regenerateCount + 1);
 
     if (selectedPage) {
@@ -154,8 +147,8 @@ function FinalPreview() {
         iframe.contentWindow?.postMessage(
           {
             type: "start",
-            templateName: "plumber",
-            pageName: currentPage.slug,
+            templateName: "common template 1",
+            pageName: currentPage?.slug,
             description: Description,
           },
           "*"
@@ -166,6 +159,8 @@ function FinalPreview() {
 
   const togglePage = (page: string) => {
     setSelectedPage(selectedPage === page ? null : page);
+    setShowPopup(true);
+    // const searchPageName = pages.findIndex(page)
   };
 
   const handlePageNavigation = (action: "next" | "skip") => {
@@ -201,7 +196,7 @@ function FinalPreview() {
 
         // Change iframe source to next page if "Next" button is clicked
         if (action === "next") {
-          const iframe = iframeRef.current;
+          const iframe: null | HTMLIFrameElement = iframeRef.current;
           const nextPageSlug = updatedPages[nextPageIndex].slug;
           iframe.src = `https://tours.mywpsite.org/${nextPageSlug}`;
 
@@ -240,6 +235,14 @@ function FinalPreview() {
   };
 
   const handlePrevious = () => {
+    if (!previousClicked && !isContentGenerating) {
+      navigate("/custom-design");
+
+      return;
+    } else if (!previousClicked) {
+      toast.warn("wait untill content generation");
+    }
+
     const currentPageIndex = pages.findIndex(
       (page) => page.name === selectedPage
     );
@@ -321,6 +324,9 @@ function FinalPreview() {
             fontFamily: fontFamily,
           },
         }));
+        if (!event.data.isGenerating) {
+          toast.success("Content generation complete!");
+        }
       }
     };
 
@@ -403,11 +409,12 @@ function FinalPreview() {
                   {pages.map((page) => (
                     <div
                       key={page.name}
-                      className={`rounded-lg p-3 mb-2 ${
+                      className={`rounded-lg p-3 mb-2  ${
                         selectedPage === page.name
                           ? "border-palatinate-blue-500 border-2 bg-palatinate-blue-50"
                           : ""
                       }`}
+                      // onClick={() => togglePage(page.name)}
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center">
@@ -467,14 +474,20 @@ function FinalPreview() {
                           {page.name === "Home" ? (
                             <>
                               <button
-                                className="bg-blue-600 text-white rounded px-3 py-1"
+                                className={`bg-blue-600 text-white rounded px-3 py-1 ${
+                                  isContentGenerating ? "opacity-50" : ""
+                                }`}
                                 onClick={handleNext}
+                                disabled={isContentGenerating}
                               >
                                 Keep & Next
                               </button>
                               <button
-                                className="bg-white text-black rounded px-3 py-1"
+                                className={`bg-white text-black rounded px-3 py-1 ${
+                                  isContentGenerating ? "opacity-50" : ""
+                                }`}
                                 onClick={handleSkipPage}
+                                disabled={isContentGenerating}
                               >
                                 Skip Page
                               </button>
@@ -482,14 +495,20 @@ function FinalPreview() {
                           ) : page.status === "Generated" ? (
                             <>
                               <button
-                                className="bg-blue-600 text-white rounded px-3 py-1"
+                                className={`bg-blue-600 text-white rounded px-3 py-1 ${
+                                  isContentGenerating ? "opacity-50" : ""
+                                }`}
                                 onClick={handleNext}
+                                disabled={isContentGenerating}
                               >
                                 Keep & Next
                               </button>
                               <button
-                                className="bg-white text-black rounded px-3 py-1"
+                                className={`bg-white text-black rounded px-3 py-1 ${
+                                  isContentGenerating ? "opacity-50" : ""
+                                }`}
                                 onClick={handleSkipPage}
+                                disabled={isContentGenerating}
                               >
                                 Skip Page
                               </button>
@@ -528,8 +547,11 @@ function FinalPreview() {
                         Previous
                       </button>
                       <button
-                        className="bg-white w-full text-palatinate-blue-500 border-palatinate-blue-500 border-2 py-3 px-8 rounded-md"
+                        className={`bg-white w-full text-palatinate-blue-500 border-palatinate-blue-500 border-2 py-3 px-8 rounded-md ${
+                          isContentGenerating ? "opacity-50" : ""
+                        }`}
                         onClick={handleNext}
+                        disabled={isContentGenerating}
                       >
                         Next
                       </button>

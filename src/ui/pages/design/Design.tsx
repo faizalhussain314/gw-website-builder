@@ -2,11 +2,16 @@ import MainLayout from "../../Layouts/MainLayout";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { RootState } from "../../../store/store";
 import { useDispatch, useSelector } from "react-redux";
-import { setTemplateId, setTemplatename } from "../../../Slice/activeStepSlice";
+import {
+  setTemplateId,
+  setTemplatename,
+  setTemplateList,
+} from "../../../Slice/activeStepSlice";
 import { Link } from "react-router-dom";
 import Popup from "../../component/Popup";
 import useTemplateList from "../../../hooks/useTemplateList";
 import { useState, useEffect } from "react";
+import { templatelist } from "../../../types/Preview.type";
 
 function Design() {
   const dispatch = useDispatch();
@@ -69,6 +74,9 @@ function Design() {
       const iframe = iframes[i];
       iframe.addEventListener("mouseenter", onMouseEnter);
       iframe.addEventListener("mouseleave", onMouseLeave);
+      iframe.addEventListener("click", () =>
+        dispatch(setTemplateList(templateList))
+      );
     }
 
     return () => {
@@ -78,7 +86,7 @@ function Design() {
         iframe.removeEventListener("mouseleave", onMouseLeave);
       }
     };
-  }, []);
+  }, [dispatch, templateList]);
 
   return (
     <MainLayout>
@@ -150,7 +158,7 @@ function Design() {
                           ? "border-2 border-palatinate-blue-500  rounded-lg "
                           : "border"
                       } `}
-                      onClick={() => handleBoxClick(index, list)}
+                      onClick={() => handleBoxClick(index, templateList[index])}
                     >
                       <div className="w-full relative h-fit bg-zip-app-highlight-bg border-1">
                         <div className="w-full aspect-[164/179] relative overflow-hidden bg-neutral-300 rounded-xl">

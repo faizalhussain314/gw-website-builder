@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
 import GravityWriteLogo from "../../assets/logo.svg";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import { useNavigate } from "react-router-dom";
-import { useDispatch } from "react-redux";
+import { Link, useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
 import { setFont, setColor } from "../../Slice/activeStepSlice";
 import Autocomplete from "@mui/material/Autocomplete";
 import TextField from "@mui/material/TextField";
+import { RootState } from "../../store/store";
 
 type FontCombination = {
   label: string;
@@ -17,7 +18,7 @@ type SelectedColor = {
   secondary: string;
 };
 
-type initialStyle = {
+type InitialStyle = {
   primaryColor: string;
   secondaryColor: string;
   fontFamily: string;
@@ -36,7 +37,7 @@ const fontCombinations: FontCombination[] = [
   { label: "Work Sans/Inter", primaryFont: "Work Sans" },
   { label: "Rubik/Inter", primaryFont: "Rubik" },
   { label: "Mulish/Inter", primaryFont: "Mulish" },
-  { label: "kaushan Script/inter", primaryFont: "Kaushan Script" },
+  { label: "Kaushan Script/Inter", primaryFont: "Kaushan Script" },
 ];
 
 const CustomizeSidebar: React.FC = () => {
@@ -44,12 +45,34 @@ const CustomizeSidebar: React.FC = () => {
     primary: "",
     secondary: "",
   });
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [selectedFont, setSelectedFont] = useState<FontCombination | null>(
     null
   );
   const navigate = useNavigate();
   const dispatch = useDispatch();
+
+  const initialStyles = useSelector((state: RootState) => ({
+    primaryColor: state.userData.color.primary,
+    secondaryColor: state.userData.color.secondary,
+    fontFamily: state.userData.font,
+  }));
+
+  useEffect(() => {
+    if (initialStyles.primaryColor && initialStyles.secondaryColor) {
+      setSelectedColor({
+        primary: initialStyles.primaryColor,
+        secondary: initialStyles.secondaryColor,
+      });
+    }
+
+    const currentFontCombination = fontCombinations.find(
+      (font) => font.primaryFont === initialStyles.fontFamily
+    );
+
+    if (currentFontCombination) {
+      setSelectedFont(currentFontCombination);
+    }
+  }, [initialStyles]);
 
   const handleFontChange = (
     _event: React.SyntheticEvent,
@@ -65,6 +88,7 @@ const CustomizeSidebar: React.FC = () => {
       const iframes = document.getElementsByTagName("iframe");
       for (let i = 0; i < iframes.length; i++) {
         const iframe = iframes[i];
+        console.log(selectedFontCombination.primaryFont);
         iframe?.contentWindow?.postMessage(
           { type: "changeFont", font: selectedFontCombination.primaryFont },
           "*"
@@ -94,31 +118,6 @@ const CustomizeSidebar: React.FC = () => {
   const nextPage = () => {
     navigate("/final-preview");
   };
-
-  const [initialStyles, setInitialStyles] = useState<initialStyle>({
-    primaryColor: "",
-    secondaryColor: "",
-    fontFamily: "",
-  });
-
-  useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
-      if (event.data.type === "initialStyles") {
-        console.log("data from iframe initial load", event.data);
-        setInitialStyles({
-          primaryColor: event.data.primaryColor,
-          secondaryColor: event.data.secondaryColor,
-          fontFamily: event.data.fontFamily,
-        });
-      }
-    };
-
-    window.addEventListener("message", handleMessage);
-
-    return () => {
-      window.removeEventListener("message", handleMessage);
-    };
-  }, []);
 
   const resetStyles = () => {
     // Dispatch default font to Redux store if necessary
@@ -178,6 +177,7 @@ const CustomizeSidebar: React.FC = () => {
                 {...params}
                 label="Choose Your Font"
                 variant="outlined"
+                value={selectedFont?.label || ""}
               />
             )}
             onChange={handleFontChange}
@@ -222,9 +222,11 @@ const CustomizeSidebar: React.FC = () => {
 
         <div className="mt-4 max-w-[18%] flex absolute bottom-0 justify-between">
           <div className="mb-4 w-full flex justify-between gap-2">
-            <button className="border previous-btn flex px-4 py-3 text-base sm:text-sm text-white mt-8 sm:mt-2 rounded-md gap-3 justify-center">
-              <ArrowBackIcon /> Previous
-            </button>
+            <Link to={"/design"}>
+              <button className="border previous-btn flex px-4 py-3 text-base sm:text-sm text-white mt-8 sm:mt-2 rounded-md gap-3 justify-center">
+                <ArrowBackIcon /> Previous
+              </button>
+            </Link>
             <button
               onClick={nextPage}
               className="px-6 py-3 bg-blue-500 text-white rounded-md tertiary text-lg sm:text-sm mt-8 sm:mt-2"

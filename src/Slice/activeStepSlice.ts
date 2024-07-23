@@ -1,4 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { templatelist } from "../types/Preview.type"; // Assuming you have this type
 
 interface Image {
   url: string;
@@ -25,8 +26,9 @@ interface UserDataState {
   templatename: string;
   category: string | null;
   content: string[];
-  color: Color; // Change to object
+  color: Color;
   font: string;
+  templateList: templatelist[]; // Add this line
 }
 
 const initialState: UserDataState = {
@@ -39,8 +41,9 @@ const initialState: UserDataState = {
   templatename: "",
   category: null,
   content: [],
-  color: { primary: "", secondary: "" }, // Initialize as an object
+  color: { primary: "", secondary: "" },
   font: "",
+  templateList: [], // Add this line
 };
 
 export const userDataSlice = createSlice({
@@ -99,6 +102,9 @@ export const userDataSlice = createSlice({
       state.color = { primary: "", secondary: "" };
       state.font = "";
     },
+    setTemplateList: (state, action: PayloadAction<templatelist[]>) => {
+      state.templateList = action.payload;
+    }, // Add this action
   },
 });
 
@@ -117,6 +123,7 @@ export const {
   setContent,
   setFont,
   setColor,
+  setTemplateList, // Export this action
 } = userDataSlice.actions;
 
 export default userDataSlice.reducer;
