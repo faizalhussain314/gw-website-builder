@@ -1,11 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import GravityWriteLogo from "../../assets/logo.svg";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { setFont, setColor } from "../../Slice/activeStepSlice";
-import Autocomplete from "@mui/material/Autocomplete";
-import TextField from "@mui/material/TextField";
+import { setFont, setColor, setLogo } from "../../Slice/activeStepSlice";
 import { RootState } from "../../store/store";
 
 type FontCombination = {
@@ -16,12 +14,6 @@ type FontCombination = {
 type SelectedColor = {
   primary: string;
   secondary: string;
-};
-
-type InitialStyle = {
-  primaryColor: string;
-  secondaryColor: string;
-  fontFamily: string;
 };
 
 const fontCombinations: FontCombination[] = [
@@ -48,6 +40,9 @@ const CustomizeSidebar: React.FC = () => {
   const [selectedFont, setSelectedFont] = useState<FontCombination | null>(
     null
   );
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
@@ -55,45 +50,48 @@ const CustomizeSidebar: React.FC = () => {
     primaryColor: state.userData.color.primary,
     secondaryColor: state.userData.color.secondary,
     fontFamily: state.userData.font,
+    logoUrl: state.userData.logo,
   }));
 
   useEffect(() => {
-    if (initialStyles.primaryColor && initialStyles.secondaryColor) {
+    // Set the initial color if it has changed
+    if (
+      initialStyles.primaryColor !== selectedColor.primary ||
+      initialStyles.secondaryColor !== selectedColor.secondary
+    ) {
       setSelectedColor({
         primary: initialStyles.primaryColor,
         secondary: initialStyles.secondaryColor,
       });
     }
 
+    // Set the initial font if it has changed
     const currentFontCombination = fontCombinations.find(
       (font) => font.primaryFont === initialStyles.fontFamily
     );
-
-    if (currentFontCombination) {
+    if (currentFontCombination && currentFontCombination !== selectedFont) {
       setSelectedFont(currentFontCombination);
     }
-  }, [initialStyles]);
 
-  const handleFontChange = (
-    _event: React.SyntheticEvent,
-    value: string | null
-  ) => {
-    const selectedFontCombination = fontCombinations.find(
-      (font) => font.label === value
-    );
-    if (selectedFontCombination) {
-      setSelectedFont(selectedFontCombination);
-      dispatch(setFont(selectedFontCombination.primaryFont));
-      // Send message to iframe to change the font
-      const iframes = document.getElementsByTagName("iframe");
-      for (let i = 0; i < iframes.length; i++) {
-        const iframe = iframes[i];
-        console.log(selectedFontCombination.primaryFont);
-        iframe?.contentWindow?.postMessage(
-          { type: "changeFont", font: selectedFontCombination.primaryFont },
-          "*"
-        );
-      }
+    // Set the initial logo if it exists
+    if (initialStyles.logoUrl && initialStyles.logoUrl !== logoUrl) {
+      setLogoUrl(initialStyles.logoUrl);
+    }
+  }, [initialStyles, selectedColor, selectedFont, logoUrl]);
+
+  const handleFontChange = (fontCombination: FontCombination) => {
+    setSelectedFont(fontCombination);
+    dispatch(setFont(fontCombination.primaryFont));
+    setIsDropdownOpen(false);
+
+    // Send message to iframe to change the font
+    const iframes = document.getElementsByTagName("iframe");
+    for (let i = 0; i < iframes.length; i++) {
+      const iframe = iframes[i];
+      iframe?.contentWindow?.postMessage(
+        { type: "changeFont", font: fontCombination.primaryFont },
+        "*"
+      );
     }
   };
 
@@ -101,17 +99,61 @@ const CustomizeSidebar: React.FC = () => {
     setSelectedColor(color);
     dispatch(setColor(color));
 
-    const primaryColor = color.primary; // Example: primary color
+    const primaryColor = color.primary;
     const secondaryColor = color.secondary;
 
-    // Send message to iframe to change the global colors
-    const iframes = document.getElementsByTagName("iframe");
-    for (let i = 0; i < iframes.length; i++) {
-      const iframe = iframes[i];
-      iframe?.contentWindow?.postMessage(
-        { type: "changeGlobalColors", primaryColor, secondaryColor },
-        "*"
-      );
+    // Send message to iframe to change the global colors only if they are not empty
+    if (primaryColor && secondaryColor) {
+      const iframes = document.getElementsByTagName("iframe");
+      for (let i = 0; i < iframes.length; i++) {
+        const iframe = iframes[i];
+        iframe?.contentWindow?.postMessage(
+          { type: "changeGlobalColors", primaryColor, secondaryColor },
+          "*"
+        );
+      }
+    }
+  };
+
+  const handleLogoChange = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const formData = new FormData();
+      formData.append("image", file);
+
+      try {
+        const response = await fetch(
+          "http://localhost/wordpress/wp-json/custom/v1/upload-logo",
+          {
+            method: "POST",
+            body: formData,
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to upload image");
+        }
+
+        const result = await response.json();
+        const logoUrl: string = result.url;
+
+        setLogoUrl(logoUrl);
+        dispatch(setLogo(logoUrl));
+
+        // Send message to iframe to change the logo
+        const iframes = document.getElementsByTagName("iframe");
+        for (let i = 0; i < iframes.length; i++) {
+          const iframe = iframes[i];
+          iframe?.contentWindow?.postMessage(
+            { type: "changeLogo", logoUrl },
+            "*"
+          );
+        }
+      } catch (error) {
+        console.error("Error uploading image:", error);
+      }
     }
   };
 
@@ -130,14 +172,44 @@ const CustomizeSidebar: React.FC = () => {
       iframe?.contentWindow?.postMessage(
         {
           type: "resetStyles",
-          primaryColor: initialStyles.primaryColor,
-          secondaryColor: initialStyles.secondaryColor,
-          fontFamily: initialStyles.fontFamily,
+          primaryColor: initialStyles.primaryColor || "",
+          secondaryColor: initialStyles.secondaryColor || "",
+          fontFamily: initialStyles.fontFamily || "",
+          logoUrl: initialStyles.logoUrl || "",
         },
         "*"
       );
     }
   };
+
+  useEffect(() => {
+    // Send message to iframe to set the logo if it exists
+    if (initialStyles.logoUrl) {
+      const iframes = document.getElementsByTagName("iframe");
+      for (let i = 0; i < iframes.length; i++) {
+        const iframe = iframes[i];
+        iframe?.contentWindow?.postMessage(
+          { type: "changeLogo", logoUrl: initialStyles.logoUrl },
+          "*"
+        );
+      }
+    }
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [initialStyles.logoUrl]);
 
   return (
     <div className="bg-white min-h-screen h-screen z-10 border-2">
@@ -155,7 +227,18 @@ const CustomizeSidebar: React.FC = () => {
         </p>
         <div className="mt-4">
           <label className="block text-sm font-medium mb-2">Site Logo</label>
-          <input type="file" className="w-full px-3 py-2 border rounded-md" />
+          <input
+            type="file"
+            className="w-full px-3 py-2 border rounded-md"
+            onChange={handleLogoChange}
+          />
+          {logoUrl && (
+            <img
+              src={logoUrl}
+              alt="Uploaded Logo"
+              className="mt-2 h-10 cursor-pointer"
+            />
+          )}
         </div>
         <div className="mt-6">
           <div className="flex w-full justify-between">
@@ -169,26 +252,36 @@ const CustomizeSidebar: React.FC = () => {
               Reset
             </span>
           </div>
-          <Autocomplete
-            id="font-pair"
-            options={fontCombinations.map((option) => option.label)}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                label="Choose Your Font"
-                variant="outlined"
-                value={selectedFont?.label || ""}
-              />
+          <div className="relative" ref={dropdownRef}>
+            <button
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              className="w-full p-2 border rounded-md bg-white text-left"
+            >
+              {selectedFont ? selectedFont.label : "Choose Your Font"}
+            </button>
+            {isDropdownOpen && (
+              <div className="absolute z-10 w-full bg-white border rounded-md mt-1 max-h-60 overflow-y-auto">
+                {fontCombinations.map((fontCombination) => (
+                  <div
+                    key={fontCombination.label}
+                    className={`p-2 hover:bg-gray-200 cursor-pointer ${
+                      selectedFont?.label === fontCombination.label
+                        ? "bg-gray-200"
+                        : ""
+                    }`}
+                    onClick={() => handleFontChange(fontCombination)}
+                  >
+                    {fontCombination.label}
+                  </div>
+                ))}
+              </div>
             )}
-            onChange={handleFontChange}
-            freeSolo // Ensures the list is shown when the input is focused
-            className="bg-white rounded-md mt-1 active:border-palatinate-blue-500 focus:border-palatinate-blue-500"
-          />
+          </div>
         </div>
         <div className="mt-4">
           <label className="block text-sm font-medium mb-2">Color</label>
           <div className="border-2 border-[#DFEAF6] p-3 rounded-md">
-            <div className="grid grid-cols-5 gap-4">
+            <div className="grid grid-cols-5 mac:gap-4 gap-3">
               {[
                 { primary: "#FF2F86", secondary: "#FDF4FF" },
                 { primary: "#7F27FF", secondary: "#F5F3FF" },
@@ -207,10 +300,10 @@ const CustomizeSidebar: React.FC = () => {
                     selectedColor.primary === color.primary
                       ? "border-2 border-palatinate-blue-500 rounded-md"
                       : ""
-                  } flex items-center justify-center p-1`}
+                  } flex items-center justify-center mac:p-1`}
                 >
                   <button
-                    className="w-6 h-6 rounded-full"
+                    className="w-4 h-4 rounded-full mac:w-6 mac:h-6"
                     style={{ backgroundColor: color.primary }}
                     onClick={() => handleColorChange(color)}
                   />
@@ -223,7 +316,7 @@ const CustomizeSidebar: React.FC = () => {
         <div className="mt-4 max-w-[18%] flex absolute bottom-0 justify-between">
           <div className="mb-4 w-full flex justify-between gap-2">
             <Link to={"/design"}>
-              <button className="border previous-btn flex px-4 py-3 text-base sm:text-sm text-white mt-8 sm:mt-2 rounded-md gap-3 justify-center">
+              <button className="border previous-btn flex px-4 py-3 text-base sm:text-sm text-white mt-8 sm:mt-2 rounded-md gap-2 mac:gap-3 justify-center">
                 <ArrowBackIcon /> Previous
               </button>
             </Link>

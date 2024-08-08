@@ -1,9 +1,18 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { templatelist } from "../types/Preview.type"; // Assuming you have this type
+import {
+  fetchStepDetail,
+  fetchPost,
+  fetchCategory,
+} from "../core/state/thunks";
+import {
+  StepDetail,
+  Post,
+  Category,
+  TemplateList,
+} from "../types/apiTypes.type";
 
-interface Image {
-  url: string;
-  description: string;
+interface ImageState {
+  images: { url: string; description: string }[];
 }
 
 interface Design {
@@ -26,9 +35,10 @@ interface UserDataState {
   templatename: string;
   category: string | null;
   content: string[];
+  logo: string;
   color: Color;
   font: string;
-  templateList: templatelist[]; // Add this line
+  templateList: TemplateList[];
 }
 
 const initialState: UserDataState = {
@@ -39,15 +49,16 @@ const initialState: UserDataState = {
   designs: [],
   templateid: 0,
   templatename: "",
+  logo: "",
   category: null,
   content: [],
   color: { primary: "", secondary: "" },
   font: "",
-  templateList: [], // Add this line
+  templateList: [],
 };
 
-export const userDataSlice = createSlice({
-  name: "userData",
+export const activeStepSlice = createSlice({
+  name: "activeStep",
   initialState,
   reducers: {
     setBusinessName: (state, action: PayloadAction<string>) => {
@@ -59,7 +70,10 @@ export const userDataSlice = createSlice({
     setDescriptionTwo: (state, action: PayloadAction<string>) => {
       state.description2 = action.payload;
     },
-    addImage: (state, action: PayloadAction<Image>) => {
+    addImage: (
+      state,
+      action: PayloadAction<{ url: string; description: string }>
+    ) => {
       state.images.push(action.payload);
     },
     removeImage: (state, action: PayloadAction<string>) => {
@@ -82,6 +96,9 @@ export const userDataSlice = createSlice({
         (design) => design.templateId !== action.payload
       );
     },
+    setLogo: (state, action: PayloadAction<string>) => {
+      state.logo = action.payload;
+    },
     setFont: (state, action: PayloadAction<string>) => {
       state.font = action.payload;
     },
@@ -102,9 +119,28 @@ export const userDataSlice = createSlice({
       state.color = { primary: "", secondary: "" };
       state.font = "";
     },
-    setTemplateList: (state, action: PayloadAction<templatelist[]>) => {
+    setTemplateList: (state, action: PayloadAction<TemplateList[]>) => {
       state.templateList = action.payload;
-    }, // Add this action
+    },
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(
+        fetchStepDetail.fulfilled,
+        (state, action: PayloadAction<StepDetail>) => {
+          state.stepDetail = action.payload;
+        }
+      )
+      .addCase(fetchPost.fulfilled, (state, action: PayloadAction<Post>) => {
+        state.post = action.payload;
+      })
+      .addCase(
+        fetchCategory.fulfilled,
+        (state, action: PayloadAction<Category[]>) => {
+          state.category = action.payload;
+        }
+      );
+    // Add cases for other thunks if necessary
   },
 });
 
@@ -119,11 +155,12 @@ export const {
   clearUserData,
   setTemplatename,
   setTemplateId,
+  setLogo,
   setCategory,
   setContent,
   setFont,
   setColor,
-  setTemplateList, // Export this action
-} = userDataSlice.actions;
+  setTemplateList,
+} = activeStepSlice.actions;
 
-export default userDataSlice.reducer;
+export default activeStepSlice.reducer;

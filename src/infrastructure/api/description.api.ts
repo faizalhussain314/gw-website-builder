@@ -1,4 +1,4 @@
-const API_URL = "https://dev.gravitywrite.com/api";
+const API_URL = import.meta.env.VITE_API_BACKEND_URL;
 
 export const fetchDescriptionStream = async (
   businessName: string,
@@ -6,7 +6,7 @@ export const fetchDescriptionStream = async (
   type: 1 | 2,
   previousDescription?: string
 ): Promise<ReadableStreamDefaultReader> => {
-  let url = `${API_URL}/ai/builder/description?businessName=${businessName}&category=${category}&type=${type}`;
+  let url = `${API_URL}ai/builder/description?businessName=${businessName}&category=${category}&type=${type}`;
   if (type === 2 && previousDescription) {
     url += `&description1=${encodeURIComponent(previousDescription)}`;
   }

@@ -1,16 +1,12 @@
-import Autocomplete, {
-  AutocompleteChangeReason,
-  AutocompleteChangeDetails,
-} from "@mui/material/Autocomplete";
-import TextField from "@mui/material/TextField";
-import MainLayout from "../../Layouts/MainLayout";
-import { CategoryList } from "../../../types/Category.type";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setCategory } from "../../../Slice/activeStepSlice";
 import { useNavigate } from "react-router-dom";
 import { fetchCategoryList } from "../../../infrastructure/api/categorylist.api";
 import { RootState } from "../../../store/store";
+import MainLayout from "../../Layouts/MainLayout";
+import { CategoryList } from "../../../types/Category.type";
+import SearchIcon from "@mui/icons-material/Search";
 
 function Category() {
   const dispatch = useDispatch();
@@ -21,6 +17,9 @@ function Category() {
   );
   const [categoryList, setCategoryList] = useState<CategoryList[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [inputValue, setInputValue] = useState<string>(selectedCategory || "");
+  const [showDropdown, setShowDropdown] = useState<boolean>(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const getCategoryList = async () => {
@@ -36,14 +35,23 @@ function Category() {
     getCategoryList();
   }, []);
 
-  const handleCategoryChange = (
-    _event: React.SyntheticEvent<Element, Event>,
-    value: string | null,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    _reason: AutocompleteChangeReason,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    _details?: AutocompleteChangeDetails<string>
-  ) => {
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setShowDropdown(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  const handleCategoryChange = (value: string | null) => {
     if (value) {
       dispatch(setCategory(value));
       setError(null);
@@ -60,11 +68,23 @@ function Category() {
     }
   };
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInputValue(e.target.value);
+    handleCategoryChange(e.target.value);
+    setShowDropdown(true);
+  };
+
+  const handleSelect = (category: string) => {
+    setInputValue(category);
+    handleCategoryChange(category);
+    setShowDropdown(false);
+  };
+
   return (
     <MainLayout>
       <div className="bg-[rgba(249, 252, 255, 1)] flex font-['inter']">
         <div className="p-8">
-          <div className="mt-8 ml-[50px] ">
+          <div className="mt-8 ml-[50px]">
             <h1 className="text-txt-black-600 leading-5 font-semibold text-3xl font-[inter] mb-4">
               I am creating a website for
             </h1>
@@ -72,32 +92,58 @@ function Category() {
               Let’s get started by choosing the type of website you’d like to
               create
             </span>
-            <Autocomplete
-              id="free-solo-demo"
-              freeSolo
-              value={selectedCategory}
-              options={categoryList.map((option) => option.name)}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label="Category"
-                  error={!!error}
-                  helperText={error}
-                />
-              )}
-              onChange={handleCategoryChange}
-              className="bg-white rounded-md w-[720px] mt-4"
-              aria-required="true"
-            />
-            <button
-              onClick={handleClick}
-              type="submit"
-              className="tertiary px-[30px] py-[15px] text-lg sm:text-sm text-white mt-8 sm:mt-2 rounded-lg"
-            >
-              Continue
-            </button>
           </div>
         </div>
+      </div>
+      <div className="relative  pl-20" ref={dropdownRef}>
+        <div
+          className={`relative w-3/4 ${
+            showDropdown && categoryList.length > 0
+              ? "border border-gray-300 rounded-md"
+              : ""
+          }`}
+        >
+          {!error && (
+            <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+          )}
+
+          <input
+            type="text"
+            value={inputValue}
+            onChange={handleInputChange}
+            placeholder="Enter a keyword to search your business"
+            className={`bg-white rounded-md w-full px-10 py-2 border ${
+              error ? "border-red-500" : "border-gray-300"
+            } focus:outline-none`}
+            aria-required="true"
+            onFocus={() => setShowDropdown(true)}
+          />
+          {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+          {showDropdown && categoryList.length > 0 && (
+            <ul className="absolute bg-white border border-gray-300 rounded-md w-full mt-1 max-h-60 overflow-y-auto">
+              {categoryList
+                .filter((option) =>
+                  option.name.toLowerCase().includes(inputValue.toLowerCase())
+                )
+                .map((option) => (
+                  <li
+                    key={option.id}
+                    onClick={() => handleSelect(option.name)}
+                    className="px-4 py-2 cursor-pointer hover:bg-gray-100"
+                  >
+                    {option.name}
+                  </li>
+                ))}
+            </ul>
+          )}
+        </div>
+        <button
+          onClick={handleClick}
+          type="submit"
+          className="tertiary px-[30px] py-[15px] text-lg sm:text-sm text-white mt-8 sm:mt-2 rounded-lg bg-blue-500 hover:bg-blue-600"
+        >
+          Continue
+        </button>
       </div>
     </MainLayout>
   );

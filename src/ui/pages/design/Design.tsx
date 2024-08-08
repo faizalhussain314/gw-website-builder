@@ -10,7 +10,7 @@ import {
 import { Link } from "react-router-dom";
 import Popup from "../../component/Popup";
 import useTemplateList from "../../../hooks/useTemplateList";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useLayoutEffect } from "react";
 import { templatelist } from "../../../types/Preview.type";
 
 function Design() {
@@ -48,12 +48,13 @@ function Design() {
     setDetails();
   }, [selectedTemplateDetails]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const handleMouseEnter = (iframe: HTMLIFrameElement) => {
       iframe?.contentWindow?.postMessage(
         { type: "scroll", scrollAmount: 20 },
         "*"
       );
+      console.log("scroll started");
     };
 
     const handleMouseLeave = (iframe: HTMLIFrameElement) => {
@@ -81,12 +82,33 @@ function Design() {
 
     return () => {
       for (let i = 0; i < iframes.length; i++) {
-        const iframe = iframes[i];
+        const iframe: HTMLIFrameElement = iframes[i];
         iframe.removeEventListener("mouseenter", onMouseEnter);
         iframe.removeEventListener("mouseleave", onMouseLeave);
       }
     };
   }, [dispatch, templateList]);
+
+  const handleMouseEnter = (event) => {
+    console.log("event mouse triggered from");
+    const iframe = event.currentTarget.querySelector("iframe");
+    if (iframe) {
+      iframe.contentWindow.postMessage(
+        { type: "scroll", scrollAmount: 20 },
+        "*"
+      );
+      console.log("scrolling event triggered");
+    }
+  };
+  const handleMouseLeave = (event) => {
+    const iframe = event.currentTarget.querySelector("iframe");
+    if (iframe) {
+      iframe.contentWindow.postMessage(
+        { type: "stopScrolling", scrollAmount: 40 },
+        "*"
+      );
+    }
+  };
 
   return (
     <MainLayout>
@@ -150,7 +172,9 @@ function Design() {
                 {templateList.map((list: templatelist, index: number) => (
                   <div
                     key={index}
-                    className="w-full flex justify-center rounded-b-2xl cursor-pointer"
+                    className="w-full flex justify-center rounded-b-2xl cursor-pointer hover-element"
+                    onMouseEnter={handleMouseEnter}
+                    onMouseLeave={handleMouseLeave}
                   >
                     <div
                       className={` w-full border border-border-tertiary border-solid rounded-t-xl mb-8 rounded-b-lg ${
@@ -160,43 +184,50 @@ function Design() {
                       } `}
                       onClick={() => handleBoxClick(index, templateList[index])}
                     >
-                      <div className="w-full relative h-fit bg-zip-app-highlight-bg border-1">
-                        <div className="w-full aspect-[164/179] relative overflow-hidden bg-neutral-300 rounded-xl">
-                          <div className="w-full max-h-[calc(19_/_15_*_100%)] pt-[calc(19_/_15_*_100%)] select-none relative shadow-md overflow-hidden origin-top-left bg-neutral-300">
-                            <iframe
-                              id="myIframe"
-                              title="Child iFrame"
-                              className={`scale-[0.33] w-[1200px] h-[1600px] absolute left-0 top-0 origin-top-left select-none `}
-                              src={list.link}
-                            ></iframe>
+                      <div className="w-full aspect-[164/179] relative overflow-hidden bg-neutral-300 rounded-xl">
+                        <div className="w-full max-h-[calc(19_/_15_*_100%)] pt-[calc(19_/_15_*_100%)] select-none relative shadow-md overflow-hidden origin-top-left bg-neutral-300">
+                          <iframe
+                            id="myIframe"
+                            title="Child iFrame"
+                            className={`scale-[0.33] w-[1200px] h-[1600px] absolute left-0 top-0 origin-top-left select-none `}
+                            src={list.link}
+                          ></iframe>
+                        </div>
+                        <div className="absolute top-3 right-3 text-xs leading-[1em] pt-1 pb-[4px] zw-xs-semibold text-white flex items-center justify-center rounded-3xl bg-[#F90]   px-[12px] pointer-events-none">
+                          <div className="flex items-center justify-center gap-1 font-sm">
+                            Premium
                           </div>
                         </div>
-                        <div className="relative h-14">
-                          <div className="absolute bottom-0 w-full h-14 flex items-center justify-between bg-white px-5 shadow-template-info rounded-b-lg">
-                            <div className="zw-base-semibold text-app-heading capitalize">
-                              Option {index + 1}
-                            </div>
-                            <div className="flex gap-4">
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                strokeWidth="1.5"
-                                stroke="currentColor"
-                                aria-hidden="true"
-                                className="w-6 h-6 cursor-pointer text-app-active-icon"
-                                id="headlessui-menu-button-:rc:"
-                                aria-haspopup="menu"
-                                aria-expanded="false"
-                                data-headlessui-state=""
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"
-                                ></path>
-                              </svg>
-                            </div>
+                        <div
+                          className="absolute inset-0 w-full h-full bg-transparent cursor-pointer"
+                          // style={{ pointerEvents: "none" }}
+                        ></div>
+                      </div>
+                      <div className="relative h-14">
+                        <div className="absolute bottom-0 w-full h-14 flex items-center justify-between bg-white px-5 shadow-template-info rounded-b-lg">
+                          <div className="zw-base-semibold text-app-heading capitalize">
+                            Option {index + 1}
+                          </div>
+                          <div className="flex gap-4">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              strokeWidth="1.5"
+                              stroke="currentColor"
+                              aria-hidden="true"
+                              className="w-6 h-6 cursor-pointer text-app-active-icon"
+                              id="headlessui-menu-button-:rc:"
+                              aria-haspopup="menu"
+                              aria-expanded="false"
+                              data-headlessui-state=""
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"
+                              ></path>
+                            </svg>
                           </div>
                         </div>
                       </div>

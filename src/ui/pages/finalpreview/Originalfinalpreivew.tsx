@@ -14,6 +14,9 @@ import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import UpgradePopup from "../../component/UpgradePopup";
+import { Link, useNavigate } from "react-router-dom";
+import useIframeMessage from "../../../hooks/useIframeMessage";
+import { ChangeLogoMessage } from "../../../types/iframeMessages.type";
 
 type Page = {
   name: string;
@@ -35,6 +38,10 @@ type GeneratedContent = {
   };
 };
 
+type IframeContent = {
+  content: string;
+}[];
+
 function FinalPreview() {
   const [isOpen, setIsOpen] = useState(false);
   const [viewMode, setViewMode] = useState("desktop");
@@ -44,13 +51,16 @@ function FinalPreview() {
   const Description = useSelector(
     (state: RootState) => state.userData.description1
   );
+  const templateName: string = useSelector(
+    (state: RootState) => state.userData.templatename
+  );
   const fontFamily = useSelector((state: RootState) => state.userData.font);
   const Color = useSelector((state: RootState) => state.userData.color);
   const [selectedPage, setSelectedPage] = useState<string | null>("Home");
   const [temLoader, setTemLoader] = useState(false);
   const [_loading, setLoading] = useState(true); // Set initial loading state to true
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [originalPrompts, setOriginalPrompts] = useState<any>({});
+  const logoUrl = useSelector((state: RootState) => state.userData.logo);
   const [pages, setPages] = useState<Page[]>([
     { name: "Home", status: "", slug: "home" },
     { name: "About Us", status: "", slug: "about" },
@@ -58,11 +68,13 @@ function FinalPreview() {
     { name: "Blog", status: "", slug: "blog" },
     { name: "Contact", status: "", slug: "contact" },
   ]);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [pageContents, setPageContents] = useState<any>({});
   const [showPopup, setShowPopup] = useState(false);
   const [isContentGenerating, setIsContentGenerating] = useState(false);
   const [previousClicked, setPreviousClicked] = useState(false);
+  const navigate = useNavigate();
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const { sendMessage, sendMessageToIframe } = useIframeMessage(iframeRef);
 
   const [generatedContent, setGeneratedContent] = useState<GeneratedContent>({
     template: "plumber",
@@ -76,12 +88,9 @@ function FinalPreview() {
 
   const [regenerateCount, setRegenerateCount] = useState(0);
   const [showUpgradePopup, setShowUpgradePopup] = useState(false);
-
-  const iframeRef = useRef<HTMLIFrameElement>(null);
-
-  useEffect(() => {
-    console.log(generatedContent);
-  }, [generatedContent]);
+  const [iframeContent, setIframeContent] = useState<IframeContent>([]);
+  const [showIframe, setShowIframe] = useState(true);
+  const [iframeSrc, setIframeSrc] = useState<string>("");
 
   const toggleDropdown = () => {
     setIsOpen(!isOpen);
@@ -92,29 +101,22 @@ function FinalPreview() {
     setIsOpen(false);
   };
 
-  const sendMessageToChild = (message: any) => {
+  const sendMessageToChild = (message: IframeMessage) => {
     const iframe = iframeRef.current;
     setTemLoader(false);
     setLoading(false); // Show loading animation
-    if (iframe) {
+    if (iframe && iframe.contentWindow) {
       console.log("data sent to iframe", message);
-      iframe.contentWindow?.postMessage(message, "*");
+      iframe.contentWindow.postMessage(message, "*");
     }
   };
 
-  const handleRegenerate = () => {
-    // Here you can check for some condition to show the upgrade popup
-    // const canRegenerate = false; // Set your condition here
-    // if (!canRegenerate) {
-    //   setShowUpgradePopup(true);
-    //   return;
-    // }
-    // if (regenerateCount <= 2) {
-    //   // Assuming free users can regenerate only once
-    //   setShowUpgradePopup(true);
-    //   return;
-    // }
+  const changeLogo = (logoUrl: string) => {
+    const message: ChangeLogoMessage = { type: "changeLogo", logoUrl };
+    sendMessageToIframe(message);
+  };
 
+  const handleRegenerate = () => {
     setRegenerateCount(regenerateCount + 1);
 
     if (selectedPage) {
@@ -125,6 +127,7 @@ function FinalPreview() {
           templateName: "plumber",
           pageName: currentPage.slug,
         });
+        setShowIframe(true);
       }
     }
   };
@@ -133,14 +136,13 @@ function FinalPreview() {
     const iframe = iframeRef.current;
     const currentPage = pages.find((page) => page.name === selectedPage);
 
-    console.log("font family:", fontFamily, "color:", Color);
     if ((Color.primary && Color.secondary) || fontFamily) {
-      if (iframe) {
-        iframe.contentWindow?.postMessage(
+      if (iframe && iframe.contentWindow) {
+        iframe.contentWindow.postMessage(
           { type: "changeFont", font: fontFamily },
           "*"
         );
-        iframe.contentWindow?.postMessage(
+        iframe.contentWindow.postMessage(
           {
             type: "changeGlobalColors",
             primaryColor: Color.primary,
@@ -150,10 +152,12 @@ function FinalPreview() {
         );
       }
     }
-
-    if (selectedPage == "Home" && pages[0].status != "Generated") {
-      if (iframe) {
-        iframe.contentWindow?.postMessage(
+    if (logoUrl) {
+      changeLogo(logoUrl);
+    }
+    if (selectedPage === "Home" && pages[0].status !== "Generated") {
+      if (iframe && iframe.contentWindow) {
+        iframe.contentWindow.postMessage(
           {
             type: "start",
             templateName: "plumber",
@@ -168,6 +172,7 @@ function FinalPreview() {
 
   const togglePage = (page: string) => {
     setSelectedPage(selectedPage === page ? null : page);
+    setShowPopup(true);
   };
 
   const handlePageNavigation = (action: "next" | "skip") => {
@@ -203,9 +208,11 @@ function FinalPreview() {
 
         // Change iframe source to next page if "Next" button is clicked
         if (action === "next") {
-          const iframe = iframeRef.current;
+          const iframe: null | HTMLIFrameElement = iframeRef.current;
           const nextPageSlug = updatedPages[nextPageIndex].slug;
-          iframe.src = `https://tours.mywpsite.org/${nextPageSlug}`;
+          if (iframe) {
+            iframe.src = `https://tours.mywpsite.org/${nextPageSlug}`;
+          }
 
           // Show popup for non-Home pages
           if (updatedPages[nextPageIndex].name !== "Home") {
@@ -242,6 +249,13 @@ function FinalPreview() {
   };
 
   const handlePrevious = () => {
+    if (!previousClicked && !isContentGenerating) {
+      navigate("/custom-design");
+      return;
+    } else if (!previousClicked) {
+      toast.warn("wait until content generation");
+    }
+
     const currentPageIndex = pages.findIndex(
       (page) => page.name === selectedPage
     );
@@ -251,7 +265,10 @@ function FinalPreview() {
 
       const iframe = iframeRef.current;
       const prevPageSlug = pages[prevPageIndex].slug;
-      iframe.src = `https://tours.mywpsite.org/${prevPageSlug}`;
+      if (iframe) {
+        iframe.src = `https://tours.mywpsite.org/${prevPageSlug}`;
+      }
+      setShowIframe(true);
     }
   };
 
@@ -298,11 +315,10 @@ function FinalPreview() {
       if (event.data.type === "storePrompts") {
         setOriginalPrompts(event.data.prompts);
       } else if (event.data.type === "contentLoaded") {
-        console.log(event.data.isFetching, "this is isFetching");
         setLoading(false); // Hide loading animation when content is loaded
         setTemLoader(false);
       } else if (event.data.type === "saveContentResponse") {
-        setPageContents((prevContents: object) => ({
+        setPageContents((prevContents) => ({
           ...prevContents,
           [selectedPage!]: event.data.content,
         }));
@@ -323,6 +339,9 @@ function FinalPreview() {
             fontFamily: fontFamily,
           },
         }));
+        if (!event.data.isGenerating) {
+          toast.success("Content generation complete!");
+        }
       }
     };
 
@@ -330,7 +349,34 @@ function FinalPreview() {
     return () => {
       window.removeEventListener("message", receiveMessage);
     };
-  }, [Color, fontFamily]);
+  }, [Color, fontFamily, selectedPage]);
+
+  useEffect(() => {
+    const receiveMessage = (event: MessageEvent) => {
+      if (event.data.type === "contentReady") {
+        const iframeHtmlContent: string = event.data.content;
+
+        console.log("event", event.data.content);
+
+        setIframeContent((prevContent) => [
+          ...prevContent,
+          { content: iframeHtmlContent },
+        ]);
+
+        // Convert the HTML content to a Blob URL
+        const blob = new Blob([iframeHtmlContent], { type: "text/html" });
+        const url = URL.createObjectURL(blob);
+        setIframeSrc(url);
+
+        console.log("iframeContent:", iframeHtmlContent);
+      }
+    };
+
+    window.addEventListener("message", receiveMessage);
+    return () => {
+      window.removeEventListener("message", receiveMessage);
+    };
+  }, []);
 
   useEffect(() => {
     const iframe = iframeRef.current;
@@ -342,19 +388,17 @@ function FinalPreview() {
         iframe.removeEventListener("load", onLoadMsg);
       }
     };
-  }, []);
+  }, [Color, fontFamily, logoUrl, selectedPage]);
 
   useEffect(() => {
     if (fontFamily && Color.primary && Color.secondary) {
       const iframe = iframeRef.current;
-
-      console.log("font family:", fontFamily, "color:", Color);
-      if (iframe) {
-        iframe.contentWindow?.postMessage(
+      if (iframe && iframe.contentWindow) {
+        iframe.contentWindow.postMessage(
           { type: "changeFont", font: fontFamily },
           "*"
         );
-        iframe.contentWindow?.postMessage(
+        iframe.contentWindow.postMessage(
           {
             type: "changeGlobalColors",
             primaryColor: Color.primary,
@@ -386,9 +430,17 @@ function FinalPreview() {
               </div>
             </div>
             <div className="p-4 w-full flex flex-col justify-center">
-              <h1 className="text-xl leading-6 pb-2 mt-4 font-bold">
-                Website Preview
-              </h1>
+              <div className="flex items-center justify-between">
+                {" "}
+                <h1 className="text-xl leading-6 pb-2 mt-4 font-bold">
+                  Website Preview
+                </h1>
+                <Link to={"/custom-design"}>
+                  <button className="bg-button-bg-secondary p-2 rounded-md text-sm">
+                    Back
+                  </button>
+                </Link>
+              </div>
               <span className="text-sm text-[#88898A] font-light">
                 Preview your website’s potential with our interactive
                 demonstration.
@@ -405,7 +457,7 @@ function FinalPreview() {
                   {pages.map((page) => (
                     <div
                       key={page.name}
-                      className={`rounded-lg p-3 mb-2 ${
+                      className={`rounded-lg p-3 mb-2  ${
                         selectedPage === page.name
                           ? "border-palatinate-blue-500 border-2 bg-palatinate-blue-50"
                           : ""
@@ -439,7 +491,7 @@ function FinalPreview() {
                             </span>
                           )}
                           {(page.status === "Generated" ||
-                            selectedPage == page.name) && (
+                            selectedPage === page.name) && (
                             <CachedIcon
                               className={`ml-2 text-gray-500 cursor-pointer ${
                                 isContentGenerating &&
@@ -469,14 +521,20 @@ function FinalPreview() {
                           {page.name === "Home" ? (
                             <>
                               <button
-                                className="bg-blue-600 text-white rounded px-3 py-1"
+                                className={`bg-blue-600 text-white rounded px-3 py-1 ${
+                                  isContentGenerating ? "opacity-50" : ""
+                                }`}
                                 onClick={handleNext}
+                                disabled={isContentGenerating}
                               >
                                 Keep & Next
                               </button>
                               <button
-                                className="bg-white text-black rounded px-3 py-1"
+                                className={`bg-white text-black rounded px-3 py-1 ${
+                                  isContentGenerating ? "opacity-50" : ""
+                                }`}
                                 onClick={handleSkipPage}
+                                disabled={isContentGenerating}
                               >
                                 Skip Page
                               </button>
@@ -484,14 +542,20 @@ function FinalPreview() {
                           ) : page.status === "Generated" ? (
                             <>
                               <button
-                                className="bg-blue-600 text-white rounded px-3 py-1"
+                                className={`bg-blue-600 text-white rounded px-3 py-1 ${
+                                  isContentGenerating ? "opacity-50" : ""
+                                }`}
                                 onClick={handleNext}
+                                disabled={isContentGenerating}
                               >
                                 Keep & Next
                               </button>
                               <button
-                                className="bg-white text-black rounded px-3 py-1"
+                                className={`bg-white text-black rounded px-3 py-1 ${
+                                  isContentGenerating ? "opacity-50" : ""
+                                }`}
                                 onClick={handleSkipPage}
+                                disabled={isContentGenerating}
                               >
                                 Skip Page
                               </button>
@@ -530,8 +594,11 @@ function FinalPreview() {
                         Previous
                       </button>
                       <button
-                        className="bg-white w-full text-palatinate-blue-500 border-palatinate-blue-500 border-2 py-3 px-8 rounded-md"
+                        className={`bg-white w-full text-palatinate-blue-500 border-palatinate-blue-500 border-2 py-3 px-8 rounded-md ${
+                          isContentGenerating ? "opacity-50" : ""
+                        }`}
                         onClick={handleNext}
+                        disabled={isContentGenerating}
                       >
                         Next
                       </button>
@@ -597,91 +664,166 @@ function FinalPreview() {
               alertType="regenerate"
             />
           )}
-          <div className="relative inline-block text-left my-4">
+          <div className="relative inline-block text-left my-4 flex justify-between">
             <div>
-              <button
-                type="button"
-                className="inline-flex justify-center w-full rounded-md border border-gray-300 shadow-sm px-2 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none"
-                id="menu-button"
-                aria-expanded={isOpen}
-                aria-haspopup="true"
-                onClick={toggleDropdown}
-              >
-                {viewMode === "desktop" && (
-                  <PersonalVideoIcon className="mr-2" />
-                )}
-                {viewMode === "tablet" && <TabletMacIcon className="mr-2" />}
-                {viewMode === "mobile" && <PhoneIphoneIcon className="mr-2" />}
-                {viewMode.charAt(0).toUpperCase() + viewMode.slice(1)}
-                <svg
-                  className="-mr-1 ml-2 h-5 w-5"
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                  aria-hidden="true"
+              <div>
+                <button
+                  type="button"
+                  className="inline-flex justify-center w-full rounded-md border border-gray-300 shadow-sm px-2 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none"
+                  id="menu-button"
+                  aria-expanded={isOpen}
+                  aria-haspopup="true"
+                  onClick={toggleDropdown}
                 >
-                  <path
-                    fillRule="evenodd"
-                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 011.414 1.414l-4 4a1 1 01-1.414 0l-4-4a1 1 010-1.414z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </button>
-            </div>
-
-            {isOpen && (
-              <div
-                className="origin-top-right absolute right-0 mt-2 cursor-pointer rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none"
-                role="menu"
-                aria-orientation="vertical"
-                aria-labelledby="menu-button"
-              >
-                <div className="py-1" role="none">
-                  <a
-                    className="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100 flex items-center"
-                    role="menuitem"
-                    onClick={() => handleViewChange("desktop")}
-                  >
+                  {viewMode === "desktop" && (
                     <PersonalVideoIcon className="mr-2" />
-                    Desktop
-                  </a>
-                  <a
-                    className="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100 flex items-center"
-                    role="menuitem"
-                    onClick={() => handleViewChange("tablet")}
-                  >
-                    <TabletMacIcon className="mr-2" />
-                    Tablet
-                  </a>
-                  <a
-                    className="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100 flex items-center"
-                    role="menuitem"
-                    onClick={() => handleViewChange("mobile")}
-                  >
+                  )}
+                  {viewMode === "tablet" && <TabletMacIcon className="mr-2" />}
+                  {viewMode === "mobile" && (
                     <PhoneIphoneIcon className="mr-2" />
-                    Mobile
-                  </a>
-                </div>
+                  )}
+                  {viewMode.charAt(0).toUpperCase() + viewMode.slice(1)}
+                  <svg
+                    className="-mr-1 ml-2 h-5 w-5"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                    aria-hidden="true"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 011.414 1.414l-4 4a1 1 01-1.414 0l-4-4a1 1 010-1.414z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </button>
               </div>
-            )}
+
+              {isOpen && (
+                <div
+                  className="origin-top-left absolute left-0 mt-2 cursor-pointer rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none"
+                  role="menu"
+                  aria-orientation="vertical"
+                  aria-labelledby="menu-button"
+                >
+                  <div className="py-1" role="none">
+                    <a
+                      className="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100 flex items-center"
+                      role="menuitem"
+                      onClick={() => handleViewChange("desktop")}
+                    >
+                      <PersonalVideoIcon className="mr-2" />
+                      Desktop
+                    </a>
+                    <a
+                      className="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100 flex items-center"
+                      role="menuitem"
+                      onClick={() => handleViewChange("tablet")}
+                    >
+                      <TabletMacIcon className="mr-2" />
+                      Tablet
+                    </a>
+                    <a
+                      className="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100 flex items-center"
+                      role="menuitem"
+                      onClick={() => handleViewChange("mobile")}
+                    >
+                      <PhoneIphoneIcon className="mr-2" />
+                      Mobile
+                    </a>
+                  </div>
+                </div>
+              )}
+            </div>
+            <div>
+              <div className="flex items-center space-x-4">
+                <button
+                  className="text-gray-500"
+                  onClick={() => setShowIframe(true)}
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth="2"
+                    stroke="currentColor"
+                    className="w-5 h-5"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M15 19l-7-7 7-7"
+                    />
+                  </svg>
+                </button>
+                <span className="text-gray-500">
+                  {selectedPage
+                    ? `${
+                        pages.findIndex((page) => page.name === selectedPage) +
+                        1
+                      }/${pages.length}`
+                    : ""}
+                </span>
+                <button
+                  className="text-gray-500"
+                  onClick={() => setShowIframe(true)}
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth="2"
+                    stroke="currentColor"
+                    className="w-5 h-5"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                </button>
+                <button
+                  className="flex items-center px-4 py-2 gap-1 bg-[#EBF4FF] text-black rounded"
+                  onClick={handleRegenerate}
+                >
+                  <CachedIcon />
+                  Regenerate page
+                </button>
+              </div>
+            </div>
           </div>
           <div className="w-full h-screen flex justify-center">
-            <iframe
-              ref={iframeRef}
-              src={`https://tours.mywpsite.org/${
-                pages.find((page) => page.name === selectedPage)?.slug
-              }`}
-              title="website"
-              id="myIframe"
-              onLoad={onLoadMsg}
-              className={`h-full transition-fade shadow-lg rounded-lg ${
-                viewMode === "desktop"
-                  ? "w-full h-full"
-                  : viewMode === "tablet"
-                  ? "w-2/3 h-full"
-                  : "w-1/3 h-full"
-              }`}
-            ></iframe>
+            {showIframe ? (
+              <iframe
+                ref={iframeRef}
+                src={`https://tours.mywpsite.org/${
+                  pages.find((page) => page.name === selectedPage)?.slug
+                }`}
+                title="website"
+                id="myIframe"
+                onLoad={onLoadMsg}
+                className={`h-full transition-fade shadow-lg rounded-lg ${
+                  viewMode === "desktop"
+                    ? "w-full h-full"
+                    : viewMode === "tablet"
+                    ? "w-2/3 h-full"
+                    : "w-1/3 h-full"
+                }`}
+              ></iframe>
+            ) : (
+              <iframe
+                src={iframeSrc}
+                title="stored-content"
+                className={`h-full transition-fade shadow-lg rounded-lg ${
+                  viewMode === "desktop"
+                    ? "w-full h-full"
+                    : viewMode === "tablet"
+                    ? "w-2/3 h-full"
+                    : "w-1/3 h-full"
+                }`}
+              />
+            )}
           </div>
         </main>
       </div>

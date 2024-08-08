@@ -1,48 +1,77 @@
 import { Link } from "react-router-dom";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import { useState } from "react";
+import { useState, useEffect, ChangeEvent } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import axios from "axios";
+import { RootState } from "../../../store/store"; // Adjust the import according to your store location
 import { Keyword, Image } from "../../../types/Image.type";
 import MainLayout from "../../Layouts/MainLayout";
+import { addImage } from "../../../Slice/activeStepSlice"; // Adjust the import according to your slice location
 
 function Images() {
-  const [selectedImageId, setSelectedImageId] = useState<number | null>(null);
-  const [keywords, setKeywords] = useState<Keyword[]>([
-    { keyword: "restaurant" },
-  ]);
+  const dispatch = useDispatch();
+  const category = useSelector((state: RootState) => state.userData.category);
+  const [selectedImageIds, setSelectedImageIds] = useState<number[]>([]);
+  const [keywords, setKeywords] = useState<Keyword[]>([{ keyword: category }]);
+  const [images, setImages] = useState<Image[]>([]);
 
-  const image: Image[] = [
-    {
-      id: 1,
-      imagelink:
-        "https://images.pexels.com/photos/67468/pexels-photo-67468.jpeg",
-    },
-    {
-      id: 2,
-      imagelink:
-        "https://images.pexels.com/photos/260922/pexels-photo-260922.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
-    },
-    {
-      id: 3,
-      imagelink:
-        "https://images.pexels.com/photos/1267320/pexels-photo-1267320.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
-    },
-    {
-      id: 4,
-      imagelink:
-        "https://images.pexels.com/photos/958545/pexels-photo-958545.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
-    },
-  ];
+  const fetchImages = async (keyword: string) => {
+    try {
+      const response = await axios.get("https://api.pexels.com/v1/search", {
+        params: { query: keyword, per_page: 16 },
+        headers: {
+          Authorization:
+            "nWeTc6fhESNX19X80CrPqDuP6zGGDrJelkvQpje9A0HjdnFtjRRXvn8D",
+        },
+      });
+      setImages(
+        response.data.photos.map(
+          (photo: { id: number; src: { landscape: string } }) => ({
+            id: photo.id,
+            imagelink: photo.src.landscape,
+          })
+        )
+      );
+    } catch (error) {
+      console.error("Error fetching images:", error);
+    }
+  };
 
-  const handleImageClick = (id: number) => {
-    setSelectedImageId(id);
+  useEffect(() => {
+    fetchImages(category);
+  }, [category]);
+
+  const handleImageClick = (id: number, imagelink: string) => {
+    setSelectedImageIds((prevSelectedImageIds) =>
+      prevSelectedImageIds.includes(id)
+        ? prevSelectedImageIds.filter((imageId) => imageId !== id)
+        : [...prevSelectedImageIds, id]
+    );
+
+    dispatch(
+      addImage({
+        url: imagelink,
+        description: "", // Add a description if needed
+      })
+    );
   };
 
   const handleInputChange =
-    (index: number) => (event: React.ChangeEvent<HTMLInputElement>) => {
+    (index: number) => (event: ChangeEvent<HTMLInputElement>) => {
       const newKeywords = [...keywords];
       newKeywords[index] = { keyword: event.target.value };
       setKeywords(newKeywords);
     };
+
+  // const addKeyword = () => {
+  //   setKeywords([...keywords, { keyword: "" }]);
+  // };
+
+  const handleSearch = () => {
+    keywords.forEach((kw) => {
+      fetchImages(kw.keyword);
+    });
+  };
 
   return (
     <MainLayout>
@@ -53,7 +82,7 @@ function Images() {
               Select Images
             </h1>
 
-            <form>
+            <form onSubmit={(e) => e.preventDefault()}>
               {keywords.map((kw, index) => (
                 <input
                   key={index}
@@ -63,31 +92,39 @@ function Images() {
                   className="bg-white p-3 border border-[rgba(205, 212, 219, 1)] rounded-md w-[720px] mt-4 focus:border-palatinate-blue-500 active:border-palatinate-blue-500 active:outline-palatinate-blue-500 focus:outline-palatinate-blue-500"
                 />
               ))}
+
+              <button
+                type="button"
+                onClick={handleSearch}
+                className="mt-4 bg-palatinate-blue-500 text-white px-3 py-1 rounded-md"
+              >
+                Search
+              </button>
               <div className="flex gap-3 m-6 cursor-pointer">
                 <span className="text-md leading-6 underline text-palatinate-blue-500 indent-px">
                   Search Result
                 </span>
                 <span className="text-md leading-6 indent-px">
-                  Selected Images(10)
+                  Selected Images({selectedImageIds.length})
                 </span>
               </div>
-              <div className="flex gap-4 overflow-y-auto">
-                {image.map((img) => (
+              <div className="grid grid-cols-4 gap-4 overflow-auto max-h-[600px]">
+                {images.map((img) => (
                   <div
                     key={img.id}
-                    className={`relative w-52 rounded-md overflow-hidden cursor-pointer ${
-                      selectedImageId === img.id
+                    className={`relative w-full h-40 rounded-md overflow-hidden cursor-pointer ${
+                      selectedImageIds.includes(img.id)
                         ? "border-4 border-palatinate-blue-500"
                         : "border"
                     }`}
-                    onClick={() => handleImageClick(img.id)}
+                    onClick={() => handleImageClick(img.id, img.imagelink)}
                   >
                     <img
                       src={img.imagelink}
                       className="w-full h-full object-cover"
                       alt="Selected"
                     />
-                    {selectedImageId === img.id && (
+                    {selectedImageIds.includes(img.id) && (
                       <div className="absolute top-0 right-0 m-2 bg-palatinate-blue-500 rounded-full p-1">
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
@@ -106,31 +143,30 @@ function Images() {
                   </div>
                 ))}
               </div>
-              <div className="flex justify-between">
-                <div className="flex  gap-4">
-                  {" "}
-                  <Link to={"/description"}>
-                    <button className=" previous-btn flex px-[10px] py-[13px] text-lg sm:text-sm text-white mt-8 sm:mt-2 rounded-md w-[150px] gap-3 justify-center">
-                      <ArrowBackIcon />
-                      Previous
-                    </button>
-                  </Link>
-                  <Link to={"/contact"}>
-                    <button className=" tertiary px-[30px] py-[10px] text-lg sm:text-sm text-white mt-8 sm:mt-2 rounded-md w-[150px] ">
-                      Continue
-                    </button>
-                  </Link>
-                </div>
-                <div className="mt-8 cursor-pointer flex items-center">
-                  <Link to={"/contact"}>
-                    <span className="text-base text-[#6C777D] leading-5">
-                      Skip This Step
-                    </span>
-                  </Link>
-                </div>
-              </div>
             </form>
           </div>
+        </div>
+      </div>
+      <div className="sticky bottom-0 left-0 pb-8 bg-app-light-background  px-8 pb-4 lg:px-16 xl:px-36 z-30 bg-[#F9FCFF] w-full flex justify-between">
+        <div className="flex gap-4">
+          <Link to={"/description"}>
+            <button className="previous-btn flex px-[10px] py-[13px] text-lg sm:text-sm text-white mt-8 sm:mt-2 rounded-md w-[150px] gap-3 justify-center">
+              <ArrowBackIcon />
+              Previous
+            </button>
+          </Link>
+          <Link to={"/contact"}>
+            <button className="tertiary px-[30px] py-[10px] text-lg sm:text-sm text-white mt-8 sm:mt-2 rounded-md w-[150px]">
+              Continue
+            </button>
+          </Link>
+        </div>
+        <div className="mt-8 cursor-pointer flex items-center">
+          <Link to={"/contact"}>
+            <span className="text-base text-[#6C777D] leading-5">
+              Skip This Step
+            </span>
+          </Link>
         </div>
       </div>
     </MainLayout>

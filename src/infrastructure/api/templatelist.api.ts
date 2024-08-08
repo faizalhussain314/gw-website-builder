@@ -1,9 +1,9 @@
 import { templatelist } from "../../types/Preview.type";
 
-const API_URL = "https://dev.gravitywrite.com/api";
+const API_URL = import.meta.env.VITE_API_BACKEND_URL;
 
 export const fetchtemplateList = async (): Promise<templatelist[]> => {
-  const response = await fetch(`${API_URL}/ai/builder/template-list`, {
+  const response = await fetch(`${API_URL}ai/builder/template-list`, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",

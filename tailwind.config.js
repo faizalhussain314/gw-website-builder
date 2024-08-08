@@ -33,6 +33,7 @@ export default {
           400: "#5F5F5F",
           500: "#555555",
         },
+        "button-bg-secondary": "#E6F0FE",
       },
       backgroundImage: {
         "gradient-to-r": "linear-gradient(to right, var(--tw-gradient-stops))", // default
