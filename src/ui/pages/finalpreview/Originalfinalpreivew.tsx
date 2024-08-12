@@ -118,6 +118,7 @@ function FinalPreview() {
 
   const handleRegenerate = () => {
     setRegenerateCount(regenerateCount + 1);
+    // setShowUpgradePopup(true);
 
     if (selectedPage) {
       const currentPage = pages.find((page) => page.name === selectedPage);

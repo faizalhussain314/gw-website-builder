@@ -30,6 +30,7 @@ const fontCombinations: FontCombination[] = [
   { label: "Rubik/Inter", primaryFont: "Rubik" },
   { label: "Mulish/Inter", primaryFont: "Mulish" },
   { label: "Kaushan Script/Inter", primaryFont: "Kaushan Script" },
+  { label: "Figtree/Inter", primaryFont: "Figtree" },
 ];
 
 const CustomizeSidebar: React.FC = () => {
