@@ -15,6 +15,7 @@ import PageSelector from "../../component/finalpreview/PageSelector";
 import CloseIcon from "@mui/icons-material/Close";
 import popupimg from "../../../assets/popupimg.svg";
 import { Page } from "../../../types/page.type";
+import Spinner from "../../component/Spinner";
 
 const FinalPreview: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -50,13 +51,14 @@ const FinalPreview: React.FC = () => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const { sendMessage, sendMessageToIframe } = useIframeMessage(iframeRef);
 
-  const [generatedPage, setGeneratedPage] = useState<any>({});
+  const [generatedPage, setGeneratedPage] = useState<any>({ spinner: true });
   const [iframeSrc, setIframeSrc] = useState<string>("");
   const [currentContent, setCurrentContent] = useState<string>(""); // State to track current content
 
   const [regenerateCount, setRegenerateCount] = useState(0);
   const [showUpgradePopup, setShowUpgradePopup] = useState(false);
   const [showIframe, setShowIframe] = useState(true);
+  const [Loaded, setLoaded] = useState(false); // State to track iframe load
 
   const toggleDropdown = () => {
     setIsOpen(!isOpen);
@@ -91,6 +93,8 @@ const FinalPreview: React.FC = () => {
   const onLoadMsg = () => {
     const iframe = iframeRef.current;
     const currentPage = pages.find((page) => page.name === selectedPage);
+
+    setLoaded(true); // Set Loaded to true when iframe loads
 
     if ((Color.primary && Color.secondary) || fontFamily) {
       if (iframe && iframe.contentWindow) {
@@ -132,6 +136,13 @@ const FinalPreview: React.FC = () => {
         }
       }
     }
+
+    // Show the popup after the iframe has loaded only if the page is not "Home"
+    if (iframe?.contentWindow && selectedPage !== "Home") {
+      setTimeout(() => {
+        setShowPopup(true); // Trigger the popup to appear after the iframe load
+      }, 1000); // Delay for better UX (adjust as necessary)
+    }
   };
 
   const updateIframeSrc = (content: string) => {
@@ -165,8 +176,8 @@ const FinalPreview: React.FC = () => {
 
     // Show the popup only if the page status is not "Generated"
     const selectedPageStatus = pages.find((p) => p.name === page)?.status;
-    if (selectedPageStatus !== "Generated") {
-      setShowPopup(true);
+    if (selectedPageStatus !== "Generated" && page !== "Home") {
+      // setShowPopup(true);
     }
   };
 
@@ -216,7 +227,7 @@ const FinalPreview: React.FC = () => {
           updatedPages[nextPageIndex].status !== "Generated" &&
           updatedPages[nextPageIndex].status !== "Skipped"
         ) {
-          setShowPopup(true);
+          // setShowPopup(true);
         }
 
         if (currentPageIndex === 0) {
@@ -232,13 +243,19 @@ const FinalPreview: React.FC = () => {
 
   const handleGeneratePage = () => {
     setShowPopup(false);
+    const iframe = iframeRef.current;
     const currentPage = pages.find((page) => page.name === selectedPage);
     if (currentPage && currentPage.status !== "Generated") {
-      sendMessage({
-        type: "start",
-        templateName: "plumber",
-        pageName: currentPage.slug,
-      });
+      iframe.contentWindow.postMessage(
+        {
+          type: "start",
+          templateName: "plumber",
+          pageName: currentPage?.slug,
+          bussinessname: businessName,
+          description: Description,
+        },
+        "*"
+      );
       const updatedPages = [...pages];
       updatedPages.find((page) => page.name === currentPage.name)!.status =
         "Generated";
@@ -298,6 +315,7 @@ const FinalPreview: React.FC = () => {
         setGeneratedPage((prevPages: any) => {
           const updatedPages = {
             ...prevPages,
+            spinner: false,
             [pageName]: {
               0: event.data.content,
             },
@@ -413,6 +431,7 @@ const FinalPreview: React.FC = () => {
               setShowPopup={setShowPopup}
               previousClicked={previousClicked}
               handlePrevious={handlePrevious}
+              lateloader={setLoaded}
               handleImportSelectedPage={() => {}} // Removed unnecessary code for brevity
             />
           </div>
@@ -423,7 +442,8 @@ const FinalPreview: React.FC = () => {
           {showPopup &&
             selectedPage !== "Blog" &&
             pages.find((p) => p.name === selectedPage)?.status !==
-              "Generated" && (
+              "Generated" &&
+            Loaded && ( // Added `Loaded` check
               <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
                 <div className="bg-white rounded-lg shadow-lg text-center absolute">
                   <div className="absolute right-0">
@@ -448,6 +468,7 @@ const FinalPreview: React.FC = () => {
                 </div>
               </div>
             )}
+
           {showUpgradePopup && (
             <UpgradePopup
               onClose={() => setShowUpgradePopup(false)}
@@ -519,8 +540,10 @@ const FinalPreview: React.FC = () => {
               </div>
             </div>
           </div>
-          <div className="w-full h-screen flex justify-center">
-            {showIframe ? (
+          <div className="w-full h-screen flex justify-center items-center">
+            {generatedPage?.spinner && !showIframe ? (
+              <Spinner />
+            ) : showIframe ? (
               <iframe
                 ref={iframeRef}
                 src={`https://tours.mywpsite.org/${

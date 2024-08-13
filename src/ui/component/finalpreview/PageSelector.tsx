@@ -16,6 +16,7 @@ type Props = {
   previousClicked: boolean;
   handlePrevious: () => void;
   handleImportSelectedPage: () => void;
+  lateloader: (show: boolean) => void;
 };
 
 const PageSelector: React.FC<Props> = ({
@@ -30,6 +31,7 @@ const PageSelector: React.FC<Props> = ({
   previousClicked,
   handlePrevious,
   handleImportSelectedPage,
+  lateloader,
 }) => {
   const [showInstructionPopup, setShowInstructionPopup] = useState(false);
 
@@ -168,7 +170,10 @@ const PageSelector: React.FC<Props> = ({
                   <>
                     <button
                       className="bg-palatinate-blue-600 text-white rounded px-3 py-1"
-                      onClick={() => setShowPopup(true)}
+                      onClick={() => {
+                        setShowPopup(true);
+                        lateloader(true);
+                      }}
                     >
                       Generate Page
                     </button>
