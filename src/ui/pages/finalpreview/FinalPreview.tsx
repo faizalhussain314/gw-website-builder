@@ -53,12 +53,11 @@ const FinalPreview: React.FC = () => {
 
   const [generatedPage, setGeneratedPage] = useState<any>({ spinner: true });
   const [iframeSrc, setIframeSrc] = useState<string>("");
-  const [currentContent, setCurrentContent] = useState<string>(""); // State to track current content
-
+  const [currentContent, setCurrentContent] = useState<string>("");
   const [regenerateCount, setRegenerateCount] = useState(0);
   const [showUpgradePopup, setShowUpgradePopup] = useState(false);
   const [showIframe, setShowIframe] = useState(true);
-  const [Loaded, setLoaded] = useState(false); // State to track iframe load
+  const [Loaded, setLoaded] = useState(false);
 
   const toggleDropdown = () => {
     setIsOpen(!isOpen);
@@ -94,7 +93,7 @@ const FinalPreview: React.FC = () => {
     const iframe = iframeRef.current;
     const currentPage = pages.find((page) => page.name === selectedPage);
 
-    setLoaded(true); // Set Loaded to true when iframe loads
+    setLoaded(true);
 
     if ((Color.primary && Color.secondary) || fontFamily) {
       if (iframe && iframe.contentWindow) {
@@ -432,7 +431,7 @@ const FinalPreview: React.FC = () => {
               previousClicked={previousClicked}
               handlePrevious={handlePrevious}
               lateloader={setLoaded}
-              handleImportSelectedPage={() => {}} // Removed unnecessary code for brevity
+              handleImportSelectedPage={() => {}}
             />
           </div>
         </aside>

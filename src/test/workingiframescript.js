@@ -1,4 +1,4 @@
-
+<script>
 document.addEventListener("DOMContentLoaded", function () {
   const API_BASE_URL = "https://dev.gravitywrite.com/api";
   let currentIndex = 0;
@@ -95,6 +95,16 @@ document.addEventListener("DOMContentLoaded", function () {
           result = result.substring(endIndex + 1);
         }
       }
+
+      // Send the entire HTML content to the parent window
+      const pageContent = document.documentElement.outerHTML;
+      window.parent.postMessage({
+        type: "generatedContent",
+        pageName: window.location.pathname.split("/").pop(), // Extract the page name from the URL
+        content: pageContent,
+        isGenerating: false,
+      }, "*");
+
     } catch (error) {
       console.error("Streaming data error:", error.message);
     } finally {
@@ -157,47 +167,74 @@ document.addEventListener("DOMContentLoaded", function () {
       const processedSelectors = await fetchPageSelectors(gwSelectors);
 
       fetchStreamContent({
-    business_name: event.data.businessName || "test businessName", 
-    template_name: event.data.templateName,
-    services_provided: event.data.description,
-    customer_steps: "customer needs to visit the website",
-    website_category: "restaurant",
-    page_name: event.data.pageName,
-    selectors: gwSelectors, // Use original selectors
-}, processedSelectors);
-
+        business_name: "ajay",
+        template_name: event.data.templateName,
+        services_provided: event.data.description || "At Ajay's restaurant, we offer a diverse menu of authentic Indian cuisine that caters all tastes and preferences. From fragrant and flavorful curries to tandoori specialties and rich biryanis, our menu showcases the vibrant and delicious flavors of India. Our skilled chefs use traditional cooking techniques and quality ingredients to create dishes that are truly unforgettable.In addition to our delectable food offerings, we also provide top-notch customer service in a warm and inviting atmosphere. Whether you are looking to enjoy a cozy dinner with loved ones or host a special celebration, Ajay's restaurant is the perfect setting for any occasion.Come experience the best of Indian cuisine at Ajay's restaurant, where every dish tells a story and every bite is a culinary delight. Join us for a memorable dining experience that will keep you more.",
+        customer_steps: "customer needs to visit the website",
+        website_category: "restaurant",
+        page_name: event.data.pageName,
+        selectors: gwSelectors, // Use original selectors
+      }, processedSelectors);
     }
   });
+});
+</script>
 
+
+
+
+
+
+
+
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
   window.addEventListener("message", (event) => {
-    if (
-      event.data.type === "changeFont" ||
-      event.data.type === "changeGlobalColors"
-    ) {
+    if (event.data.type === "changeFont" || event.data.type === "changeGlobalColors") {
       updateCSSVariables(event.data);
     }
   });
 
   function updateCSSVariables(data) {
     if (data.type === "changeFont") {
-      document.documentElement.style.setProperty(
-        "--e-global-typography-primary-font-family",
-        data.font
-      );
+      updateCSSVariable('--e-global-typography-primary-font-family', data.font);
+      loadGoogleFont(data.font);
     } else if (data.type === "changeGlobalColors") {
-      document.documentElement.style.setProperty(
-        "--e-global-color-primary",
-        data.primaryColor
-      );
-      document.documentElement.style.setProperty(
-        "--e-global-color-secondary",
-        data.secondaryColor
-      );
+      updateCSSVariable('--e-global-color-primary', data.primaryColor);
+      updateCSSVariable('--e-global-color-secondary', data.secondaryColor);
     }
+  }
+
+  function updateCSSVariable(variable, value) {
+    for (let sheet of document.styleSheets) {
+      try {
+        for (let rule of sheet.cssRules || sheet.rules) {
+          if (rule.style && rule.style.getPropertyValue(variable)) {
+            rule.style.setProperty(variable, value);
+            return true;
+          }
+        }
+      } catch (e) {
+        continue;
+      }
+    }
+    return false;
+  }
+
+  function loadGoogleFont(font) {
+    const link = document.createElement("link");
+    link.href = `https://fonts.googleapis.com/css2?family=${font.replace(/ /g, "+")}&display=swap`;
+    link.rel = "stylesheet";
+    document.head.appendChild(link);
+    document.body.style.fontFamily = font;
+    document.documentElement.style.setProperty("--gw-primary-font", `${font} !important`);
   }
 });
 
 
+</script>
 
 
 
@@ -233,12 +270,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
 
-
-
-
-
-
-
+<script>
   window.addEventListener("message", (event) => {
     if (event.data.type === "changeLogo") {
       updateLogo(event.data.logoUrl);
@@ -255,13 +287,13 @@ document.addEventListener("DOMContentLoaded", function () {
       console.warn("Logo element not found.");
     }
   }
+</script>
 
 
 
 
 
-
-
+<script>
 	window.addEventListener("message", function (event) {
   var data = event.data;
   if (data.type === "scroll") {
@@ -298,7 +330,9 @@ function reverseScroll() {
   }, 20);
 }
 
+</script>
 
+ <script>
     window.addEventListener("message", function (event) {
       if (event.data.type === "startProcessing") {
         processIds();
@@ -342,7 +376,7 @@ function reverseScroll() {
 
 
 
-
+<script>
   // Function to handle incoming messages
   window.addEventListener("message", function(event) {
     // Check the message type
@@ -360,10 +394,10 @@ function reverseScroll() {
       }
     }
   });
+</script>
 
 
-
-
+<script>
   window.addEventListener('message', function(event) {
     if (event.data === 'fetchGWIDs') {
       const elements = document.querySelectorAll('[id^="gw"]');
@@ -374,5 +408,5 @@ function reverseScroll() {
       window.parent.postMessage({ type: 'gwIDs', idsAndContent }, '*');
     }
   });
-
+</script>
 
