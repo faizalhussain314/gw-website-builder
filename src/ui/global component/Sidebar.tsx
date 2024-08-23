@@ -20,7 +20,7 @@ function Sidebar() {
       >
         <div className="flex items-center justify-between py-4 border-b cursor-pointer pr-7 ps-3 sidebar-header">
           <img
-            src={GravityWriteLogo}
+            src="https://tours.mywpsite.org/wp-content/uploads/2024/08/logo.svg"
             alt="gravity write logo"
             className="h-10 p-2 rounded-md cursor-pointer hover:bg-palatinate-blue-50"
           />

@@ -6,7 +6,7 @@ import axios from "axios";
 import { RootState } from "../../../store/store"; // Adjust the import according to your store location
 import { Keyword, Image } from "../../../types/Image.type";
 import MainLayout from "../../Layouts/MainLayout";
-import { addImage } from "../../../Slice/activeStepSlice"; // Adjust the import according to your slice location
+// import { addImage } from "../../../Slice/activeStepSlice"; // Adjust the import according to your slice location
 
 function Images() {
   const dispatch = useDispatch();
@@ -48,12 +48,12 @@ function Images() {
         : [...prevSelectedImageIds, id]
     );
 
-    dispatch(
-      addImage({
-        url: imagelink,
-        description: "", // Add a description if needed
-      })
-    );
+    // dispatch(
+    //   addImage({
+    //     url: imagelink,
+    //     description: "", // Add a description if needed
+    //   })
+    // );
   };
 
   const handleInputChange =

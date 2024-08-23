@@ -240,8 +240,15 @@ function Design() {
         </div>
         <div className="sticky bottom-0 pb-8 bg-app-light-background  px-10 lg:px-16 xl:px-36 z-30 bg-[#F9FCFF]">
           <div className="flex xs:items-center items-start justify-between">
-            <div className="flex flex-row xs:flex-row xs:items-center items-start gap-x-10 gap-y-10 xs:gap-y-0 flex-wrap">
+            <div className="flex flex-row xs:flex-row xs:items-center items-start gap-x-4 gap-y-10 xs:gap-y-0 flex-wrap">
               {" "}
+              <Link to={"/contact"}>
+                {" "}
+                <button className=" previous-btn flex px-[10px] py-[13px] text-lg sm:text-sm text-white mt-8 sm:mt-2 rounded-md w-[150px] gap-3 justify-center">
+                  <ArrowBackIcon />
+                  Previous
+                </button>
+              </Link>
               <button
                 className=" tertiary px-[30px] py-[10px] text-lg sm:text-sm text-white mt-8 sm:mt-2 rounded-md w-[150px]"
                 onClick={() => setShowPopup(true)}
@@ -250,13 +257,6 @@ function Design() {
                   <div>Continue</div>
                 </div>
               </button>
-              <Link to={"/contact"}>
-                {" "}
-                <button className=" previous-btn flex px-[10px] py-[13px] text-lg sm:text-sm text-white mt-8 sm:mt-2 rounded-md w-[150px] gap-3 justify-center">
-                  <ArrowBackIcon />
-                  Previous
-                </button>
-              </Link>
             </div>
           </div>
         </div>

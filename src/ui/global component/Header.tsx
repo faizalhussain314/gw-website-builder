@@ -17,7 +17,7 @@ const Header: React.FC<HeaderProps> = ({ active }) => {
                   {" "}
                   {active && (
                     <img
-                      src={GravityWriteLogo}
+                      src="https://tours.mywpsite.org/wp-content/uploads/2024/08/logo.svg"
                       alt="gravity write logo"
                       className="h-10 p-2 rounded-md cursor-pointer hover:bg-palatinate-blue-50"
                     />

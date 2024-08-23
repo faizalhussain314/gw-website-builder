@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import Profilepic from "../../assets/profilepic.svg";
 import ProfileArrowIcon from "../../assets/icons/profile-arrow-icon.svg";
 import CrownIcon from "../../assets/icons/crown.svg";
 import AiGenerate from "../../assets/icons/aigenerate.svg";
@@ -20,7 +19,7 @@ const ProfileSection: React.FC = () => {
             <div className="  mt-2 w-full bg-white rounded-lg shadow-xl z-20 pt-2 justify-evenly absolute bottom-20">
               <div className="flex items-center justify-center  ">
                 <img
-                  src={Profilepic}
+                  src={CrownIcon}
                   alt="Profile"
                   className="w-7 h-7 rounded-full mr-3"
                 />
@@ -82,7 +81,7 @@ const ProfileSection: React.FC = () => {
           )}
           <div className="absolute bottom-0 border w-[90%] px-2 mac:w-full rounded-lg gap-1  z-0 shadow flex justify-between  py-2 ">
             <img
-              src={Profilepic}
+              src={CrownIcon}
               alt="Profile"
               className="w-10 h-10 rounded-full"
             />

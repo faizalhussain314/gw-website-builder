@@ -16,7 +16,7 @@ import store from "./store/store.ts";
 import ProcessingScreen from "./ui/pages/design/ProcessingScreen.tsx";
 import FinalPreview from "./ui/pages/finalpreview/FinalPreview.tsx";
 import CustomDesign from "./ui/pages/customdesign/CustomDesign.tsx";
-// import Success from "./pages/successpage/Success.tsx";
+import Success from "./ui/pages/successPage/Success.tsx";
 // import Login from "./pages/login/Login.tsx";
 // import Signup from "./pages/signup/Signup.tsx";
 
@@ -38,8 +38,9 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
         <Route path="/processing" element={<ProcessingScreen />} />
         <Route path="/final-preview" element={<FinalPreview />} />
         <Route path="/custom-design" element={<CustomDesign />} />
+        <Route path="/proccessing" element={<ProcessingScreen />} />
 
-        {/* <Route path="/success" element={<Success />} /> */}
+        <Route path="/success" element={<Success />} />
         {/* <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} /> */}
       </Routes>

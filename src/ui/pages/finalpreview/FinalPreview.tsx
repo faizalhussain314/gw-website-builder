@@ -34,13 +34,13 @@ const FinalPreview: React.FC = () => {
   const [selectedPage, setSelectedPage] = useState<string | null>("Home");
   const [temLoader, setTemLoader] = useState(false);
   const [_loading, setLoading] = useState(true);
-  const [originalPrompts, setOriginalPrompts] = useState<any>({});
+
   const logoUrl = useSelector((state: RootState) => state.userData.logo);
   const [pages, setPages] = useState<Page[]>([
     { name: "Home", status: "", slug: "homepage" },
     { name: "About Us", status: "", slug: "about" },
     { name: "Services", status: "", slug: "service" },
-    { name: "Blog", status: "Generated", slug: "blog" },
+    { name: "Blog", status: "", slug: "blog" },
     { name: "Contact", status: "", slug: "contact" },
   ]);
   const [pageContents, setPageContents] = useState<any>({});
@@ -58,6 +58,7 @@ const FinalPreview: React.FC = () => {
   const [showUpgradePopup, setShowUpgradePopup] = useState(false);
   const [showIframe, setShowIframe] = useState(true);
   const [Loaded, setLoaded] = useState(false);
+  const [contentForBackend, setContentForBackend] = useState<any[]>([]);
 
   const toggleDropdown = () => {
     setIsOpen(!isOpen);
@@ -74,6 +75,11 @@ const FinalPreview: React.FC = () => {
   };
 
   const handleRegenerate = () => {
+    if (isContentGenerating) {
+      showWarningToast();
+      return;
+    }
+
     setRegenerateCount(regenerateCount + 1);
 
     if (selectedPage) {
@@ -89,6 +95,14 @@ const FinalPreview: React.FC = () => {
     }
   };
 
+  const showWarningToast = () => {
+    toast.warn("Please wait while content is being generated.");
+  };
+
+  const showSuccessToast = () => {
+    toast.success("Content generation complete!");
+  };
+
   const onLoadMsg = () => {
     const iframe = iframeRef.current;
     const currentPage = pages.find((page) => page.name === selectedPage);
@@ -96,20 +110,18 @@ const FinalPreview: React.FC = () => {
     setLoaded(true);
 
     if ((Color.primary && Color.secondary) || fontFamily) {
-      if (iframe && iframe.contentWindow) {
-        iframe.contentWindow.postMessage(
-          { type: "changeFont", font: fontFamily },
-          "*"
-        );
-        iframe.contentWindow.postMessage(
-          {
-            type: "changeGlobalColors",
-            primaryColor: Color.primary,
-            secondaryColor: Color.secondary,
-          },
-          "*"
-        );
-      }
+      iframe?.contentWindow?.postMessage(
+        { type: "changeFont", font: fontFamily },
+        "*"
+      );
+      iframe?.contentWindow?.postMessage(
+        {
+          type: "changeGlobalColors",
+          primaryColor: Color.primary,
+          secondaryColor: Color.secondary,
+        },
+        "*"
+      );
     }
     if (logoUrl) {
       changeLogo(logoUrl);
@@ -121,33 +133,35 @@ const FinalPreview: React.FC = () => {
         updateIframeSrc(existingContent);
         setShowIframe(false);
       } else if (selectedPage === "Home" && pages[0].status !== "Generated") {
-        if (iframe && iframe.contentWindow) {
-          iframe.contentWindow.postMessage(
-            {
-              type: "start",
-              templateName: "plumber",
-              pageName: currentPage?.slug,
-              bussinessname: businessName,
-              description: Description,
-            },
-            "*"
-          );
-        }
+        iframe?.contentWindow?.postMessage(
+          {
+            type: "start",
+            templateName: "plumber",
+            pageName: currentPage?.slug,
+            bussinessname: businessName,
+            description: Description,
+          },
+          "*"
+        );
       }
     }
 
-    // Show the popup after the iframe has loaded only if the page is not "Home"
-    if (iframe?.contentWindow && selectedPage !== "Home") {
+    // Updated logic for the popup
+    if (
+      selectedPage !== "Home" &&
+      currentPage &&
+      currentPage.status !== "Generated" &&
+      currentPage.status !== "Skipped"
+    ) {
       setTimeout(() => {
-        setShowPopup(true); // Trigger the popup to appear after the iframe load
-      }, 1000); // Delay for better UX (adjust as necessary)
+        setShowPopup(true);
+      }, 100);
     }
   };
 
   const updateIframeSrc = (content: string) => {
-    // Compare the new content with the current content
     if (content !== currentContent) {
-      setCurrentContent(content); // Update the current content state
+      setCurrentContent(content);
       const newBlob = new Blob([content], { type: "text/html" });
       const newBlobUrl = URL.createObjectURL(newBlob);
 
@@ -161,10 +175,10 @@ const FinalPreview: React.FC = () => {
   };
 
   const togglePage = (page: string) => {
-    if (page === selectedPage) return; // Prevent re-selecting the same page
+    if (page === selectedPage) return;
 
     setSelectedPage(page);
-    const existingContent = generatedPage[page]; // Check if content exists for the selected page
+    const existingContent = generatedPage[page];
 
     if (existingContent) {
       updateIframeSrc(existingContent[0]);
@@ -172,17 +186,11 @@ const FinalPreview: React.FC = () => {
     } else {
       setShowIframe(true);
     }
-
-    // Show the popup only if the page status is not "Generated"
-    const selectedPageStatus = pages.find((p) => p.name === page)?.status;
-    if (selectedPageStatus !== "Generated" && page !== "Home") {
-      // setShowPopup(true);
-    }
   };
 
   const handlePageNavigation = (action: "next" | "skip") => {
     if (isContentGenerating) {
-      toast.warn("Please wait until the full page generation is complete.");
+      showWarningToast();
       return;
     }
 
@@ -202,10 +210,11 @@ const FinalPreview: React.FC = () => {
         updatedPages[currentPageIndex].status = "Skipped";
       }
 
+      setPages(updatedPages);
+
       const nextPageIndex = currentPageIndex + 1;
       if (nextPageIndex < updatedPages.length) {
         setSelectedPage(updatedPages[nextPageIndex].name);
-        setPages(updatedPages);
 
         const nextPageContent = generatedPage[updatedPages[nextPageIndex].name];
         if (nextPageContent) {
@@ -220,20 +229,18 @@ const FinalPreview: React.FC = () => {
           }
         }
 
-        if (
-          updatedPages[nextPageIndex].name !== "Home" &&
-          updatedPages[nextPageIndex].name !== "Blog" &&
-          updatedPages[nextPageIndex].status !== "Generated" &&
-          updatedPages[nextPageIndex].status !== "Skipped"
-        ) {
-          // setShowPopup(true);
-        }
-
         if (currentPageIndex === 0) {
           setPreviousClicked(true);
         }
       }
     }
+  };
+
+  const updatePageStatus = (pageName: string, status: string) => {
+    const updatedPages = pages.map((page) =>
+      page.name === pageName ? { ...page, status } : page
+    );
+    setPages(updatedPages);
   };
 
   const handleClosePopup = () => {
@@ -267,7 +274,7 @@ const FinalPreview: React.FC = () => {
       navigate("/custom-design");
       return;
     } else if (!previousClicked) {
-      toast.warn("wait until content generation");
+      showWarningToast(); // Show warning toast if content is still generating
     }
 
     const currentPageIndex = pages.findIndex(
@@ -296,9 +303,7 @@ const FinalPreview: React.FC = () => {
 
   useEffect(() => {
     const receiveMessage = (event: MessageEvent) => {
-      if (event.data.type === "storePrompts") {
-        setOriginalPrompts(event.data.prompts);
-      } else if (event.data.type === "contentLoaded") {
+      if (event.data.type === "contentLoaded") {
         setLoading(false);
         setTemLoader(false);
       } else if (event.data.type === "saveContentResponse") {
@@ -319,12 +324,11 @@ const FinalPreview: React.FC = () => {
               0: event.data.content,
             },
           };
-          console.log("Generated Page Updated:", updatedPages);
           return updatedPages;
         });
 
         if (!event.data.isGenerating) {
-          toast.success("Content generation complete!");
+          showSuccessToast(); // Show success toast after content generation
         }
       }
     };
@@ -341,6 +345,30 @@ const FinalPreview: React.FC = () => {
         const iframeHtmlContent: string = event.data.content;
         updateIframeSrc(iframeHtmlContent);
         setShowIframe(false);
+
+        // Send post messages to the stored content iframe
+        if (iframeRef.current && iframeRef.current.contentWindow) {
+          if ((Color.primary && Color.secondary) || fontFamily) {
+            iframeRef.current.contentWindow.postMessage(
+              { type: "changeFont", font: fontFamily },
+              "*"
+            );
+            iframeRef.current.contentWindow.postMessage(
+              {
+                type: "changeGlobalColors",
+                primaryColor: Color.primary,
+                secondaryColor: Color.secondary,
+              },
+              "*"
+            );
+          }
+          if (logoUrl) {
+            iframeRef.current.contentWindow.postMessage(
+              { type: "changeLogo", logoUrl },
+              "*"
+            );
+          }
+        }
       }
     };
 
@@ -348,7 +376,7 @@ const FinalPreview: React.FC = () => {
     return () => {
       window.removeEventListener("message", receiveMessage);
     };
-  }, []);
+  }, [Color, fontFamily, logoUrl]);
 
   useEffect(() => {
     if (showIframe) {
@@ -383,6 +411,43 @@ const FinalPreview: React.FC = () => {
       }
     }
   }, [fontFamily, Color]);
+
+  useEffect(() => {
+    const receiveMessage = (event: MessageEvent) => {
+      if (event.data.type === "oldNewContent") {
+        const pageName = selectedPage || "unknown";
+        const oldNewContent = event.data.content;
+
+        updateBackEndContent(pageName, oldNewContent);
+      }
+    };
+
+    window.addEventListener("message", receiveMessage);
+
+    return () => {
+      window.removeEventListener("message", receiveMessage);
+    };
+  }, [selectedPage]);
+
+  const updateBackEndContent = (pageName, oldNewContent) => {
+    setContentForBackend((prevContent) => {
+      const existingPageIndex = prevContent.findIndex(
+        (entry) => Object.keys(entry)[0] === pageName
+      );
+
+      if (existingPageIndex !== -1) {
+        const updatedContent = [...prevContent];
+        updatedContent[existingPageIndex] = { [pageName]: oldNewContent };
+        return updatedContent;
+      } else {
+        return [...prevContent, { [pageName]: oldNewContent }];
+      }
+    });
+  };
+
+  const handleImportSelectedPage = () => {
+    navigate("/processing", { state: { pageName: selectedPage } });
+  };
 
   return (
     <div className="h-screen flex font-[inter] w-screen">
@@ -431,7 +496,8 @@ const FinalPreview: React.FC = () => {
               previousClicked={previousClicked}
               handlePrevious={handlePrevious}
               lateloader={setLoaded}
-              handleImportSelectedPage={() => {}}
+              handleImportSelectedPage={handleImportSelectedPage}
+              updatePageStatus={updatePageStatus}
             />
           </div>
         </aside>
@@ -442,7 +508,8 @@ const FinalPreview: React.FC = () => {
             selectedPage !== "Blog" &&
             pages.find((p) => p.name === selectedPage)?.status !==
               "Generated" &&
-            Loaded && ( // Added `Loaded` check
+            Loaded &&
+            selectedPage !== "Contact" && (
               <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
                 <div className="bg-white rounded-lg shadow-lg text-center absolute">
                   <div className="absolute right-0">

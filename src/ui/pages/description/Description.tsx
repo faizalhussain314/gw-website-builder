@@ -31,7 +31,8 @@ function Description() {
   const [description2, setDescription2] = useState<string>(
     initialDescription2 || ""
   );
-  const [loader, setLoader] = useState<boolean>(false);
+  const [loader1, setLoader1] = useState<boolean>(false); // Loader for Description 1
+  const [loader2, setLoader2] = useState<boolean>(false); // Loader for Description 2
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -44,7 +45,13 @@ function Description() {
       setError("Description 1 is required before generating Description 2.");
       return;
     }
-    setLoader(true);
+    if (type === 1) {
+      setLoader1(true);
+      setLoader2(false);
+    } else {
+      setLoader2(true);
+      setLoader1(false);
+    }
     setError(null);
 
     try {
@@ -92,10 +99,12 @@ function Description() {
           }
         }
       }
-      setLoader(false);
+      setLoader1(false);
+      setLoader2(false);
     } catch (error) {
       console.error("Error fetching streaming data:", error);
-      setLoader(false);
+      setLoader1(false);
+      setLoader2(false);
     }
   };
 
@@ -167,11 +176,11 @@ function Description() {
                     className="flex gap-2  text-palatinate-blue-600 hover:text-palatinate-blue-800 "
                     onClick={() => handleAIWrite(1)}
                   >
-                    <img src={Sparkle} />
+                    <img src="https://tours.mywpsite.org/wp-content/uploads/2024/08/sparkle.svg" />
                     <span className="font-semibold text-sm transition duration-150 ease-in-out">
                       Write Using AI
                     </span>
-                    {loader && (
+                    {loader1 && (
                       <button type="button" className=" " disabled>
                         <svg
                           className="text-palatinate-blue-600 animate-spin"
@@ -245,11 +254,11 @@ function Description() {
                     className="flex gap-2  text-palatinate-blue-600 hover:text-palatinate-blue-800 "
                     onClick={() => handleAIWrite(2)}
                   >
-                    <img src={Sparkle} />
+                    <img src="https://tours.mywpsite.org/wp-content/uploads/2024/08/sparkle.svg" />
                     <span className="font-semibold text-sm transition duration-150 ease-in-out">
                       Write Using AI
                     </span>
-                    {loader && (
+                    {loader2 && (
                       <button type="button" className=" " disabled>
                         <svg
                           className="text-palatinate-blue-600 animate-spin"

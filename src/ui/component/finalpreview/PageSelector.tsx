@@ -3,6 +3,8 @@ import CachedIcon from "@mui/icons-material/Cached";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import { Page } from "../../../types/page.type";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 type Props = {
   pages: Page[];
@@ -17,6 +19,7 @@ type Props = {
   handlePrevious: () => void;
   handleImportSelectedPage: () => void;
   lateloader: (show: boolean) => void;
+  updatePageStatus: (pageName: string, status: string) => void;
 };
 
 const PageSelector: React.FC<Props> = ({
@@ -32,22 +35,23 @@ const PageSelector: React.FC<Props> = ({
   handlePrevious,
   handleImportSelectedPage,
   lateloader,
+  updatePageStatus,
 }) => {
-  const [showInstructionPopup, setShowInstructionPopup] = useState(false);
-
-  const handlePageClick = (pageName: string, pageStatus: string) => {
-    if (
-      selectedPage &&
-      pages.find((page) => page.name === selectedPage)?.status === ""
-    ) {
-      setShowInstructionPopup(true);
-    } else {
-      togglePage(pageName);
-    }
+  const showWarningToast = () => {
+    toast.warn("Please wait while content is being generated.");
   };
 
-  const handleCloseInstructionPopup = () => {
-    setShowInstructionPopup(false);
+  const handlePageClick = (pageName: string) => {
+    togglePage(pageName);
+  };
+
+  const handleSkipClick = (pageName: string) => {
+    if (isContentGenerating) {
+      showWarningToast();
+    } else {
+      updatePageStatus(pageName, "Skipped");
+      handleSkipPage();
+    }
   };
 
   return (
@@ -76,7 +80,7 @@ const PageSelector: React.FC<Props> = ({
                     checked={
                       selectedPage === page.name || page.status === "Generated"
                     }
-                    onChange={() => handlePageClick(page.name, page.status)}
+                    onChange={() => handlePageClick(page.name)}
                     disabled={page.status === ""}
                   />
                 </div>
@@ -86,51 +90,75 @@ const PageSelector: React.FC<Props> = ({
                 {page.status && (
                   <span
                     className={`ml-2 text-xs rounded-2xl px-2 ${
-                      page.status === "Generated" || page.name === "Blog"
+                      page.status === "Generated"
                         ? "text-green-700 bg-green-200"
+                        : page.status === "Skipped"
+                        ? "text-yellow-600 bg-yellow-100"
                         : "text-black bg-[#FFDCD5]"
                     }`}
                   >
-                    {page.status === "Generated" || page.name === "Blog"
-                      ? "Generated"
-                      : page.status}
+                    {page.status}
                   </span>
                 )}
-                {(page.status === "Generated" ||
-                  page.name === "Blog" ||
-                  selectedPage === page.name) && (
-                  <CachedIcon
-                    className={`ml-2 text-gray-500 cursor-pointer ${
-                      isContentGenerating && page.name === selectedPage
-                        ? "animate-spin"
-                        : ""
-                    }`}
-                    onClick={handleRegenerate}
-                  />
-                )}
+                {(page.status === "Generated" || selectedPage === page.name) &&
+                  page.name !== "Blog" &&
+                  page.name !== "Contact" && (
+                    <CachedIcon
+                      className={`ml-2 text-gray-500 cursor-pointer ${
+                        isContentGenerating && page.name === selectedPage
+                          ? "animate-spin"
+                          : ""
+                      }`}
+                      onClick={() => {
+                        if (isContentGenerating) {
+                          showWarningToast();
+                        } else {
+                          handleRegenerate();
+                        }
+                      }}
+                    />
+                  )}
 
                 {selectedPage === page.name ? (
                   <ExpandLessIcon
                     className="ml-2 text-gray-500 cursor-pointer"
-                    onClick={() => handlePageClick(page.name, page.status)}
+                    onClick={() => {
+                      if (isContentGenerating) {
+                        showWarningToast();
+                      } else {
+                        handlePageClick(page.name);
+                      }
+                    }}
                   />
                 ) : (
                   <ExpandMoreIcon
                     className="ml-2 text-gray-500 cursor-pointer"
-                    onClick={() => handlePageClick(page.name, page.status)}
+                    onClick={() => {
+                      if (isContentGenerating) {
+                        showWarningToast();
+                      } else {
+                        handlePageClick(page.name);
+                      }
+                    }}
                   />
                 )}
               </div>
             </div>
             {selectedPage === page.name && (
               <div className="mt-3 flex justify-evenly text-sm">
-                {page.name === "Home" ? (
+                {page.status === "Generated" ? (
                   <>
                     <button
                       className={`bg-blue-600 text-white rounded px-3 py-1 ${
                         isContentGenerating ? "opacity-50" : ""
                       }`}
-                      onClick={handleNext}
+                      onClick={() => {
+                        if (isContentGenerating) {
+                          showWarningToast();
+                        } else {
+                          handleNext();
+                        }
+                      }}
                       disabled={isContentGenerating}
                     >
                       Keep & Next
@@ -139,28 +167,7 @@ const PageSelector: React.FC<Props> = ({
                       className={`bg-white text-black rounded px-3 py-1 ${
                         isContentGenerating ? "opacity-50" : ""
                       }`}
-                      onClick={handleSkipPage}
-                      disabled={isContentGenerating}
-                    >
-                      Skip Page
-                    </button>
-                  </>
-                ) : page.status === "Generated" || page.name === "Blog" ? (
-                  <>
-                    <button
-                      className={`bg-blue-600 text-white rounded px-3 py-1 ${
-                        isContentGenerating ? "opacity-50" : ""
-                      }`}
-                      onClick={handleNext}
-                      disabled={isContentGenerating}
-                    >
-                      Keep & Next
-                    </button>
-                    <button
-                      className={`bg-white text-black rounded px-3 py-1 ${
-                        isContentGenerating ? "opacity-50" : ""
-                      }`}
-                      onClick={handleSkipPage}
+                      onClick={() => handleSkipClick(page.name)}
                       disabled={isContentGenerating}
                     >
                       Skip Page
@@ -169,17 +176,24 @@ const PageSelector: React.FC<Props> = ({
                 ) : (
                   <>
                     <button
-                      className="bg-palatinate-blue-600 text-white rounded px-3 py-1"
+                      className={`bg-blue-600 text-white rounded px-3 py-1 ${
+                        isContentGenerating ? "opacity-50" : ""
+                      }`}
                       onClick={() => {
-                        setShowPopup(true);
-                        lateloader(true);
+                        if (isContentGenerating) {
+                          showWarningToast();
+                        } else {
+                          updatePageStatus(page.name, "Generated");
+                          handleNext();
+                        }
                       }}
+                      disabled={isContentGenerating}
                     >
-                      Generate Page
+                      Keep & Next
                     </button>
                     <button
                       className="bg-white text-black rounded px-3 py-1"
-                      onClick={handleSkipPage}
+                      onClick={() => handleSkipClick(page.name)}
                     >
                       Skip Page
                     </button>
@@ -198,7 +212,13 @@ const PageSelector: React.FC<Props> = ({
                 ? "border-palatinate-blue-500 text-palatinate-blue-500"
                 : "border-[#88898A] text-[#88898A]"
             }`}
-            onClick={handlePrevious}
+            onClick={() => {
+              if (isContentGenerating) {
+                showWarningToast();
+              } else {
+                handlePrevious();
+              }
+            }}
           >
             Previous
           </button>
@@ -206,7 +226,13 @@ const PageSelector: React.FC<Props> = ({
             className={`bg-white w-full text-palatinate-blue-500 border-palatinate-blue-500 border-2 py-3 px-8 rounded-md ${
               isContentGenerating ? "opacity-50" : ""
             }`}
-            onClick={handleNext}
+            onClick={() => {
+              if (isContentGenerating) {
+                showWarningToast();
+              } else {
+                handleNext();
+              }
+            }}
             disabled={isContentGenerating}
           >
             Next
@@ -230,22 +256,6 @@ const PageSelector: React.FC<Props> = ({
           Import Selected Page
         </button>
       </div>
-      {showInstructionPopup && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="bg-white rounded-lg shadow-lg text-center absolute p-4">
-            <h2 className="text-lg font-semibold mb-4">Action Required</h2>
-            <p className="mb-4">
-              Please click "Keep & Next" or "Skip Page" to proceed.
-            </p>
-            <button
-              className="bg-blue-600 text-white px-4 py-2 rounded"
-              onClick={handleCloseInstructionPopup}
-            >
-              OK
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

@@ -4,12 +4,8 @@ import {
   fetchPost,
   fetchCategory,
 } from "../core/state/thunks";
-import {
-  StepDetail,
-  Post,
-  Category,
-  TemplateList,
-} from "../types/apiTypes.type";
+import { StepDetail, Post, Category } from "../types/apiTypes.type";
+import { templatelist } from "../types/Preview.type";
 
 interface ImageState {
   images: { url: string; description: string }[];
@@ -29,7 +25,7 @@ interface UserDataState {
   businessName: string;
   description1: string;
   description2: string;
-  images: Image[];
+  images: ImageState[];
   designs: Design[];
   templateid: number;
   templatename: string;
@@ -38,7 +34,7 @@ interface UserDataState {
   logo: string;
   color: Color;
   font: string;
-  templateList: TemplateList[];
+  templateList: templatelist[];
 }
 
 const initialState: UserDataState = {
@@ -70,15 +66,15 @@ export const activeStepSlice = createSlice({
     setDescriptionTwo: (state, action: PayloadAction<string>) => {
       state.description2 = action.payload;
     },
-    addImage: (
-      state,
-      action: PayloadAction<{ url: string; description: string }>
-    ) => {
-      state.images.push(action.payload);
-    },
-    removeImage: (state, action: PayloadAction<string>) => {
-      state.images = state.images.filter((img) => img.url !== action.payload);
-    },
+    // addImage: (
+    //   state,
+    //   action: PayloadAction<{ url: string; description: string }>
+    // ) => {
+    //   state.images.push(action.payload);
+    // },
+    // removeImage: (state, action: PayloadAction<string>) => {
+    //   state.images = state.images.filter((img) => img.url !== action.payload);
+    // },
     setTemplateId: (state, action: PayloadAction<number>) => {
       state.templateid = action.payload;
     },
@@ -119,37 +115,37 @@ export const activeStepSlice = createSlice({
       state.color = { primary: "", secondary: "" };
       state.font = "";
     },
-    setTemplateList: (state, action: PayloadAction<TemplateList[]>) => {
+    setTemplateList: (state, action: PayloadAction<templatelist[]>) => {
       state.templateList = action.payload;
     },
   },
-  extraReducers: (builder) => {
-    builder
-      .addCase(
-        fetchStepDetail.fulfilled,
-        (state, action: PayloadAction<StepDetail>) => {
-          state.stepDetail = action.payload;
-        }
-      )
-      .addCase(fetchPost.fulfilled, (state, action: PayloadAction<Post>) => {
-        state.post = action.payload;
-      })
-      .addCase(
-        fetchCategory.fulfilled,
-        (state, action: PayloadAction<Category[]>) => {
-          state.category = action.payload;
-        }
-      );
-    // Add cases for other thunks if necessary
-  },
+  // extraReducers: (builder) => {
+  //   builder
+  //     .addCase(
+  //       fetchStepDetail.fulfilled,
+  //       (state, action: PayloadAction<StepDetail>) => {
+  //         state.stepDetail = action.payload;
+  //       }
+  //     )
+  //     .addCase(fetchPost.fulfilled, (state, action: PayloadAction<Post>) => {
+  //       state.post = action.payload;
+  //     })
+  //     .addCase(
+  //       fetchCategory.fulfilled,
+  //       (state, action: PayloadAction<Category[]>) => {
+  //         state.category = action.payload;
+  //       }
+  //     );
+  //   // Add cases for other thunks if necessary
+  // },
 });
 
 export const {
   setBusinessName,
   setDescriptionOne,
   setDescriptionTwo,
-  addImage,
-  removeImage,
+  // addImage,
+  // removeImage,
   addDesign,
   removeDesign,
   clearUserData,
