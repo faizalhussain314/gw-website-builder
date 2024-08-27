@@ -22,7 +22,7 @@ const FinalPreview: React.FC = () => {
   const [viewMode, setViewMode] = useState("desktop");
   const [isLoading, setIsLoading] = useState(true); // Loader state
   const [isContentGenerating, setIsContentGenerating] = useState(false);
-  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [isPageGenerated, setIsPageGenerated] = useState(false);
   const [selectedPage, setSelectedPage] = useState<string | null>("Home");
 
   const businessName = useSelector(
@@ -138,7 +138,7 @@ const FinalPreview: React.FC = () => {
     }
 
     if (selectedPage) {
-      if (generatedPage[selectedPage]) {
+      if (generatedPage[selectedPage] && isPageGenerated) {
         const existingContent = generatedPage[selectedPage][0];
         updateIframeSrc(existingContent);
         setShowIframe(false);
@@ -174,22 +174,16 @@ const FinalPreview: React.FC = () => {
 
   const updateIframeSrc = (content: string) => {
     if (content !== currentContent) {
-      setIsTransitioning(true); // Start transition
       setCurrentContent(content);
+      const newBlob = new Blob([content], { type: "text/html" });
+      const newBlobUrl = URL.createObjectURL(newBlob);
 
-      setTimeout(() => {
-        const newBlob = new Blob([content], { type: "text/html" });
-        const newBlobUrl = URL.createObjectURL(newBlob);
-
-        setIframeSrc((prevSrc) => {
-          if (prevSrc) {
-            URL.revokeObjectURL(prevSrc);
-          }
-          return newBlobUrl;
-        });
-
-        setIsTransitioning(false); // End transition
-      }, 300); // Adjust delay to control the transition duration
+      setIframeSrc((prevSrc) => {
+        if (prevSrc) {
+          URL.revokeObjectURL(prevSrc);
+        }
+        return newBlobUrl;
+      });
     }
   };
 
@@ -202,8 +196,10 @@ const FinalPreview: React.FC = () => {
     if (existingContent) {
       updateIframeSrc(existingContent[0]);
       setShowIframe(false);
+      setIsPageGenerated(true); // Page is now displaying generated content
     } else {
       setShowIframe(true);
+      setIsPageGenerated(false); // Reset when user navigates away
       setIsLoading(true); // Show loader when navigating to a new page
     }
   };
@@ -243,6 +239,7 @@ const FinalPreview: React.FC = () => {
           setShowIframe(false);
         } else {
           setShowIframe(true);
+          setIsPageGenerated(false); // Reset the generated state
           setIsLoading(true); // Show loader when navigating to the next page
           const iframe: null | HTMLIFrameElement = iframeRef.current;
           const nextPageSlug = updatedPages[nextPageIndex].slug;
@@ -275,6 +272,7 @@ const FinalPreview: React.FC = () => {
 
   const handleGeneratePage = () => {
     setShowPopup(false);
+    setIsLoading(true); // Show loader immediately when "Generate this Page" is clicked
     const iframe = iframeRef.current;
     const currentPage = pages.find((page) => page.name === selectedPage);
     if (currentPage && currentPage.status !== "Generated") {
@@ -319,6 +317,7 @@ const FinalPreview: React.FC = () => {
       }
       setShowIframe(true);
       setIsLoading(true);
+      setIsPageGenerated(false); // Reset the generated state
     }
   };
 
@@ -640,7 +639,7 @@ const FinalPreview: React.FC = () => {
             {isLoading && !isContentGenerating && <PlumberPageSkeleton />}
 
             {/* Generated Content Iframe */}
-            {generatedPage[selectedPage!] && !isTransitioning && (
+            {generatedPage[selectedPage!] && isPageGenerated && (
               <iframe
                 ref={iframeRef}
                 src={iframeSrc}
@@ -662,7 +661,7 @@ const FinalPreview: React.FC = () => {
             )}
 
             {/* Non-Generated Content Iframe */}
-            {(!generatedPage[selectedPage!] || isTransitioning) && (
+            {(!generatedPage[selectedPage!] || !isPageGenerated) && (
               <iframe
                 ref={iframeRef}
                 src={`https://tours.mywpsite.org/${
