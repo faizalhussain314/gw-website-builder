@@ -17,6 +17,7 @@ import ProcessingScreen from "./ui/pages/design/ProcessingScreen.tsx";
 import FinalPreview from "./ui/pages/finalpreview/FinalPreview.tsx";
 import CustomDesign from "./ui/pages/customdesign/CustomDesign.tsx";
 import Success from "./ui/pages/successPage/Success.tsx";
+import PlumberPageSkeleton from "./ui/component/PlumberPageSkeleton .tsx";
 // import Login from "./pages/login/Login.tsx";
 // import Signup from "./pages/signup/Signup.tsx";
 
@@ -41,6 +42,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
         <Route path="/proccessing" element={<ProcessingScreen />} />
 
         <Route path="/success" element={<Success />} />
+        <Route path="/loader" element={<PlumberPageSkeleton />} />
         {/* <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} /> */}
       </Routes>

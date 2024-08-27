@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import CachedIcon from "@mui/icons-material/Cached";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
@@ -19,7 +19,11 @@ type Props = {
   handlePrevious: () => void;
   handleImportSelectedPage: () => void;
   lateloader: (show: boolean) => void;
-  updatePageStatus: (pageName: string, status: string) => void;
+  updatePageStatus: (
+    pageName: string,
+    status: string,
+    selected: boolean
+  ) => void;
 };
 
 const PageSelector: React.FC<Props> = ({
@@ -49,9 +53,14 @@ const PageSelector: React.FC<Props> = ({
     if (isContentGenerating) {
       showWarningToast();
     } else {
-      updatePageStatus(pageName, "Skipped");
+      updatePageStatus(pageName, "Skipped", true);
       handleSkipPage();
     }
+  };
+
+  const handleGeneratePageClick = () => {
+    setShowPopup(true);
+    lateloader(true);
   };
 
   return (
@@ -77,9 +86,7 @@ const PageSelector: React.FC<Props> = ({
                   <input
                     type="checkbox"
                     className="mr-2"
-                    checked={
-                      selectedPage === page.name || page.status === "Generated"
-                    }
+                    checked={page.selected || page.status === "Generated"}
                     onChange={() => handlePageClick(page.name)}
                     disabled={page.status === ""}
                   />
@@ -146,7 +153,10 @@ const PageSelector: React.FC<Props> = ({
             </div>
             {selectedPage === page.name && (
               <div className="mt-3 flex justify-evenly text-sm">
-                {page.status === "Generated" ? (
+                {page.status === "Generated" ||
+                page.name === "Blog" ||
+                page.name === "Contact" ||
+                page.name === "Home" ? (
                   <>
                     <button
                       className={`bg-blue-600 text-white rounded px-3 py-1 ${
@@ -176,20 +186,10 @@ const PageSelector: React.FC<Props> = ({
                 ) : (
                   <>
                     <button
-                      className={`bg-blue-600 text-white rounded px-3 py-1 ${
-                        isContentGenerating ? "opacity-50" : ""
-                      }`}
-                      onClick={() => {
-                        if (isContentGenerating) {
-                          showWarningToast();
-                        } else {
-                          updatePageStatus(page.name, "Generated");
-                          handleNext();
-                        }
-                      }}
-                      disabled={isContentGenerating}
+                      className="bg-palatinate-blue-600 text-white rounded px-3 py-1"
+                      onClick={handleGeneratePageClick}
                     >
-                      Keep & Next
+                      Generate Page
                     </button>
                     <button
                       className="bg-white text-black rounded px-3 py-1"

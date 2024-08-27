@@ -48,7 +48,7 @@ const ViewModeSwitcher: React.FC<Props> = ({
       </div>
       {isOpen && (
         <div
-          className="origin-top-left absolute left-0 mt-2 cursor-pointer rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none"
+          className="origin-top-left absolute left-0 mt-2 cursor-pointer rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-20"
           role="menu"
           aria-orientation="vertical"
           aria-labelledby="menu-button"

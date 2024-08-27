@@ -163,7 +163,7 @@ function ProcessingScreen() {
             className="w-[340px] h-[340px] flex items-center justify-center"
             style={{
               backgroundImage: `url(${websitebg})`,
-              backgroundSize: "cover",
+
               backgroundSize: "contain",
               backgroundPosition: "center center",
               backgroundRepeat: "no-repeat",

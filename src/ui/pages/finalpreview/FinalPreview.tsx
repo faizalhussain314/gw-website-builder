@@ -15,11 +15,16 @@ import PageSelector from "../../component/finalpreview/PageSelector";
 import CloseIcon from "@mui/icons-material/Close";
 import popupimg from "../../../assets/popupimg.svg";
 import { Page } from "../../../types/page.type";
-import Spinner from "../../component/Spinner";
+import PlumberPageSkeleton from "../../component/PlumberPageSkeleton ";
 
 const FinalPreview: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [viewMode, setViewMode] = useState("desktop");
+  const [isLoading, setIsLoading] = useState(true); // Loader state
+  const [isContentGenerating, setIsContentGenerating] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [selectedPage, setSelectedPage] = useState<string | null>("Home");
+
   const businessName = useSelector(
     (state: RootState) => state.userData.businessName
   );
@@ -31,27 +36,20 @@ const FinalPreview: React.FC = () => {
   );
   const fontFamily = useSelector((state: RootState) => state.userData.font);
   const Color = useSelector((state: RootState) => state.userData.color);
-  const [selectedPage, setSelectedPage] = useState<string | null>("Home");
-  const [temLoader, setTemLoader] = useState(false);
-  const [_loading, setLoading] = useState(true);
-
   const logoUrl = useSelector((state: RootState) => state.userData.logo);
+
   const [pages, setPages] = useState<Page[]>([
-    { name: "Home", status: "", slug: "homepage" },
-    { name: "About Us", status: "", slug: "about" },
-    { name: "Services", status: "", slug: "service" },
-    { name: "Blog", status: "", slug: "blog" },
-    { name: "Contact", status: "", slug: "contact" },
+    { name: "Home", status: "", slug: "homepage", selected: false },
+    { name: "About Us", status: "", slug: "about", selected: false },
+    { name: "Services", status: "", slug: "service", selected: false },
+    { name: "Blog", status: "", slug: "blog", selected: false },
+    { name: "Contact", status: "", slug: "contact", selected: false },
   ]);
+
   const [pageContents, setPageContents] = useState<any>({});
   const [showPopup, setShowPopup] = useState(false);
-  const [isContentGenerating, setIsContentGenerating] = useState(false);
   const [previousClicked, setPreviousClicked] = useState(false);
-  const navigate = useNavigate();
-  const iframeRef = useRef<HTMLIFrameElement>(null);
-  const { sendMessage, sendMessageToIframe } = useIframeMessage(iframeRef);
-
-  const [generatedPage, setGeneratedPage] = useState<any>({ spinner: true });
+  const [generatedPage, setGeneratedPage] = useState<any>({});
   const [iframeSrc, setIframeSrc] = useState<string>("");
   const [currentContent, setCurrentContent] = useState<string>("");
   const [regenerateCount, setRegenerateCount] = useState(0);
@@ -59,6 +57,10 @@ const FinalPreview: React.FC = () => {
   const [showIframe, setShowIframe] = useState(true);
   const [Loaded, setLoaded] = useState(false);
   const [contentForBackend, setContentForBackend] = useState<any[]>([]);
+
+  const navigate = useNavigate();
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const { sendMessage, sendMessageToIframe } = useIframeMessage(iframeRef);
 
   const toggleDropdown = () => {
     setIsOpen(!isOpen);
@@ -81,13 +83,14 @@ const FinalPreview: React.FC = () => {
     }
 
     setRegenerateCount(regenerateCount + 1);
+    setIsLoading(true); // Show loader before regeneration starts
 
     if (selectedPage) {
       const currentPage = pages.find((page) => page.name === selectedPage);
       if (currentPage) {
         sendMessage({
           type: "regenerate",
-          templateName: "plumber",
+          templateName: templateName,
           pageName: currentPage.slug,
         });
         setShowIframe(true);
@@ -108,6 +111,13 @@ const FinalPreview: React.FC = () => {
     const currentPage = pages.find((page) => page.name === selectedPage);
 
     setLoaded(true);
+
+    if (selectedPage === "Blog" || selectedPage === "Contact") {
+      setIsLoading(false);
+      setLoaded(false);
+      setIsLoading(false);
+      return;
+    }
 
     if ((Color.primary && Color.secondary) || fontFamily) {
       iframe?.contentWindow?.postMessage(
@@ -136,7 +146,7 @@ const FinalPreview: React.FC = () => {
         iframe?.contentWindow?.postMessage(
           {
             type: "start",
-            templateName: "plumber",
+            templateName: templateName,
             pageName: currentPage?.slug,
             bussinessname: businessName,
             description: Description,
@@ -146,7 +156,6 @@ const FinalPreview: React.FC = () => {
       }
     }
 
-    // Updated logic for the popup
     if (
       selectedPage !== "Home" &&
       currentPage &&
@@ -157,20 +166,30 @@ const FinalPreview: React.FC = () => {
         setShowPopup(true);
       }, 100);
     }
+
+    if (!isContentGenerating) {
+      setIsLoading(false); // Ensure loader is not shown again after content generation
+    }
   };
 
   const updateIframeSrc = (content: string) => {
     if (content !== currentContent) {
+      setIsTransitioning(true); // Start transition
       setCurrentContent(content);
-      const newBlob = new Blob([content], { type: "text/html" });
-      const newBlobUrl = URL.createObjectURL(newBlob);
 
-      setIframeSrc((prevSrc) => {
-        if (prevSrc) {
-          URL.revokeObjectURL(prevSrc);
-        }
-        return newBlobUrl;
-      });
+      setTimeout(() => {
+        const newBlob = new Blob([content], { type: "text/html" });
+        const newBlobUrl = URL.createObjectURL(newBlob);
+
+        setIframeSrc((prevSrc) => {
+          if (prevSrc) {
+            URL.revokeObjectURL(prevSrc);
+          }
+          return newBlobUrl;
+        });
+
+        setIsTransitioning(false); // End transition
+      }, 300); // Adjust delay to control the transition duration
     }
   };
 
@@ -185,6 +204,7 @@ const FinalPreview: React.FC = () => {
       setShowIframe(false);
     } else {
       setShowIframe(true);
+      setIsLoading(true); // Show loader when navigating to a new page
     }
   };
 
@@ -209,6 +229,7 @@ const FinalPreview: React.FC = () => {
       } else if (action === "skip") {
         updatedPages[currentPageIndex].status = "Skipped";
       }
+      updatedPages[currentPageIndex].selected = true;
 
       setPages(updatedPages);
 
@@ -222,6 +243,7 @@ const FinalPreview: React.FC = () => {
           setShowIframe(false);
         } else {
           setShowIframe(true);
+          setIsLoading(true); // Show loader when navigating to the next page
           const iframe: null | HTMLIFrameElement = iframeRef.current;
           const nextPageSlug = updatedPages[nextPageIndex].slug;
           if (iframe) {
@@ -236,9 +258,13 @@ const FinalPreview: React.FC = () => {
     }
   };
 
-  const updatePageStatus = (pageName: string, status: string) => {
+  const updatePageStatus = (
+    pageName: string,
+    status: string,
+    selected: boolean
+  ) => {
     const updatedPages = pages.map((page) =>
-      page.name === pageName ? { ...page, status } : page
+      page.name === pageName ? { ...page, status, selected } : page
     );
     setPages(updatedPages);
   };
@@ -255,7 +281,7 @@ const FinalPreview: React.FC = () => {
       iframe.contentWindow.postMessage(
         {
           type: "start",
-          templateName: "plumber",
+          templateName: templateName,
           pageName: currentPage?.slug,
           bussinessname: businessName,
           description: Description,
@@ -265,6 +291,8 @@ const FinalPreview: React.FC = () => {
       const updatedPages = [...pages];
       updatedPages.find((page) => page.name === currentPage.name)!.status =
         "Generated";
+      updatedPages.find((page) => page.name === currentPage.name)!.selected =
+        true;
       setPages(updatedPages);
     }
   };
@@ -274,7 +302,7 @@ const FinalPreview: React.FC = () => {
       navigate("/custom-design");
       return;
     } else if (!previousClicked) {
-      showWarningToast(); // Show warning toast if content is still generating
+      showWarningToast();
     }
 
     const currentPageIndex = pages.findIndex(
@@ -290,6 +318,7 @@ const FinalPreview: React.FC = () => {
         iframe.src = `https://tours.mywpsite.org/${prevPageSlug}`;
       }
       setShowIframe(true);
+      setIsLoading(true);
     }
   };
 
@@ -305,7 +334,6 @@ const FinalPreview: React.FC = () => {
     const receiveMessage = (event: MessageEvent) => {
       if (event.data.type === "contentLoaded") {
         setLoading(false);
-        setTemLoader(false);
       } else if (event.data.type === "saveContentResponse") {
         setPageContents((prevContents) => ({
           ...prevContents,
@@ -313,6 +341,7 @@ const FinalPreview: React.FC = () => {
         }));
       } else if (event.data.type === "generationStatus") {
         setIsContentGenerating(event.data.isGenerating);
+        setIsLoading(event.data.isGenerating);
       } else if (event.data.type === "generatedContent") {
         const pageName = event.data.pageName || selectedPage || "";
 
@@ -328,7 +357,7 @@ const FinalPreview: React.FC = () => {
         });
 
         if (!event.data.isGenerating) {
-          showSuccessToast(); // Show success toast after content generation
+          showSuccessToast();
         }
       }
     };
@@ -346,7 +375,6 @@ const FinalPreview: React.FC = () => {
         updateIframeSrc(iframeHtmlContent);
         setShowIframe(false);
 
-        // Send post messages to the stored content iframe
         if (iframeRef.current && iframeRef.current.contentWindow) {
           if ((Color.primary && Color.secondary) || fontFamily) {
             iframeRef.current.contentWindow.postMessage(
@@ -606,10 +634,35 @@ const FinalPreview: React.FC = () => {
               </div>
             </div>
           </div>
-          <div className="w-full h-screen flex justify-center items-center">
-            {generatedPage?.spinner && !showIframe ? (
-              <Spinner />
-            ) : showIframe ? (
+
+          <div className="w-full h-screen flex justify-center items-center relative">
+            {/* Skeleton Loader Layer */}
+            {isLoading && !isContentGenerating && <PlumberPageSkeleton />}
+
+            {/* Generated Content Iframe */}
+            {generatedPage[selectedPage!] && !isTransitioning && (
+              <iframe
+                ref={iframeRef}
+                src={iframeSrc}
+                title="website"
+                id="myIframe"
+                onLoad={onLoadMsg}
+                className={`h-full w-full transition-fade shadow-lg rounded-lg z-10 absolute top-0 left-0 ${
+                  isLoading && !isContentGenerating
+                    ? "opacity-0"
+                    : "opacity-100"
+                }  ${
+                  viewMode === "desktop"
+                    ? "w-full h-full"
+                    : viewMode === "tablet"
+                    ? "w-2/3 h-full"
+                    : "w-1/3 h-full"
+                }`}
+              />
+            )}
+
+            {/* Non-Generated Content Iframe */}
+            {(!generatedPage[selectedPage!] || isTransitioning) && (
               <iframe
                 ref={iframeRef}
                 src={`https://tours.mywpsite.org/${
@@ -618,19 +671,11 @@ const FinalPreview: React.FC = () => {
                 title="website"
                 id="myIframe"
                 onLoad={onLoadMsg}
-                className={`h-full transition-fade shadow-lg rounded-lg ${
-                  viewMode === "desktop"
-                    ? "w-full h-full"
-                    : viewMode === "tablet"
-                    ? "w-2/3 h-full"
-                    : "w-1/3 h-full"
-                }`}
-              ></iframe>
-            ) : (
-              <iframe
-                src={iframeSrc}
-                title="stored-content"
-                className={`h-full transition-fade shadow-lg rounded-lg ${
+                className={`h-full w-full transition-fade shadow-lg rounded-lg z-10 absolute top-0 left-0 ${
+                  isLoading && !isContentGenerating
+                    ? "opacity-0"
+                    : "opacity-100"
+                }  ${
                   viewMode === "desktop"
                     ? "w-full h-full"
                     : viewMode === "tablet"
