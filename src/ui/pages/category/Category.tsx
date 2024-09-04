@@ -21,7 +21,31 @@ function Category() {
   const [showDropdown, setShowDropdown] = useState<boolean>(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  const getDomainFromEndpoint = (endpoint: string) => {
+    const currentUrl = window.location.href;
+    const wpAdminIndex = currentUrl.indexOf("/wp-admin");
+
+    if (wpAdminIndex !== -1) {
+      const baseUrl = currentUrl.substring(0, wpAdminIndex);
+      return `${baseUrl}/${endpoint}`;
+    } else {
+      console.error("Could not find wp-admin in the current URL.");
+      return null;
+    }
+  };
+
   useEffect(() => {
+    const fetchInitialCategory = async () => {
+      const content = await getContent();
+      if (content && content.category) {
+        console.log("content", content);
+        setInputValue(content.category);
+        dispatch(setCategory(content.category));
+      }
+    };
+
+    fetchInitialCategory();
+
     const getCategoryList = async () => {
       try {
         const categories = await fetchCategoryList();
@@ -33,7 +57,7 @@ function Category() {
     };
 
     getCategoryList();
-  }, []);
+  }, [dispatch]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -55,6 +79,7 @@ function Category() {
     if (value) {
       dispatch(setCategory(value));
       setError(null);
+      storeContent(value); // Update backend when value changes
     } else {
       dispatch(setCategory(null));
     }
@@ -78,6 +103,47 @@ function Category() {
     setInputValue(category);
     handleCategoryChange(category);
     setShowDropdown(false);
+  };
+
+  const storeContent = async (content: string) => {
+    const url = getDomainFromEndpoint("wp-json/custom/v1/update-form-details");
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ category: content }),
+      });
+
+      const result = await response.json();
+      return result;
+    } catch (error) {
+      console.error("Error making API call:", error);
+      return null;
+    }
+  };
+
+  const getContent = async () => {
+    const url = getDomainFromEndpoint("wp-json/custom/v1/get-form-details");
+
+    try {
+      const response = await fetch(url, {
+        method: "POST", // Use POST to send a body
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          fields: ["category"],
+        }),
+      });
+
+      const result = await response.json();
+      return result;
+    } catch (error) {
+      console.error("Error making API call:", error);
+      return null;
+    }
   };
 
   return (

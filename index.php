@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin Name: AI Website Builder - Gravity Write 1
+ * Plugin Name: AI Website Builder - Gravity Write latest
  * Description: A Website Builder made by WordPress.
  * Version: 1.0.0
  * Author: Gravity Write
@@ -112,7 +112,7 @@ add_action('rest_api_init', function () {
         'permission_callback' => '__return_true',
     ));
     register_rest_route('custom/v1', '/get-form-details', array(
-        'methods' => WP_REST_Server::READABLE, // Equivalent to 'GET'
+        'methods' => WP_REST_Server::CREATABLE, 
         'callback' => 'fetch_form_details',
         'permission_callback' =>'__return_true'
     ));
@@ -295,16 +295,16 @@ class GW_Website_Builder {
         add_menu_page(
             'GW Website Builder', // Page title
             'GW Website Builder', // Menu title
-            'manage_options',     // Capability
-            'gw-website-builder', // Menu slug
-            array($this, 'settings_page_html'), // Callback function
+            'manage_options',     
+            'gw-website-builder', 
+            array($this, 'settings_page_html'), 
             'dashicons-admin-generic', // Icon URL
             20 // Position
         );
     }
 
     public function settings_page_html() {
-        // Check user capabilities
+        
         if (!current_user_can('manage_options')) {
             return;
         }
@@ -328,9 +328,10 @@ class GW_Website_Builder {
         wp_deregister_style('l10n');
 
 
-
+        wp_enqueue_script('lodash', 'https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js', array(), '4.17.21', true);
         // Define the paths to the expected JS and CSS files
         $script_path = plugin_dir_path(__FILE__) . 'dist/mainfile.js';
+       
         $style_path = plugin_dir_path(__FILE__) . 'dist/mainfile.css';
     
         // Check if the JS file exists

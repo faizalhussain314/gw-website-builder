@@ -7,7 +7,7 @@ import "../../../index.css";
 import websitebg from "../../../assets/websiteloader-bg.svg";
 
 // Helper function to get the full URL
-const getDomainFromEndpoint = (endpoint) => {
+const getDomainFromEndpoint = (endpoint: string) => {
   const currentUrl = window.location.href;
   const wpAdminIndex = currentUrl.indexOf("/wp-admin");
 

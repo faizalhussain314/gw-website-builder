@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import GravityWriteLogo from "../../../assets/logo.svg";
 import MenuIcon from "../../../assets/menu.svg";
-import CachedIcon from "@mui/icons-material/Cached";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../store/store";
 import { ToastContainer, toast } from "react-toastify";
@@ -16,14 +15,16 @@ import CloseIcon from "@mui/icons-material/Close";
 import popupimg from "../../../assets/popupimg.svg";
 import { Page } from "../../../types/page.type";
 import PlumberPageSkeleton from "../../component/PlumberPageSkeleton ";
+import GwLoader from "../../component/loader/gwLoader";
 
 const FinalPreview: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [viewMode, setViewMode] = useState("desktop");
-  const [isLoading, setIsLoading] = useState(true); // Loader state
+  const [isLoading, setIsLoading] = useState(true);
   const [isContentGenerating, setIsContentGenerating] = useState(false);
   const [isPageGenerated, setIsPageGenerated] = useState(false);
   const [selectedPage, setSelectedPage] = useState<string | null>("Home");
+  const [showGwLoader, setShowGwLoader] = useState(false);
 
   const businessName = useSelector(
     (state: RootState) => state.userData.businessName
@@ -52,7 +53,6 @@ const FinalPreview: React.FC = () => {
   const [generatedPage, setGeneratedPage] = useState<any>({});
   const [iframeSrc, setIframeSrc] = useState<string>("");
   const [currentContent, setCurrentContent] = useState<string>("");
-  const [regenerateCount, setRegenerateCount] = useState(0);
   const [showUpgradePopup, setShowUpgradePopup] = useState(false);
   const [showIframe, setShowIframe] = useState(true);
   const [Loaded, setLoaded] = useState(false);
@@ -76,34 +76,13 @@ const FinalPreview: React.FC = () => {
     sendMessageToIframe(message);
   };
 
-  const handleRegenerate = () => {
-    if (isContentGenerating) {
-      showWarningToast();
-      return;
-    }
-
-    setRegenerateCount(regenerateCount + 1);
-    setIsLoading(true); // Show loader before regeneration starts
-
-    if (selectedPage) {
-      const currentPage = pages.find((page) => page.name === selectedPage);
-      if (currentPage) {
-        sendMessage({
-          type: "regenerate",
-          templateName: templateName,
-          pageName: currentPage.slug,
-        });
-        setShowIframe(true);
-      }
-    }
-  };
-
   const showWarningToast = () => {
     toast.warn("Please wait while content is being generated.");
   };
 
   const showSuccessToast = () => {
     toast.success("Content generation complete!");
+    updatePageStatus(selectedPage!, "Generated"); // Update page status to "Generated" on success
   };
 
   const onLoadMsg = () => {
@@ -137,23 +116,21 @@ const FinalPreview: React.FC = () => {
       changeLogo(logoUrl);
     }
 
-    if (selectedPage) {
-      if (generatedPage[selectedPage] && isPageGenerated) {
-        const existingContent = generatedPage[selectedPage][0];
-        updateIframeSrc(existingContent);
-        setShowIframe(false);
-      } else if (selectedPage === "Home" && pages[0].status !== "Generated") {
-        iframe?.contentWindow?.postMessage(
-          {
-            type: "start",
-            templateName: templateName,
-            pageName: currentPage?.slug,
-            bussinessname: businessName,
-            description: Description,
-          },
-          "*"
-        );
-      }
+    if (selectedPage && generatedPage[selectedPage] && isPageGenerated) {
+      const existingContent = generatedPage[selectedPage][0];
+      updateIframeSrc(existingContent);
+      setShowIframe(false);
+    } else if (selectedPage === "Home" && pages[0].status !== "Generated") {
+      iframe?.contentWindow?.postMessage(
+        {
+          type: "start",
+          templateName: templateName,
+          pageName: currentPage?.slug,
+          bussinessname: businessName,
+          description: Description,
+        },
+        "*"
+      );
     }
 
     if (
@@ -168,7 +145,7 @@ const FinalPreview: React.FC = () => {
     }
 
     if (!isContentGenerating) {
-      setIsLoading(false); // Ensure loader is not shown again after content generation
+      setIsLoading(false);
     }
   };
 
@@ -196,11 +173,11 @@ const FinalPreview: React.FC = () => {
     if (existingContent) {
       updateIframeSrc(existingContent[0]);
       setShowIframe(false);
-      setIsPageGenerated(true); // Page is now displaying generated content
+      setIsPageGenerated(true);
     } else {
       setShowIframe(true);
-      setIsPageGenerated(false); // Reset when user navigates away
-      setIsLoading(true); // Show loader when navigating to a new page
+      setIsPageGenerated(false);
+      setIsLoading(true);
     }
   };
 
@@ -214,11 +191,6 @@ const FinalPreview: React.FC = () => {
       (page) => page.name === selectedPage
     );
     if (currentPageIndex !== -1) {
-      if (action === "next") {
-        const iframe = iframeRef.current;
-        iframe?.contentWindow?.postMessage({ type: "saveContent" }, "*");
-      }
-
       const updatedPages = [...pages];
       if (action === "next") {
         updatedPages[currentPageIndex].status = "Generated";
@@ -239,8 +211,8 @@ const FinalPreview: React.FC = () => {
           setShowIframe(false);
         } else {
           setShowIframe(true);
-          setIsPageGenerated(false); // Reset the generated state
-          setIsLoading(true); // Show loader when navigating to the next page
+          setIsPageGenerated(false);
+          setIsLoading(true);
           const iframe: null | HTMLIFrameElement = iframeRef.current;
           const nextPageSlug = updatedPages[nextPageIndex].slug;
           if (iframe) {
@@ -255,13 +227,9 @@ const FinalPreview: React.FC = () => {
     }
   };
 
-  const updatePageStatus = (
-    pageName: string,
-    status: string,
-    selected: boolean
-  ) => {
+  const updatePageStatus = (pageName: string, status: string) => {
     const updatedPages = pages.map((page) =>
-      page.name === pageName ? { ...page, status, selected } : page
+      page.name === pageName ? { ...page, status } : page
     );
     setPages(updatedPages);
   };
@@ -272,7 +240,9 @@ const FinalPreview: React.FC = () => {
 
   const handleGeneratePage = () => {
     setShowPopup(false);
-    setIsLoading(true); // Show loader immediately when "Generate this Page" is clicked
+    setIsLoading(true);
+    setShowGwLoader(true);
+
     const iframe = iframeRef.current;
     const currentPage = pages.find((page) => page.name === selectedPage);
     if (currentPage && currentPage.status !== "Generated") {
@@ -286,12 +256,6 @@ const FinalPreview: React.FC = () => {
         },
         "*"
       );
-      const updatedPages = [...pages];
-      updatedPages.find((page) => page.name === currentPage.name)!.status =
-        "Generated";
-      updatedPages.find((page) => page.name === currentPage.name)!.selected =
-        true;
-      setPages(updatedPages);
     }
   };
 
@@ -317,7 +281,7 @@ const FinalPreview: React.FC = () => {
       }
       setShowIframe(true);
       setIsLoading(true);
-      setIsPageGenerated(false); // Reset the generated state
+      setIsPageGenerated(false);
     }
   };
 
@@ -329,10 +293,26 @@ const FinalPreview: React.FC = () => {
     handlePageNavigation("skip");
   };
 
+  // Effect to handle iframe resizing based on view mode
+  useEffect(() => {
+    if (iframeRef.current) {
+      if (viewMode === "desktop") {
+        iframeRef.current.style.width = "100%";
+        iframeRef.current.style.height = "100%";
+      } else if (viewMode === "tablet") {
+        iframeRef.current.style.width = "768px"; // Typical width for tablet
+        iframeRef.current.style.height = "100%";
+      } else if (viewMode === "mobile") {
+        iframeRef.current.style.width = "375px"; // Typical width for mobile
+        iframeRef.current.style.height = "100%";
+      }
+    }
+  }, [viewMode]);
+
   useEffect(() => {
     const receiveMessage = (event: MessageEvent) => {
       if (event.data.type === "contentLoaded") {
-        setLoading(false);
+        setIsLoading(false);
       } else if (event.data.type === "saveContentResponse") {
         setPageContents((prevContents) => ({
           ...prevContents,
@@ -341,6 +321,9 @@ const FinalPreview: React.FC = () => {
       } else if (event.data.type === "generationStatus") {
         setIsContentGenerating(event.data.isGenerating);
         setIsLoading(event.data.isGenerating);
+        if (event.data.isGenerating) {
+          setShowGwLoader(false);
+        }
       } else if (event.data.type === "generatedContent") {
         const pageName = event.data.pageName || selectedPage || "";
 
@@ -515,7 +498,6 @@ const FinalPreview: React.FC = () => {
               pages={pages}
               selectedPage={selectedPage}
               isContentGenerating={isContentGenerating}
-              handleRegenerate={handleRegenerate}
               togglePage={togglePage}
               handleNext={handleNext}
               handleSkipPage={handleSkipPage}
@@ -575,66 +557,16 @@ const FinalPreview: React.FC = () => {
               toggleDropdown={toggleDropdown}
               handleViewChange={handleViewChange}
             />
-            <div>
-              <div className="flex items-center space-x-4">
-                <button
-                  className="text-gray-500"
-                  onClick={() => setShowIframe(true)}
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth="2"
-                    stroke="currentColor"
-                    className="w-5 h-5"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M15 19l-7-7 7-7"
-                    />
-                  </svg>
-                </button>
-                <span className="text-gray-500">
-                  {selectedPage
-                    ? `${
-                        pages.findIndex((page) => page.name === selectedPage) +
-                        1
-                      }/${pages.length}`
-                    : ""}
-                </span>
-                <button
-                  className="text-gray-500"
-                  onClick={() => setShowIframe(true)}
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth="2"
-                    stroke="currentColor"
-                    className="w-5 h-5"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M9 5l7 7-7 7"
-                    />
-                  </svg>
-                </button>
-                <button
-                  className="flex items-center px-4 py-2 gap-1 bg-[#EBF4FF] text-black rounded"
-                  onClick={handleRegenerate}
-                >
-                  <CachedIcon />
-                  Regenerate page
-                </button>
-              </div>
-            </div>
           </div>
 
           <div className="w-full h-screen flex justify-center items-center relative">
+            {/* Show GwLoader only when showGwLoader is true */}
+            {showGwLoader && (
+              <div className="absolute inset-0 bg-white flex justify-center items-center z-20">
+                <GwLoader />
+              </div>
+            )}
+
             {/* Skeleton Loader Layer */}
             {isLoading && !isContentGenerating && <PlumberPageSkeleton />}
 
@@ -646,16 +578,10 @@ const FinalPreview: React.FC = () => {
                 title="website"
                 id="myIframe"
                 onLoad={onLoadMsg}
-                className={`h-full w-full transition-fade shadow-lg rounded-lg z-10 absolute top-0 left-0 ${
+                className={`h-full w-full transition-fade shadow-lg rounded-lg z-10 absolute top-0  ${
                   isLoading && !isContentGenerating
                     ? "opacity-0"
                     : "opacity-100"
-                }  ${
-                  viewMode === "desktop"
-                    ? "w-full h-full"
-                    : viewMode === "tablet"
-                    ? "w-2/3 h-full"
-                    : "w-1/3 h-full"
                 }`}
               />
             )}
@@ -670,16 +596,10 @@ const FinalPreview: React.FC = () => {
                 title="website"
                 id="myIframe"
                 onLoad={onLoadMsg}
-                className={`h-full w-full transition-fade shadow-lg rounded-lg z-10 absolute top-0 left-0 ${
+                className={`h-full w-full transition-fade shadow-lg rounded-lg z-10 absolute top-0 ${
                   isLoading && !isContentGenerating
                     ? "opacity-0"
                     : "opacity-100"
-                }  ${
-                  viewMode === "desktop"
-                    ? "w-full h-full"
-                    : viewMode === "tablet"
-                    ? "w-2/3 h-full"
-                    : "w-1/3 h-full"
                 }`}
               />
             )}

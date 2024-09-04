@@ -10,7 +10,7 @@ type Props = {
   pages: Page[];
   selectedPage: string | null;
   isContentGenerating: boolean;
-  handleRegenerate: () => void;
+
   togglePage: (page: string) => void;
   handleNext: () => void;
   handleSkipPage: () => void;
@@ -30,7 +30,7 @@ const PageSelector: React.FC<Props> = ({
   pages,
   selectedPage,
   isContentGenerating,
-  handleRegenerate,
+
   togglePage,
   handleNext,
   handleSkipPage,
@@ -53,7 +53,7 @@ const PageSelector: React.FC<Props> = ({
     if (isContentGenerating) {
       showWarningToast();
     } else {
-      updatePageStatus(pageName, "Skipped", true);
+      updatePageStatus(pageName, "Skipped", false);
       handleSkipPage();
     }
   };
@@ -86,7 +86,7 @@ const PageSelector: React.FC<Props> = ({
                   <input
                     type="checkbox"
                     className="mr-2"
-                    checked={page.selected || page.status === "Generated"}
+                    checked={page.selected && page.status !== "Skipped"}
                     onChange={() => handlePageClick(page.name)}
                     disabled={page.status === ""}
                   />
@@ -119,8 +119,6 @@ const PageSelector: React.FC<Props> = ({
                       onClick={() => {
                         if (isContentGenerating) {
                           showWarningToast();
-                        } else {
-                          handleRegenerate();
                         }
                       }}
                     />

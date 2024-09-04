@@ -39,17 +39,26 @@ function Name() {
     }
   };
 
+  const handlePrevious = () => {
+    if (name) {
+      dispatch(setBusinessName(name));
+      navigate("/category");
+    } else {
+      navigate("/category");
+    }
+  };
+
   return (
     <MainLayout>
       <div className="bg-[rgba(249, 252, 255, 1)] flex font-['inter']">
         <div className="p-8">
           <div className="mt-8 ml-[50px] flex flex-col">
             <h1 className="text-txt-black-600 leading-5 font-semibold text-3xl font-[inter] mb-4">
-              What is {category}? Tell us more about the {category}.
+              What is {category} name? Tell us more about the {category}.
             </h1>
             <span className="mt-4 text-lg leading-6 text-txt-secondary-400">
               Please be as descriptive as you can. Share details such as a brief
-              about the restaurant, specialty, menu, etc.
+              about the {category}, specialty, menu, etc.
             </span>
             <form>
               <input
@@ -62,12 +71,14 @@ function Name() {
               />
               {error && <div className="mt-2 text-red-600">{error}</div>}
               <div className="flex gap-4">
-                <Link to={"/category"}>
-                  <button className="previous-btn flex px-[10px] py-[13px] text-lg sm:text-sm text-white mt-8 sm:mt-2 rounded-md w-[150px] gap-3 justify-center">
-                    <ArrowBackIcon />
-                    Previous
-                  </button>
-                </Link>
+                <button
+                  onClick={handlePrevious}
+                  className="previous-btn flex px-[10px] py-[13px] text-lg sm:text-sm text-white mt-8 sm:mt-2 rounded-md w-[150px] gap-3 justify-center"
+                >
+                  <ArrowBackIcon />
+                  Previous
+                </button>
+
                 <button
                   type="button"
                   onClick={handleClick}

@@ -844,8 +844,8 @@
 
 // export default FinalPreview;
 
-
-<script>
+{
+  /* <script>
 document.addEventListener("DOMContentLoaded", function () {
   const API_BASE_URL = "https://dev.gravitywrite.com/api";
   let currentIndex = 0;
@@ -1056,4 +1056,5 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 });
-</script>
+</script> */
+}

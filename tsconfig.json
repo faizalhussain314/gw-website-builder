@@ -18,7 +18,8 @@
     "strict": false,
     "noUnusedLocals": false,
     "noUnusedParameters": false,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+    "forceConsistentCasingInFileNames": true // Added option
   },
   "include": ["src"],
   "references": [{ "path": "./tsconfig.node.json" }]
