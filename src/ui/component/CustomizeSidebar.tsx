@@ -5,6 +5,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { setFont, setColor, setLogo } from "../../Slice/activeStepSlice";
 import { RootState } from "../../store/store";
+import useDomainEndpoint from "../../hooks/useDomainEndpoint";
+import useStoreContent from "../../hooks/useStoreContent ";
 
 type FontCombination = {
   label: string;
@@ -15,6 +17,11 @@ type SelectedColor = {
   primary: string;
   secondary: string;
 };
+
+interface ColorCombination {
+  primary: string;
+  secondary: string;
+}
 
 const fontCombinations: FontCombination[] = [
   { label: "Lora/Lato", primaryFont: "Lora" },
@@ -33,6 +40,19 @@ const fontCombinations: FontCombination[] = [
   { label: "Figtree/Inter", primaryFont: "Figtree" },
 ];
 
+const colorCombination: ColorCombination[] = [
+  { primary: "#1FB68D", secondary: "#EFFFFB" },
+  { primary: "#7F27FF", secondary: "#F5F3FF" },
+  { primary: "#5755FE", secondary: "#F2F2FE" },
+  { primary: "#FFA800", secondary: "#FFFCE5" },
+  { primary: "#16A34A", secondary: "#F0FDF4" },
+  { primary: "#3D065A", secondary: "#F9ECFF" },
+  { primary: "#FF8329", secondary: "#FFF7ED" },
+  { primary: "#0E17FB", secondary: "#F6F6FF" },
+  { primary: "#009FF1", secondary: "#F0F9FF" },
+  { primary: "#FF5151", secondary: "#FEF2F2" },
+];
+
 const CustomizeSidebar: React.FC = () => {
   const [selectedColor, setSelectedColor] = useState<SelectedColor>({
     primary: "",
@@ -46,6 +66,8 @@ const CustomizeSidebar: React.FC = () => {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const { getDomainFromEndpoint } = useDomainEndpoint();
+  const storeContent = useStoreContent();
 
   const initialStyles = useSelector((state: RootState) => ({
     primaryColor: state.userData.color.primary,
@@ -55,37 +77,138 @@ const CustomizeSidebar: React.FC = () => {
   }));
 
   useEffect(() => {
-    // Set the initial color if it has changed
-    if (
-      initialStyles.primaryColor !== selectedColor.primary ||
-      initialStyles.secondaryColor !== selectedColor.secondary
-    ) {
-      setSelectedColor({
-        primary: initialStyles.primaryColor,
-        secondary: initialStyles.secondaryColor,
-      });
-    }
+    const sendMessageToIframes = (type, payload) => {
+      console.log(payload, "098790870969sd6");
+      const iframes = document.getElementsByTagName("iframe");
 
-    // Set the initial font if it has changed
-    const currentFontCombination = fontCombinations.find(
-      (font) => font.primaryFont === initialStyles.fontFamily
-    );
-    if (currentFontCombination && currentFontCombination !== selectedFont) {
-      setSelectedFont(currentFontCombination);
-    }
+      if (iframes.length > 0) {
+        for (let i = 0; i < iframes.length; i++) {
+          const iframe = iframes[i];
 
-    // Set the initial logo if it exists
-    if (initialStyles.logoUrl && initialStyles.logoUrl !== logoUrl) {
-      setLogoUrl(initialStyles.logoUrl);
-    }
-  }, [initialStyles, selectedColor, selectedFont, logoUrl]);
+          iframe.onload = () => {
+            if (type == "changeGlobalColors") {
+              const iframes = document.getElementsByTagName("iframe");
+              for (let i = 0; i < iframes.length; i++) {
+                const iframe = iframes[i];
+                iframe?.contentWindow?.postMessage(
+                  {
+                    type: "changeGlobalColors",
+                    primaryColor: payload.primary,
+                    secondaryColor: payload.secondary,
+                  },
+                  "*"
+                );
+              }
+            }
 
-  const handleFontChange = (fontCombination: FontCombination) => {
+            iframe?.contentWindow?.postMessage({ type, ...payload }, "*");
+            console.log(`Iframe loaded, sending ${type}:`, payload);
+          };
+
+          if (iframe?.contentWindow) {
+            if (type == "changeGlobalColors") {
+              const iframes = document.getElementsByTagName("iframe");
+              for (let i = 0; i < iframes.length; i++) {
+                const iframe = iframes[i];
+                iframe?.contentWindow?.postMessage(
+                  {
+                    type: "changeGlobalColors",
+                    primaryColor: payload.primary,
+                    secondaryColor: payload.secondary,
+                  },
+                  "*"
+                );
+              }
+            }
+            iframe?.contentWindow?.postMessage({ type, ...payload }, "*");
+            console.log(`Iframe is already loaded, sending ${type}:`, payload);
+          }
+        }
+      } else {
+        console.log("No iframes found");
+      }
+    };
+
+    const fetchInitialData = async () => {
+      // const url = getDomainFromEndpoint("/wp-json/custom/v1/get-form-details");
+      const url =
+        "https://solitaire-sojourner-02c.zipwp.link/wp-json/custom/v1/get-form-details";
+      try {
+        const response = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ fields: ["color", "font", "logo"] }),
+        });
+        const result = await response.json();
+
+        if (result) {
+          if (result.color) {
+            const resultColor = JSON.parse(result.color);
+            const postmsg: SelectedColor = {
+              // Fixing the type here
+              primary: resultColor.primary,
+              secondary: resultColor.secondary,
+            };
+
+            dispatch(setColor(resultColor));
+            setSelectedColor({
+              primary: resultColor.primary,
+              secondary: resultColor.secondary,
+            });
+            if (postmsg.primary) {
+              handleColorChange(postmsg, false);
+              console.log("post message was sent successfull", postmsg);
+            } else {
+              console.log("postmsg was empty");
+            }
+            console.log("result.color:", resultColor.primary);
+
+            // Send message to iframes for color change
+            sendMessageToIframes("changeGlobalColors", postmsg);
+          }
+
+          if (result.font) {
+            const fontCombination = fontCombinations.find(
+              (font) => font.primaryFont === result.font
+            );
+            setSelectedFont(fontCombination || null);
+            dispatch(setFont(result.font));
+
+            // Send message to iframes for font change
+            sendMessageToIframes("changeFont", { font: result.font });
+          }
+
+          if (result.logo) {
+            const logoUrl = result.logo;
+            const resultColor = JSON.parse(result.color);
+            setLogoUrl(logoUrl);
+            dispatch(setLogo(logoUrl));
+
+            await storeContent({ logo: logoUrl });
+
+            // Send message to iframes for logo change
+            sendMessageToIframes("changeGlobalColors", {
+              primaryColor: resultColor.primary,
+              secondaryColor: resultColor.secondary,
+            });
+            sendMessageToIframes("changeLogo", { logoUrl });
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching initial data:", error);
+      }
+    };
+
+    fetchInitialData();
+  }, [dispatch, getDomainFromEndpoint]);
+
+  const handleFontChange = async (fontCombination: FontCombination) => {
     setSelectedFont(fontCombination);
     dispatch(setFont(fontCombination.primaryFont));
     setIsDropdownOpen(false);
 
-    // Send message to iframe to change the font
+    await storeContent({ font: fontCombination.primaryFont });
+
     const iframes = document.getElementsByTagName("iframe");
     for (let i = 0; i < iframes.length; i++) {
       const iframe = iframes[i];
@@ -96,20 +219,26 @@ const CustomizeSidebar: React.FC = () => {
     }
   };
 
-  const handleColorChange = (color: SelectedColor) => {
+  const handleColorChange = async (color: SelectedColor, store: boolean) => {
     setSelectedColor(color);
     dispatch(setColor(color));
+    console.log("color from handleColorChange", color);
 
-    const primaryColor = color.primary;
-    const secondaryColor = color.secondary;
+    if (store) {
+      console.log("true was executed");
+      await storeContent({ color });
+    }
 
-    // Send message to iframe to change the global colors only if they are not empty
-    if (primaryColor && secondaryColor) {
+    if (color.primary && color.secondary) {
       const iframes = document.getElementsByTagName("iframe");
       for (let i = 0; i < iframes.length; i++) {
         const iframe = iframes[i];
         iframe?.contentWindow?.postMessage(
-          { type: "changeGlobalColors", primaryColor, secondaryColor },
+          {
+            type: "changeGlobalColors",
+            primaryColor: color.primary,
+            secondaryColor: color.secondary,
+          },
           "*"
         );
       }
@@ -124,14 +253,12 @@ const CustomizeSidebar: React.FC = () => {
       const formData = new FormData();
       formData.append("image", file);
 
+      const url = getDomainFromEndpoint("/wp-json/custom/v1/upload-logo");
       try {
-        const response = await fetch(
-          "http://localhost/wordpress/wp-json/custom/v1/upload-logo",
-          {
-            method: "POST",
-            body: formData,
-          }
-        );
+        const response = await fetch(url, {
+          method: "POST",
+          body: formData,
+        });
 
         if (!response.ok) {
           throw new Error("Failed to upload image");
@@ -143,7 +270,8 @@ const CustomizeSidebar: React.FC = () => {
         setLogoUrl(logoUrl);
         dispatch(setLogo(logoUrl));
 
-        // Send message to iframe to change the logo
+        await storeContent({ logo: logoUrl });
+
         const iframes = document.getElementsByTagName("iframe");
         for (let i = 0; i < iframes.length; i++) {
           const iframe = iframes[i];
@@ -163,10 +291,8 @@ const CustomizeSidebar: React.FC = () => {
   };
 
   const resetStyles = () => {
-    // Dispatch default font to Redux store if necessary
     dispatch(setFont(initialStyles.fontFamily));
 
-    // Send message to iframe to reset the styles
     const iframes = document.getElementsByTagName("iframe");
     for (let i = 0; i < iframes.length; i++) {
       const iframe = iframes[i];
@@ -184,18 +310,6 @@ const CustomizeSidebar: React.FC = () => {
   };
 
   useEffect(() => {
-    // Send message to iframe to set the logo if it exists
-    if (initialStyles.logoUrl) {
-      const iframes = document.getElementsByTagName("iframe");
-      for (let i = 0; i < iframes.length; i++) {
-        const iframe = iframes[i];
-        iframe?.contentWindow?.postMessage(
-          { type: "changeLogo", logoUrl: initialStyles.logoUrl },
-          "*"
-        );
-      }
-    }
-
     const handleClickOutside = (event: MouseEvent) => {
       if (
         dropdownRef.current &&
@@ -210,7 +324,7 @@ const CustomizeSidebar: React.FC = () => {
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [initialStyles.logoUrl]);
+  }, []);
 
   return (
     <div className="bg-white min-h-screen h-screen z-10 border-2">
@@ -283,22 +397,12 @@ const CustomizeSidebar: React.FC = () => {
           <label className="block text-sm font-medium mb-2">Color</label>
           <div className="border-2 border-[#DFEAF6] p-3 rounded-md">
             <div className="grid grid-cols-5 mac:gap-4 gap-3">
-              {[
-                { primary: "#FF2F86", secondary: "#FDF4FF" },
-                { primary: "#7F27FF", secondary: "#F5F3FF" },
-                { primary: "#5755FE", secondary: "#F2F2FE" },
-                { primary: "#E421F4", secondary: "#FEF6FF" },
-                { primary: "#16A34A", secondary: "#F0FDF4" },
-                { primary: "#3D065A", secondary: "#F9ECFF" },
-                { primary: "#FF8329", secondary: "#FFF7ED" },
-                { primary: "#0E17FB", secondary: "#F6F6FF" },
-                { primary: "#009FF1", secondary: "#F0F9FF" },
-                { primary: "#FF5151", secondary: "#FEF2F2" },
-              ].map((color) => (
+              {colorCombination.map((color) => (
                 <div
                   key={color.primary}
                   className={`${
-                    selectedColor.primary === color.primary
+                    selectedColor.primary === color.primary &&
+                    selectedColor.secondary === color.secondary
                       ? "border-2 border-palatinate-blue-500 rounded-md"
                       : ""
                   } flex items-center justify-center mac:p-1`}
@@ -306,7 +410,7 @@ const CustomizeSidebar: React.FC = () => {
                   <button
                     className="w-4 h-4 rounded-full mac:w-6 mac:h-6"
                     style={{ backgroundColor: color.primary }}
-                    onClick={() => handleColorChange(color)}
+                    onClick={() => handleColorChange(color, true)}
                   />
                 </div>
               ))}

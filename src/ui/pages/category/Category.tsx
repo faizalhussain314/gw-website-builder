@@ -2,15 +2,19 @@ import React, { useState, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setCategory } from "../../../Slice/activeStepSlice";
 import { useNavigate } from "react-router-dom";
-import { fetchCategoryList } from "../../../infrastructure/api/categorylist.api";
+import { fetchCategoryList } from "../../../infrastructure/api/laraval-api/categorylist.api";
 import { RootState } from "../../../store/store";
 import MainLayout from "../../Layouts/MainLayout";
 import { CategoryList } from "../../../types/Category.type";
 import SearchIcon from "@mui/icons-material/Search";
+import useDomainEndpoint from "../../../hooks/useDomainEndpoint";
+import { getCategoryDetails } from "../../../infrastructure/api/wordpress-api/category/getCategoryDetails.api";
+import { updateCategoryDetails } from "../../../infrastructure/api/wordpress-api/category/updateCategoryDetails.api.ts";
 
 function Category() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { getDomainFromEndpoint } = useDomainEndpoint();
 
   const selectedCategory = useSelector(
     (state: RootState) => state.userData.category
@@ -21,22 +25,9 @@ function Category() {
   const [showDropdown, setShowDropdown] = useState<boolean>(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const getDomainFromEndpoint = (endpoint: string) => {
-    const currentUrl = window.location.href;
-    const wpAdminIndex = currentUrl.indexOf("/wp-admin");
-
-    if (wpAdminIndex !== -1) {
-      const baseUrl = currentUrl.substring(0, wpAdminIndex);
-      return `${baseUrl}/${endpoint}`;
-    } else {
-      console.error("Could not find wp-admin in the current URL.");
-      return null;
-    }
-  };
-
   useEffect(() => {
     const fetchInitialCategory = async () => {
-      const content = await getContent();
+      const content = await getCategoryDetails(getDomainFromEndpoint);
       if (content && content.category) {
         console.log("content", content);
         setInputValue(content.category);
@@ -57,7 +48,7 @@ function Category() {
     };
 
     getCategoryList();
-  }, [dispatch]);
+  }, [dispatch, getDomainFromEndpoint]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -79,14 +70,14 @@ function Category() {
     if (value) {
       dispatch(setCategory(value));
       setError(null);
-      storeContent(value); // Update backend when value changes
     } else {
       dispatch(setCategory(null));
     }
   };
 
-  const handleClick = () => {
+  const handleClick = async () => {
     if (selectedCategory) {
+      await updateCategoryDetails(selectedCategory, getDomainFromEndpoint);
       navigate("/name");
     } else {
       setError("Please select a category before continuing.");
@@ -104,47 +95,27 @@ function Category() {
     handleCategoryChange(category);
     setShowDropdown(false);
   };
+  // const getContent = async () => {
+  //   const url = getDomainFromEndpoint("wp-json/custom/v1/get-form-details");
 
-  const storeContent = async (content: string) => {
-    const url = getDomainFromEndpoint("wp-json/custom/v1/update-form-details");
-    try {
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ category: content }),
-      });
+  //   try {
+  //     const response = await fetch(url, {
+  //       method: "POST",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //       },
+  //       body: JSON.stringify({
+  //         fields: ["category"],
+  //       }),
+  //     });
 
-      const result = await response.json();
-      return result;
-    } catch (error) {
-      console.error("Error making API call:", error);
-      return null;
-    }
-  };
-
-  const getContent = async () => {
-    const url = getDomainFromEndpoint("wp-json/custom/v1/get-form-details");
-
-    try {
-      const response = await fetch(url, {
-        method: "POST", // Use POST to send a body
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          fields: ["category"],
-        }),
-      });
-
-      const result = await response.json();
-      return result;
-    } catch (error) {
-      console.error("Error making API call:", error);
-      return null;
-    }
-  };
+  //     const result = await response.json();
+  //     return result;
+  //   } catch (error) {
+  //     console.error("Error making API call:", error);
+  //     return null;
+  //   }
+  // };
 
   return (
     <MainLayout>

@@ -25,9 +25,9 @@ function install_plugins($plugins) {
     }
 
     if (empty($errors)) {
-        return true;
+        return ['success' => true, 'message' => 'Plugins installed and activated successfully'];
     } else {
-        return array('There is a problem in plugin installation', 'details' => $errors);
+        return ['success' => false, 'error' => $errors];
     }
 }
 ?>

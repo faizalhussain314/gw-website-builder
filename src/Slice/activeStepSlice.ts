@@ -1,10 +1,4 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import {
-  fetchStepDetail,
-  fetchPost,
-  fetchCategory,
-} from "../core/state/thunks";
-import { StepDetail, Post, Category } from "../types/apiTypes.type";
 import { templatelist } from "../types/Preview.type";
 
 interface ImageState {
@@ -99,7 +93,8 @@ export const activeStepSlice = createSlice({
       state.font = action.payload;
     },
     setColor: (state, action: PayloadAction<Color>) => {
-      state.color = action.payload;
+      state.color.primary = action.payload.primary;
+      state.color.secondary = action.payload.secondary;
     },
     setCategory: (state, action: PayloadAction<string | null>) => {
       state.category = action.payload;
@@ -136,7 +131,7 @@ export const activeStepSlice = createSlice({
   //         state.category = action.payload;
   //       }
   //     );
-  //   // Add cases for other thunks if necessary
+  //
   // },
 });
 

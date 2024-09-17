@@ -700,3 +700,75 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
 </script>
+
+
+
+//suspious code that might tirgger the error
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  window.addEventListener("message", (event) => {
+    if (event.data.type === "changeFont" || event.data.type === "changeGlobalColors") {
+		console.log("event data triggered",event.data.primaryColor);
+      updateCSSVariables(event.data);
+    }
+  });
+
+  function updateCSSVariables(data) {
+	  console.log(data, "asdfyaiuydf896ogh")
+    if (data.type === "changeFont") {
+      updateCSSVariable('--e-global-typography-primary-font-family', data.font);
+      loadGoogleFont(data.font);
+    } else if (data.type === "changeGlobalColors") {
+      updateCSSVariable('--e-global-color-primary', data.primaryColor);
+      updateCSSVariable('--e-global-color-secondary', data.secondaryColor);
+    }
+  }
+
+ function updateCSSVariable(variable, value) {
+    let found = false;
+
+    
+    for (let sheet of document.styleSheets) {
+        try {
+            for (let rule of sheet.cssRules || sheet.rules) {
+                if (rule.style && rule.style.getPropertyValue(variable)) {
+                    rule.style.setProperty(variable, value);
+                    found = true; // Set found to true if the variable is updated
+                }
+            }
+        } catch (e) {
+            console.error("Access to stylesheet is denied:", e.message)
+			found = false
+        }
+    }
+    if (!found) {
+        let styleElement = document.head.querySelector('style#custom-style');
+		
+        if (!styleElement) {
+            styleElement = document.createElement('style');
+            styleElement.id = 'custom-style';
+            document.head.appendChild(styleElement);
+        }
+        styleElement.innerHTML += `
+            :root {
+                ${variable}: ${value} !important;
+            }
+        `;
+    }
+
+    return found;
+}
+
+
+  function loadGoogleFont(font) {
+    const link = document.createElement("link");
+    link.href = `https://fonts.googleapis.com/css2?family=${font.replace(/ /g, "+")}&display=swap`;
+    link.rel = "stylesheet";
+    document.head.appendChild(link);
+    document.body.style.fontFamily = font;
+    document.documentElement.style.setProperty("--gw-primary-font", `${font} !important`);
+  }
+});
+
+
+</script>

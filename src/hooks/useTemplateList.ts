@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { templatelist } from "../types/Preview.type";
-import { fetchtemplateList } from "../infrastructure/api/templatelist.api";
+import { fetchtemplateList } from "../infrastructure/api/laraval-api/templatelist.api";
 import { setTemplateList } from "../Slice/activeStepSlice";
 import { useDispatch } from "react-redux";
 

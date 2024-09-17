@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import axios from "axios";
 import GravityWriteLogo from "../../../assets/logo.svg";
 import MenuIcon from "../../../assets/menu.svg";
 import { useSelector } from "react-redux";
@@ -16,6 +17,7 @@ import popupimg from "../../../assets/popupimg.svg";
 import { Page } from "../../../types/page.type";
 import PlumberPageSkeleton from "../../component/PlumberPageSkeleton ";
 import GwLoader from "../../component/loader/gwLoader";
+import useDomainEndpoint from "../../../hooks/useDomainEndpoint";
 
 const FinalPreview: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -25,6 +27,7 @@ const FinalPreview: React.FC = () => {
   const [isPageGenerated, setIsPageGenerated] = useState(false);
   const [selectedPage, setSelectedPage] = useState<string | null>("Home");
   const [showGwLoader, setShowGwLoader] = useState(false);
+  const [oldNewContent, setOldNewContent] = useState<Record<string, any>>({});
 
   const businessName = useSelector(
     (state: RootState) => state.userData.businessName
@@ -61,6 +64,7 @@ const FinalPreview: React.FC = () => {
   const navigate = useNavigate();
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const { sendMessage, sendMessageToIframe } = useIframeMessage(iframeRef);
+  const { getDomainFromEndpoint } = useDomainEndpoint();
 
   const toggleDropdown = () => {
     setIsOpen(!isOpen);
@@ -82,28 +86,108 @@ const FinalPreview: React.FC = () => {
 
   const showSuccessToast = () => {
     toast.success("Content generation complete!");
-    updatePageStatus(selectedPage!, "Generated"); // Update page status to "Generated" on success
+    updatePageStatus(selectedPage!, "Generated");
   };
+
+  const storeHtmlContent = useCallback(
+    async (pageName: string, htmlContent: string) => {
+      try {
+        const endpoint = getDomainFromEndpoint(
+          "/wp-json/custom/v1/save-generated-html-data"
+        );
+        if (!endpoint) {
+          console.error("Endpoint is not available.");
+          return;
+        }
+
+        const response = await axios.post(endpoint, {
+          version_name: "5.5",
+          page_name: pageName,
+          template_name: templateName,
+          html_data: JSON.stringify(htmlContent),
+        });
+
+        if (response.status === 200) {
+          console.log("HTML content stored successfully:", response.data);
+        } else {
+          console.error("Failed to store HTML content:", response);
+        }
+      } catch (error) {
+        console.error("Error storing HTML content:", error);
+      }
+    },
+    [getDomainFromEndpoint, templateName]
+  );
+
+  const storeOldNewContent = useCallback(
+    async (pageName: string, jsonContent: Record<string, any>) => {
+      try {
+        const endpoint = getDomainFromEndpoint(
+          "/wp-json/custom/v1/save-generated-data"
+        );
+        if (!endpoint) {
+          console.error("Endpoint is not available.");
+          return;
+        }
+
+        const response = await axios.post(endpoint, {
+          version_name: "5.5",
+          page_name: pageName,
+          template_name: templateName,
+          json_content: jsonContent,
+        });
+
+        if (response.status === 200) {
+          console.log(
+            "Old and new content stored successfully:",
+            response.data
+          );
+        } else {
+          console.error("Failed to store old and new content:", response);
+        }
+      } catch (error) {
+        console.error("Error storing old and new content:", error);
+      }
+    },
+    [getDomainFromEndpoint, templateName]
+  );
+
+  const handleOldNewContent = useCallback(
+    (pageName: string, content: Record<string, any>) => {
+      // Store old and new content for the selected page
+      setOldNewContent((prevContent) => ({
+        ...prevContent,
+        [pageName]: content,
+      }));
+
+      // Store the old and new content in the backend
+      storeOldNewContent(pageName, content);
+    },
+    [storeOldNewContent]
+  );
 
   const onLoadMsg = () => {
     const iframe = iframeRef.current;
     const currentPage = pages.find((page) => page.name === selectedPage);
 
+    if (!iframe) return;
+
     setLoaded(true);
 
-    if (selectedPage === "Blog" || selectedPage === "Contact") {
-      setIsLoading(false);
-      setLoaded(false);
-      setIsLoading(false);
-      return;
-    }
+    console.log("Iframe loaded, applying styles and fonts...");
 
-    if ((Color.primary && Color.secondary) || fontFamily) {
-      iframe?.contentWindow?.postMessage(
+    // Always apply font and color changes if applicable
+    if (Color.primary || Color.secondary || fontFamily) {
+      console.log(
+        `Applying colors: Primary ${Color.primary}, Secondary ${Color.secondary}`
+      );
+      console.log(`Applying font: ${fontFamily}`);
+
+      iframe.contentWindow.postMessage(
         { type: "changeFont", font: fontFamily },
         "*"
       );
-      iframe?.contentWindow?.postMessage(
+      iframe.contentWindow.postMessage(
         {
           type: "changeGlobalColors",
           primaryColor: Color.primary,
@@ -112,16 +196,19 @@ const FinalPreview: React.FC = () => {
         "*"
       );
     }
+
+    // Change logo if applicable
     if (logoUrl) {
       changeLogo(logoUrl);
     }
 
+    // Additional handling based on the page type and generation status
     if (selectedPage && generatedPage[selectedPage] && isPageGenerated) {
       const existingContent = generatedPage[selectedPage][0];
       updateIframeSrc(existingContent);
       setShowIframe(false);
     } else if (selectedPage === "Home" && pages[0].status !== "Generated") {
-      iframe?.contentWindow?.postMessage(
+      iframe.contentWindow.postMessage(
         {
           type: "start",
           templateName: templateName,
@@ -326,21 +413,27 @@ const FinalPreview: React.FC = () => {
         }
       } else if (event.data.type === "generatedContent") {
         const pageName = event.data.pageName || selectedPage || "";
+        const htmlContent = event.data.content;
 
         setGeneratedPage((prevPages: any) => {
           const updatedPages = {
             ...prevPages,
             spinner: false,
             [pageName]: {
-              0: event.data.content,
+              0: htmlContent,
             },
           };
           return updatedPages;
         });
 
+        // Store the HTML content
+        storeHtmlContent(pageName, htmlContent);
+
         if (!event.data.isGenerating) {
           showSuccessToast();
         }
+      } else if (event.data.type === "oldNewContent") {
+        handleOldNewContent(event.data.pageName, event.data.content);
       }
     };
 
@@ -348,112 +441,7 @@ const FinalPreview: React.FC = () => {
     return () => {
       window.removeEventListener("message", receiveMessage);
     };
-  }, [Color, fontFamily, selectedPage]);
-
-  useEffect(() => {
-    const receiveMessage = (event: MessageEvent) => {
-      if (event.data.type === "contentReady") {
-        const iframeHtmlContent: string = event.data.content;
-        updateIframeSrc(iframeHtmlContent);
-        setShowIframe(false);
-
-        if (iframeRef.current && iframeRef.current.contentWindow) {
-          if ((Color.primary && Color.secondary) || fontFamily) {
-            iframeRef.current.contentWindow.postMessage(
-              { type: "changeFont", font: fontFamily },
-              "*"
-            );
-            iframeRef.current.contentWindow.postMessage(
-              {
-                type: "changeGlobalColors",
-                primaryColor: Color.primary,
-                secondaryColor: Color.secondary,
-              },
-              "*"
-            );
-          }
-          if (logoUrl) {
-            iframeRef.current.contentWindow.postMessage(
-              { type: "changeLogo", logoUrl },
-              "*"
-            );
-          }
-        }
-      }
-    };
-
-    window.addEventListener("message", receiveMessage);
-    return () => {
-      window.removeEventListener("message", receiveMessage);
-    };
-  }, [Color, fontFamily, logoUrl]);
-
-  useEffect(() => {
-    if (showIframe) {
-      const iframe = iframeRef.current;
-      if (iframe) {
-        iframe.addEventListener("load", onLoadMsg);
-      }
-      return () => {
-        if (iframe) {
-          iframe.removeEventListener("load", onLoadMsg);
-        }
-      };
-    }
-  }, [Color, fontFamily, logoUrl, selectedPage, showIframe]);
-
-  useEffect(() => {
-    if (fontFamily && Color.primary && Color.secondary) {
-      const iframe = iframeRef.current;
-      if (iframe && iframe.contentWindow) {
-        iframe.contentWindow.postMessage(
-          { type: "changeFont", font: fontFamily },
-          "*"
-        );
-        iframe.contentWindow.postMessage(
-          {
-            type: "changeGlobalColors",
-            primaryColor: Color.primary,
-            secondaryColor: Color.secondary,
-          },
-          "*"
-        );
-      }
-    }
-  }, [fontFamily, Color]);
-
-  useEffect(() => {
-    const receiveMessage = (event: MessageEvent) => {
-      if (event.data.type === "oldNewContent") {
-        const pageName = selectedPage || "unknown";
-        const oldNewContent = event.data.content;
-
-        updateBackEndContent(pageName, oldNewContent);
-      }
-    };
-
-    window.addEventListener("message", receiveMessage);
-
-    return () => {
-      window.removeEventListener("message", receiveMessage);
-    };
-  }, [selectedPage]);
-
-  const updateBackEndContent = (pageName, oldNewContent) => {
-    setContentForBackend((prevContent) => {
-      const existingPageIndex = prevContent.findIndex(
-        (entry) => Object.keys(entry)[0] === pageName
-      );
-
-      if (existingPageIndex !== -1) {
-        const updatedContent = [...prevContent];
-        updatedContent[existingPageIndex] = { [pageName]: oldNewContent };
-        return updatedContent;
-      } else {
-        return [...prevContent, { [pageName]: oldNewContent }];
-      }
-    });
-  };
+  }, [Color, fontFamily, selectedPage, storeHtmlContent, handleOldNewContent]);
 
   const handleImportSelectedPage = () => {
     navigate("/processing", { state: { pageName: selectedPage } });

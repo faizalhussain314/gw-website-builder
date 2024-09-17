@@ -54,7 +54,6 @@ function Design() {
         { type: "scroll", scrollAmount: 20 },
         "*"
       );
-      console.log("scroll started");
     };
 
     const handleMouseLeave = (iframe: HTMLIFrameElement) => {
@@ -90,14 +89,12 @@ function Design() {
   }, [dispatch, templateList]);
 
   const handleMouseEnter = (event) => {
-    console.log("event mouse triggered from");
     const iframe = event.currentTarget.querySelector("iframe");
     if (iframe) {
       iframe.contentWindow.postMessage(
         { type: "scroll", scrollAmount: 20 },
         "*"
       );
-      console.log("scrolling event triggered");
     }
   };
   const handleMouseLeave = (event) => {

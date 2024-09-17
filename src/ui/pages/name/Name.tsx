@@ -1,14 +1,19 @@
+import React, { useState, useEffect } from "react";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import MainLayout from "../../Layouts/MainLayout";
 import { useDispatch, useSelector } from "react-redux";
-import { useState, useEffect } from "react";
 import { setBusinessName } from "../../../Slice/activeStepSlice";
 import { RootState } from "../../../store/store";
+import useDomainEndpoint from "../../../hooks/useDomainEndpoint";
+import { getBusinessName } from "../../../infrastructure/api/wordpress-api/name/getBusinessName.api";
+import { updateBusinessName } from "../../../infrastructure/api/wordpress-api/name/updateBusinessName.api";
 
 function Name() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { getDomainFromEndpoint } = useDomainEndpoint();
+
   const category = useSelector((state: RootState) => state.userData.category);
   const initialName = useSelector(
     (state: RootState) => state.userData.businessName
@@ -17,16 +22,24 @@ function Name() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (initialName) {
-      setName(initialName);
-    }
-  }, [initialName]);
+    const fetchInitialName = async () => {
+      const content = await getBusinessName(getDomainFromEndpoint);
+      if (content && content.businessName) {
+        setName(content.businessName);
+        dispatch(setBusinessName(content.businessName));
+      }
+    };
 
-  const handleChange = (event: { target: { value: string } }) => {
+    fetchInitialName();
+  }, [dispatch, getDomainFromEndpoint]);
+
+  const handleChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const newName = event.target.value;
     setName(newName);
     if (newName) {
       setError(null);
+      await updateBusinessName(newName, getDomainFromEndpoint); // Store content on every change
+      dispatch(setBusinessName(newName));
     }
   };
 
@@ -42,10 +55,8 @@ function Name() {
   const handlePrevious = () => {
     if (name) {
       dispatch(setBusinessName(name));
-      navigate("/category");
-    } else {
-      navigate("/category");
     }
+    navigate("/category");
   };
 
   return (
@@ -60,7 +71,7 @@ function Name() {
               Please be as descriptive as you can. Share details such as a brief
               about the {category}, specialty, menu, etc.
             </span>
-            <form>
+            <form onSubmit={(e) => e.preventDefault()}>
               <input
                 type="text"
                 value={name}

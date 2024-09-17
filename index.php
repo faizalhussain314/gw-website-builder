@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin Name: AI Website Builder - Gravity Write latest
+ * Plugin Name: AI Website Builder - Gravity Write 1
  * Description: A Website Builder made by WordPress.
  * Version: 1.0.0
  * Author: Gravity Write
@@ -23,6 +23,10 @@ require_once(plugin_dir_path(__FILE__) . 'install_plugins.php');
 require_once(plugin_dir_path(__FILE__) . 'import-header-footer.php'); 
 require_once(plugin_dir_path(__FILE__) . 'elementor-import.php'); 
 require_once(plugin_dir_path(__FILE__) . 'save-form-details.php'); 
+require_once(plugin_dir_path(__FILE__) . 'import-menus.php');
+require_once(plugin_dir_path(__FILE__) . 'create-menu.php');
+require_once(plugin_dir_path(__FILE__) . 'update-ai-content.php');
+require_once(plugin_dir_path(__FILE__) . 'replace-user-details.php');
 
 if (!defined('ABSPATH')) {
     exit; // Exit if accessed directly.
@@ -33,7 +37,7 @@ register_activation_hook(__FILE__, 'create_required_tables');
 
 function create_required_tables() {
     global $wpdb;
-    $table_name = $wpdb->prefix . 'gw_user_form_details';  // Using WPDB prefix to set the table name
+    $table_name = $wpdb->prefix . 'gw_user_form_details';  
 
     // Check if the table already exists
     if ($wpdb->get_var("SHOW TABLES LIKE '{$table_name}'") != $table_name) {
@@ -58,64 +62,201 @@ function create_required_tables() {
         ) $charset_collate;";
         dbDelta($sql);
     }
+
+    // Table for user form details
+    $table_name1 = $wpdb->prefix . 'gw_user_form_details';  
+    // Table for imported posts
+    $table_name2 = $wpdb->prefix . 'imported_posts';  
+    // Table for menu details
+    $table_name3 = $wpdb->prefix . 'menu_details';  
+    $table_name4 = $wpdb->prefix . 'menu_item_details';  
+    $table_name5 = $wpdb->prefix . 'generated_content'; 
+    $table_name6 = $wpdb->prefix . 'generated_html_content'; 
+
+    $charset_collate = $wpdb->get_charset_collate();
+
+    // SQL to create the user form details table
+    $sql1 = "CREATE TABLE $table_name1 (
+        id mediumint(9) NOT NULL AUTO_INCREMENT,
+        businessName text,
+        description1 text,
+        description2 text,
+        images longtext, 
+        designs longtext,  
+        templateid mediumint(9),
+        templatename text,
+        logo text,
+        category text, 
+        content longtext, 
+        color longtext, 
+        font text,
+        templateList longtext, 
+        PRIMARY KEY (id)
+    ) $charset_collate;";
+
+    // SQL to create the imported posts table
+    $sql2 = "CREATE TABLE $table_name2 (
+        post_id INT NOT NULL AUTO_INCREMENT,
+        post_type VARCHAR(255),
+        template_name VARCHAR(255),
+        page_name VARCHAR(255),
+        PRIMARY KEY (post_id)
+    ) $charset_collate;";
+
+    // SQL to create the menu details table
+    $sql3 = "CREATE TABLE $table_name3 (
+        menu_id INT NOT NULL AUTO_INCREMENT,
+        menu_name VARCHAR(255),
+        PRIMARY KEY (menu_id)
+    ) $charset_collate;";
+    $sql4 = "CREATE TABLE $table_name4 (
+        menu_id INT NOT NULL AUTO_INCREMENT,
+        menu_name VARCHAR(255),
+        menu_item_order VARCHAR(255),
+        PRIMARY KEY (menu_id)
+    ) $charset_collate;";
+
+$sql5 = "CREATE TABLE $table_name5 (
+    id INT NOT NULL AUTO_INCREMENT,
+    page_name VARCHAR(255) NOT NULL,
+    template_name VARCHAR(255) NOT NULL,
+    version_name VARCHAR(255) NOT NULL,
+    json_content LONGTEXT NOT NULL,
+    PRIMARY KEY (id)
+) $charset_collate;";
+$sql6 = "CREATE TABLE $table_name6 (
+    id INT NOT NULL AUTO_INCREMENT,
+    version_name VARCHAR(255),
+    page_name VARCHAR(255),
+    template_name VARCHAR(255),
+    html_data LONGTEXT,
+    PRIMARY KEY (id)
+) $charset_collate;";
+
+    // Check if the tables exist and create them if not
+    if ($wpdb->get_var("SHOW TABLES LIKE '{$table_name1}'") != $table_name1) {
+        dbDelta($sql1);
+    }
+    if ($wpdb->get_var("SHOW TABLES LIKE '{$table_name2}'") != $table_name2) {
+        dbDelta($sql2);
+    }
+    if ($wpdb->get_var("SHOW TABLES LIKE '{$table_name3}'") != $table_name3) {
+        dbDelta($sql3);
+    }
+    if ($wpdb->get_var("SHOW TABLES LIKE '{$table_name4}'") != $table_name4) {
+        dbDelta($sql4);
+    }
+    if ($wpdb->get_var("SHOW TABLES LIKE '{$table_name5}'") != $table_name5) {
+        dbDelta($sql5);
+    }
+    if ($wpdb->get_var("SHOW TABLES LIKE '{$table_name6}'") != $table_name6) {
+        dbDelta($sql6);
+    }
 }
 
 // Register REST API routes
 add_action('rest_api_init', function () {
-    // Register the install plugin endpoint
+    
     register_rest_route('custom/v1', '/install-plugin', array(
-        'methods' => WP_REST_Server::CREATABLE, // This is better as it includes POST, PUT, etc.
+        'methods' => WP_REST_Server::CREATABLE, 
         'callback' => 'custom_xml_importer_install_and_activate_plugins',
-        'permission_callback' => '__return_true', // Ensure the callback always runs
+        'permission_callback' => '__return_true' 
     ));
-    // Register the install theme endpoint
+   
     
     register_rest_route('custom/v1', '/install-theme', array(
         'methods' => WP_REST_Server::CREATABLE, 
         'callback' => 'custom_xml_importer_install_and_activate_theme',
-        'permission_callback' => '__return_true', 
+        'permission_callback' => '__return_true' 
     ));
     register_rest_route('custom/v1', '/install-posts', array(
         'methods' => WP_REST_Server::CREATABLE, 
         'callback' => 'import_posts_from_url',
-        'permission_callback' => '__return_true', 
+        'permission_callback' => '__return_true' 
     ));
     register_rest_route('custom/v1', '/install-pages', array(
         'methods' => WP_REST_Server::CREATABLE, 
         'callback' => 'import_posts_from_url',
-        'permission_callback' => '__return_true',
+        'permission_callback' => '__return_true'
     ));
     register_rest_route('custom/v1', '/install-forms', array(
         'methods' => WP_REST_Server::CREATABLE,
         'callback' => 'import_posts_from_url',
-        'permission_callback' => '__return_true', 
+        'permission_callback' => '__return_true' 
     ));
     register_rest_route('custom/v1', '/install-elementor-kit', array(
         'methods' => WP_REST_Server::CREATABLE,
         'callback' => 'import_elementor_kit',
-        'permission_callback' => '__return_true', 
+        'permission_callback' => '__return_true' 
     ));
 
     register_rest_route('custom/v1', '/install-elementor-settings', array(
         'methods' => WP_REST_Server::CREATABLE,
         'callback' => 'import_elementor_settings',
-        'permission_callback' => '__return_true', // Ensure the callback always runs
+        'permission_callback' => '__return_true' 
     ));
     register_rest_route('custom/v1', '/install-header-footer', array(
         'methods' => WP_REST_Server::CREATABLE,
         'callback' => 'import_header_footer_data',
-        'permission_callback' => '__return_true', // Ensure the callback always runs
+        'permission_callback' => '__return_true' 
     ));
     register_rest_route('custom/v1', '/update-form-details', array(
         'methods' => WP_REST_Server::CREATABLE,
         'callback' => 'update_form_details',
-        'permission_callback' => '__return_true',
+        'permission_callback' => '__return_true'
     ));
     register_rest_route('custom/v1', '/get-form-details', array(
         'methods' => WP_REST_Server::CREATABLE, 
         'callback' => 'fetch_form_details',
         'permission_callback' =>'__return_true'
     ));
+    register_rest_route('custom/v1', '/import-menus-css', array(
+        'methods' => WP_REST_Server::CREATABLE,
+        'callback' => 'wpse_import_menus_css',
+        'permission_callback' => '__return_true'  // Ensure to implement proper permission checks in production
+    ));
+    register_rest_route('custom/v1', '/import-sitelogo', array(
+        'methods' => WP_REST_Server::CREATABLE,
+        'callback' => 'import_site_logo',
+        'permission_callback' => '__return_true'  // Ensure to implement proper permission checks in production
+    ));
+    register_rest_route('custom/v1', '/replace-user-content', array(
+    'methods' => WP_REST_Server::CREATABLE,
+    'callback' => 'update_user_details_data',
+    'permission_callback' => '__return_true'
+    ));
+
+    register_rest_route('custom/v1', '/regenerate-global-css', array(
+        'methods' => WP_REST_Server::CREATABLE,
+        'callback' => 'regenerate_global_elementor_css',
+        'permission_callback' => '__return_true'
+    ));
+    register_rest_route('custom/v1', '/save-generated-data', array(
+        'methods' => WP_REST_Server::CREATABLE,
+        'callback' => 'save_generated_data',
+        'permission_callback' => '__return_true',
+    ));
+    register_rest_route('custom/v1', '/save-generated-html-data', array(
+        'methods' => WP_REST_Server::CREATABLE,
+        'callback' => 'save_generated_html_data',
+        'permission_callback' => '__return_true'
+    ));
+    register_rest_route('custom/v1', '/get-saved-html-data', array(
+        'methods' => WP_REST_Server::CREATABLE,
+        'callback' => 'fetch_html_data',
+        'permission_callback' => '__return_true'
+    ));
+    register_rest_route('custom/v1', '/get-html-data-details', array(
+        'methods' => WP_REST_Server::CREATABLE,  // Using READABLE as this is a GET operation
+        'callback' => 'fetch_html_data_details',
+        'permission_callback' => '__return_true'
+    ));
+    /*
+    register_rest_route('custom/v1', '/update-content', array(
+        'methods' => WP_REST_Server::CREATABLE,
+        'callback' => 'update_elementor_page_content_directly',
+        'permission_callback' => '__return_true'  // Always secure your endpoints!
+    ));*/
 
     // Register the attempt endpoint
     // register_rest_route('custom/v1', '/attempt', array(
@@ -124,17 +265,221 @@ add_action('rest_api_init', function () {
     //     'permission_callback' => '__return_true',
     // ));
 });
+function fetch_html_data_details(WP_REST_Request $request) {
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'generated_html_content';
 
+    // Query to select distinct combinations of version_name, page_name, and template_name
+    $query = "SELECT DISTINCT version_name, page_name, template_name FROM $table_name";
+
+    $results = $wpdb->get_results($query, ARRAY_A);
+
+    if (!empty($results)) {
+        // Optionally, you could manipulate the structure of the returned JSON here
+        return new WP_REST_Response($results, 200);
+    } else {
+        return new WP_Error('no_data', 'No HTML metadata found', ['status' => 404]);
+    }
+}
+
+function fetch_html_data($request) {
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'generated_html_content';
+
+    $version_name = sanitize_text_field($request->get_param('version_name'));
+    $page_name = sanitize_text_field($request->get_param('page_name'));
+    $template_name = sanitize_text_field($request->get_param('template_name'));
+
+    $query = $wpdb->prepare(
+        "SELECT html_data FROM $table_name WHERE version_name = %s AND page_name = %s AND template_name = %s",
+        $version_name, $page_name, $template_name
+    );
+
+    $results = $wpdb->get_results($query, ARRAY_A);
+
+    if (!empty($results)) {
+        foreach ($results as $index => $result) {
+            // First, decode any HTML entities. This prevents double encoding issues.
+            $clean_html = html_entity_decode($result['html_data']);
+
+            // Remove unwanted characters
+            $clean_html = str_replace(array("\n", "\t", "&quot;"), '', $clean_html);
+
+            $results[$index]['html_data'] = $clean_html;
+        }
+        return new WP_REST_Response($results, 200);
+    } else {
+        return new WP_Error('no_data', 'No HTML data found for the given criteria', ['status' => 404]);
+    }
+}
+
+function save_generated_html_data($request) {
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'generated_html_content'; 
+
+    $version_name = sanitize_text_field($request->get_param('version_name'));
+    $page_name = sanitize_text_field($request->get_param('page_name'));
+    $template_name = sanitize_text_field($request->get_param('template_name'));
+    $html_data = $request->get_param('html_data'); // Assuming HTML data is passed as a string
+
+    $data = array(
+        'version_name' => $version_name,
+        'page_name' => $page_name,
+        'template_name' => $template_name,
+        'html_data' => $html_data
+    );
+
+    $format = array('%s', '%s', '%s', '%s');
+    $wpdb->insert($table_name, $data, $format);
+
+    if ($wpdb->insert_id) {
+        return new WP_REST_Response(['success' => true, 'id' => $wpdb->insert_id], 200);
+    } else {
+        return new WP_Error('db_error', 'Failed to save HTML data', ['status' => 500]);
+    }
+}
+function save_generated_data(WP_REST_Request $request) {
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'generated_content';
+
+    // Retrieve data from the request
+    $page_name = $request->get_param('page_name');
+    $template_name = $request->get_param('template_name');
+    $version_name = $request->get_param('version_name');
+    $json_content = $request->get_param('json_content');
+
+    // Insert data into the custom table
+    $result = $wpdb->insert(
+        $table_name,
+        array(
+            'page_name' => $page_name,
+            'template_name' => $template_name,
+            'version_name' => $version_name,
+            'json_content' => $json_content
+        ),
+        array('%s', '%s', '%s', '%s')
+    );
+
+    if ($result) {
+        
+        return new WP_REST_Response([
+            'success' => true,
+            'message' => 'Data successfully saved'
+        ], 200); 
+    } else {
+        return new WP_REST_Response([
+            'success' => false,
+            'message' => 'Failed to save data'
+        ], 500); 
+    }
+}
+function regenerate_global_elementor_css() {
+    if (!class_exists('\Elementor\Plugin')) {
+        return new WP_REST_Response(['success' => false, 'message' => 'Elementor is not active'], 500);
+    }
+
+    $elementor = \Elementor\Plugin::instance()->files_manager->clear_cache();
+    
+    return new WP_REST_Response([
+        'success' => true,
+        'message' => 'Elementor files regenerated successfully'
+    ], 200);
+}
+function import_site_logo(WP_REST_Request $request) {
+    $params = $request->get_json_params();
+    $image_url = $params['fileurl'] ?? '';
+
+    // Convert the image URL to an attachment ID
+    $image_id = attachment_url_to_postid($image_url);
+    
+    if ($image_id) {
+        // Set the image as the custom logo
+        set_theme_mod('custom_logo', $image_id);
+        return new WP_REST_Response([
+            'success' => true,
+            'message' => 'Site logo updated successfully.'
+        ], 200);
+    } else {
+        // Handle the case where the image is not found in the media library
+        return new WP_REST_Response([
+            'success' => false,
+            'message' => 'Failed to find the image in the media library. Make sure the image is uploaded and try again.'
+        ], 404);  // Using 404 Not Found or 400 Bad Request could be appropriate here
+    }
+}
+// Callback function for the API endpoint
+function wpse_import_menus_css(WP_REST_Request $request) {
+    $params = $request->get_json_params();
+    $file_url = $params['fileurl'] ?? '';
+
+    if (empty($file_url)) {
+        return new WP_REST_Response([
+            'success' => false,
+            'message' => 'No file URL provided'
+        ], 400); // Bad Request
+    }
+
+    // Prepare the local file path
+    $plugin_dir = plugin_dir_path(__FILE__);
+    $local_file_path = $plugin_dir . basename($file_url);
+
+    // Download the JSON file
+    if (!download_file($file_url, $local_file_path)) {
+        return new WP_REST_Response([
+            'success' => false,
+            'message' => 'Failed to download the file from: ' . $file_url
+        ], 500); // Internal Server Error
+    }
+
+    // Load the JSON file from local path
+    $json_data = file_get_contents($local_file_path);
+    $data = json_decode($json_data, true);
+
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        return new WP_REST_Response([
+            'success' => false,
+            'message' => 'Invalid JSON format'
+        ], 400); // Bad Request
+    }
+
+    $result = wpse_process_import_data($data);
+    if ($result) {
+        return new WP_REST_Response([
+            'success' => true,
+            'message' => 'Menus and CSS imported successfully'
+        ], 200); // OK
+    } else {
+        return new WP_REST_Response([
+            'success' => false,
+            'message' => 'Failed to import menus and CSS'
+        ], 500); // Internal Server Error
+    }
+}
 function custom_xml_importer_install_and_activate_plugins(WP_REST_Request $request){
-    // Retrieve plugin data sent in the request
+    
     $plugins = $request->get_param('plugins');
 
     if (empty($plugins)) {
-        return new WP_Error('no_plugins', 'No plugins specified', array('status' => 400));
+        
+        return new WP_REST_Response([
+            'success' => false,
+            'message' => 'No Plugins Specified'
+        ], 400); 
     }
-
-    // Call the function to install and activate plugins
-    return install_plugins($plugins);
+    $result=install_plugins($plugins);
+    if (!$result['success']) {
+        return new WP_REST_Response([
+            'success' => false,
+            'message' => $result['error']
+        ], 500); 
+    }
+    
+    
+    return new WP_REST_Response([
+        'success' => true,
+        'message' => $result['message']
+    ], 200); 
+    
 }
 function custom_xml_importer_install_and_activate_theme(WP_REST_Request $request) {
     $result = install_theme();
@@ -142,23 +487,24 @@ function custom_xml_importer_install_and_activate_theme(WP_REST_Request $request
         return new WP_REST_Response([
             'success' => false,
             'message' => $result['error']
-        ], 500); // Return HTTP status 500 if there's an error
+        ], 500); 
     }
+    
     
     return new WP_REST_Response([
         'success' => true,
         'message' => $result['message']
-    ], 200); // Return HTTP status 200 if successful
+    ], 200); 
 }
 function import_posts_from_url(WP_REST_Request $request) {
     $params = $request->get_json_params();
-    $file_url = $params['xml_url'] ?? null;
+    $file_url = $params['fileurl'] ?? null;
 
     if (!$file_url) {
         return new WP_REST_Response([
             'success' => false,
             'message' => 'No XML file URL provided'
-        ], 400); // Bad Request
+        ], 400); 
     }
 
     $import_results = import_posts($file_url);
@@ -174,32 +520,32 @@ function import_posts_from_url(WP_REST_Request $request) {
             'success' => false,
             'message' => 'Failed to import posts',
             'data' => $import_results
-        ], 500); // Internal Server Error
+        ], 500); 
     }
 }
 function import_header_footer_data(WP_REST_Request $request){
     $params = $request->get_json_params();
-    $file_url = $params['xml_url'] ?? null;
+    $file_url = $params['fileurl'] ?? null;
 
     if (!$file_url) {
         return new WP_REST_Response([
             'success' => false,
             'message' => 'No XML file URL provided'
-        ], 400); // Bad Request
+        ], 400); 
     }
 
     $import_results = import_header_footer($file_url);
 
-    if ($import_results) {
+    if ($import_results['success']) {
         return new WP_REST_Response([
             'success' => true,
-            'message' => 'Header and footer data imported successfully.'
-        ], 200); // OK
+            'message' => $import_results['message']
+        ], 200); 
     } else {
         return new WP_REST_Response([
             'success' => false,
-            'message' => 'Failed to import header and footer data.'
-        ], 500); // Internal Server Error
+            'message' => $import_results['message']
+        ], 500); 
     }
 }
 
@@ -212,7 +558,7 @@ function import_elementor_kit(WP_REST_Request $request) {
         return new WP_REST_Response([
             'success' => false,
             'message' => 'No file URL provided'
-        ], 400); // Bad Request
+        ], 400); 
     }
 
     $result = install_elementor_kits($file_url);
@@ -220,12 +566,12 @@ function import_elementor_kit(WP_REST_Request $request) {
         return new WP_REST_Response([
             'success' => true,
             'message' => 'Elementor kit installed successfully'
-        ], 200); // OK
+        ], 200); 
     } else {
         return new WP_REST_Response([
             'success' => false,
             'message' => 'Failed to install Elementor kit'
-        ], 500); // Internal Server Error
+        ], 500); 
     }
 }
 function import_elementor_settings(WP_REST_Request $request) {
@@ -235,8 +581,7 @@ function import_elementor_settings(WP_REST_Request $request) {
     if (!$file_url) {
         return new WP_REST_Response([
             'success' => false,
-            'message' => 'No file URL provided'
-        ], 400); // Bad Request
+        ], 400); 
     }
 
     $result = install_elementor_kit_settings($file_url);
@@ -244,17 +589,17 @@ function import_elementor_settings(WP_REST_Request $request) {
         return new WP_REST_Response([
             'success' => true,
             'message' => 'Elementor settings imported successfully.'
-        ], 200); // OK
+        ], 200); 
     } else {
         return new WP_REST_Response([
             'success' => false,
             'message' => $result
-        ], 500); // Internal Server Error
+        ], 500); 
     }
 }
 function update_form_details(WP_REST_Request $request) {
     $params = $request->get_json_params();
-    $result = save_or_update_form_details($params); // Call to a separate function to handle DB operations
+    $result = save_or_update_form_details($params); 
 
     if ($result === true) {
         return new WP_REST_Response(['success' => true, 'message' => 'Data saved successfully'], 200);
@@ -263,20 +608,20 @@ function update_form_details(WP_REST_Request $request) {
     }
 }
 function fetch_form_details(WP_REST_Request $request) {
-    // Extract fields from the request JSON body
+    
     $fields = $request->get_json_params()['fields'] ?? [];
     $field_list = is_array($fields) ? $fields : explode(',', $fields);
 
-    // Call the function that performs the database query
+    
     $result = get_form_details_from_database($field_list);
 
     if (!empty($result)) {
-        return new WP_REST_Response($result, 200); // Return successful response with data
+        return new WP_REST_Response($result, 200); 
     } else {
         return new WP_REST_Response([
             'success' => false,
             'message' => 'No data found'
-        ], 404); // Return an error if no data is found
+        ], 404); 
     }
 }
 
@@ -289,22 +634,24 @@ class GW_Website_Builder {
         add_action('rest_api_init', array($this, 'register_api_endpoints'));
         add_action('after_setup_theme', array($this, 'create_gravity_write_ai_builder_table'));
         add_action('after_setup_theme', array($this, 'alter_gravity_write_ai_builder_table'));
+        
+        
     }
 
     public function add_admin_menu() {
         add_menu_page(
             'GW Website Builder', // Page title
             'GW Website Builder', // Menu title
-            'manage_options',     
-            'gw-website-builder', 
-            array($this, 'settings_page_html'), 
+            'manage_options',     // Capability
+            'gw-website-builder', // Menu slug
+            array($this, 'settings_page_html'), // Callback function
             'dashicons-admin-generic', // Icon URL
             20 // Position
         );
     }
 
     public function settings_page_html() {
-        
+        // Check user capabilities
         if (!current_user_can('manage_options')) {
             return;
         }
@@ -328,10 +675,9 @@ class GW_Website_Builder {
         wp_deregister_style('l10n');
 
 
-        wp_enqueue_script('lodash', 'https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js', array(), '4.17.21', true);
+
         // Define the paths to the expected JS and CSS files
         $script_path = plugin_dir_path(__FILE__) . 'dist/mainfile.js';
-       
         $style_path = plugin_dir_path(__FILE__) . 'dist/mainfile.css';
     
         // Check if the JS file exists
@@ -389,6 +735,32 @@ class GW_Website_Builder {
 
         return $asset_path;
     }
+    // Function to handle image upload
+function upload_custom_logo(WP_REST_Request $request) {
+    require_once(ABSPATH . 'wp-admin/includes/media.php');
+    require_once(ABSPATH . 'wp-admin/includes/file.php');
+    require_once(ABSPATH . 'wp-admin/includes/image.php');
+    // Check if the files are set and are not empty
+    if (empty($_FILES) || !isset($_FILES['image'])) {
+        return new WP_Error('no_image', "No image file specified", array('status' => 400));
+    }
+    // Handle the uploaded file
+    $file_handler = 'image';  // That’s the name attribute from your React form
+    $attachment_id = media_handle_upload($file_handler, 0);
+    if (is_wp_error($attachment_id)) {
+        return $attachment_id; // Return the error details
+    }
+    // Get the URL of the uploaded image
+    $image_url = wp_get_attachment_url($attachment_id);
+    if (!$image_url) {
+        return new WP_Error('upload_failed', 'Upload successful but could not retrieve image URL.', array('status' => 404));
+    }
+    // Return the attachment ID and URL
+    return new WP_REST_Response(array(
+        'id'  => $attachment_id,
+        'url' => $image_url,
+    ), 200);
+}
 
     public function register_api_endpoints() {
         // Register the content endpoint
@@ -551,6 +923,8 @@ class GW_Website_Builder {
         return new WP_REST_Response('Status updated successfully', 200);
     }
 
+    
+
     public function handle_post_get_update_request(WP_REST_Request $request, $table_name, $data, $fields) {
         // Get the allowed domain dynamically
         $allowed_domain = home_url();
@@ -628,35 +1002,35 @@ class GW_Website_Builder {
         }
     }
 
-    public function upload_custom_logo(WP_REST_Request $request) {
-        require_once(ABSPATH . 'wp-admin/includes/media.php');
-        require_once(ABSPATH . 'wp-admin/includes/file.php');
-        require_once(ABSPATH . 'wp-admin/includes/image.php');
+    // public function upload_custom_logo(WP_REST_Request $request) {
+    //     require_once(ABSPATH . 'wp-admin/includes/media.php');
+    //     require_once(ABSPATH . 'wp-admin/includes/file.php');
+    //     require_once(ABSPATH . 'wp-admin/includes/image.php');
 
-        // Check if the files are set and are not empty
-        if (empty($_FILES) || !isset($_FILES['image'])) {
-            return new WP_Error('no_image', 'No image file specified', array('status' => 400));
-        }
+    //     // Check if the files are set and are not empty
+    //     if (empty($_FILES) || !isset($_FILES['image'])) {
+    //         return new WP_Error('no_image', 'No image file specified', array('status' => 400));
+    //     }
 
-        // Handle the uploaded file
-        $file_handler = 'image';  // That’s the name attribute from your React form
-        $attachment_id = media_handle_upload($file_handler, 0);
-        if (is_wp_error($attachment_id)) {
-            return $attachment_id; // Return the error details
-        }
+    //     // Handle the uploaded file
+    //     $file_handler = 'image';  // That’s the name attribute from your React form
+    //     $attachment_id = media_handle_upload($file_handler, 0);
+    //     if (is_wp_error($attachment_id)) {
+    //         return $attachment_id; // Return the error details
+    //     }
 
-        // Get the URL of the uploaded image
-        $image_url = wp_get_attachment_url($attachment_id);
-        if (!$image_url) {
-            return new WP_Error('upload_failed', 'Upload successful but could not retrieve image URL.', array('status' => 404));
-        }
+    //     // Get the URL of the uploaded image
+    //     $image_url = wp_get_attachment_url($attachment_id);
+    //     if (!$image_url) {
+    //         return new WP_Error('upload_failed', 'Upload successful but could not retrieve image URL.', array('status' => 404));
+    //     }
 
-        // Return the attachment ID and URL
-        return new WP_REST_Response(array(
-            'id'  => $attachment_id,
-            'url' => $image_url,
-        ), 200);
-    }
+    //     // Return the attachment ID and URL
+    //     return new WP_REST_Response(array(
+    //         'id'  => $attachment_id,
+    //         'url' => $image_url,
+    //     ), 200);
+    // }
 
     public function create_gravity_write_ai_builder_table() {
         global $wpdb;

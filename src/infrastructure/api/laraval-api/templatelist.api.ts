@@ -1,4 +1,4 @@
-import { templatelist } from "../../types/Preview.type";
+import { templatelist } from "../../../types/Preview.type";
 
 const API_URL = import.meta.env.VITE_API_BACKEND_URL;
 

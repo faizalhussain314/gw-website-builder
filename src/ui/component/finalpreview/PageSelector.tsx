@@ -74,11 +74,18 @@ const PageSelector: React.FC<Props> = ({
         {pages.map((page) => (
           <div
             key={page.name}
-            className={`rounded-lg p-2 mb-2 ${
+            className={`rounded-lg p-2 mb-2 cursor-pointer ${
               selectedPage === page.name
                 ? "border-palatinate-blue-500 border-2 bg-palatinate-blue-50"
                 : ""
             }`}
+            onClick={() => {
+              if (isContentGenerating) {
+                showWarningToast();
+              } else {
+                handlePageClick(page.name);
+              }
+            }}
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center">
@@ -107,7 +114,7 @@ const PageSelector: React.FC<Props> = ({
                     {page.status}
                   </span>
                 )}
-                {(page.status === "Generated" || selectedPage === page.name) &&
+                {/* {(page.status === "Generated" || selectedPage === page.name) &&
                   page.name !== "Blog" &&
                   page.name !== "Contact" && (
                     <CachedIcon
@@ -122,7 +129,7 @@ const PageSelector: React.FC<Props> = ({
                         }
                       }}
                     />
-                  )}
+                  )} */}
 
                 {selectedPage === page.name ? (
                   <ExpandLessIcon
@@ -204,7 +211,7 @@ const PageSelector: React.FC<Props> = ({
       </div>
       <div className="flex flex-col items-center justify-center absolute bottom-0 w-[85%] mb-4">
         <div className="mb-4 w-full flex justify-between">
-          <button
+          {/* <button
             className={`w-full py-3 px-6 rounded-md mr-2 border-2 ${
               previousClicked
                 ? "border-palatinate-blue-500 text-palatinate-blue-500"
@@ -234,7 +241,7 @@ const PageSelector: React.FC<Props> = ({
             disabled={isContentGenerating}
           >
             Next
-          </button>
+          </button> */}
         </div>
         <button
           className={`tertiary w-full text-white py-3 px-8 rounded-md mb-4 ${

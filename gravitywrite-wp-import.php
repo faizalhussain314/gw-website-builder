@@ -296,6 +296,15 @@ class GW_Import extends WP_Importer {
 	
 			// Import Elementor data if available
 			$this->import_elementor_data($post_id, $post);
+			$imported_post_data = [
+				'post_id'       => $post_id,
+				'post_type' =>$post['post_type'],
+				'template_name' => "our_template",
+				'page_name'=>$post['post_title'] // Assuming template_name is part of your data structure
+			];
+	        global $wpdb;
+			// Insert data into imported_posts
+			$wpdb->insert($wpdb->prefix . 'imported_posts', $imported_post_data);
 			update_post_meta($post_id,'_wp_page_template' , 'elementor_header_footer');
 		}
 	

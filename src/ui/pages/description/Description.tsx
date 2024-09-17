@@ -1,50 +1,77 @@
-import { Link, useNavigate } from "react-router-dom";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import React, { useState, useEffect } from "react";
 import MainLayout from "../../Layouts/MainLayout";
-import { useState, useEffect } from "react";
-import Sparkle from "../../../assets/sparkle.svg";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../../../store/store";
 import {
   setDescriptionOne,
   setDescriptionTwo,
 } from "../../../Slice/activeStepSlice";
-import { fetchDescriptionStream } from "../../../infrastructure/api/description.api";
+import { fetchDescriptionStream } from "../../../infrastructure/api/laraval-api/description.api";
+import useDomainEndpoint from "../../../hooks/useDomainEndpoint";
+import { getDescriptions } from "../../../infrastructure/api/wordpress-api/description/getDescriptions.api";
+import { updateDescriptions } from "../../../infrastructure/api/wordpress-api/description/updateDescriptions.api";
 
 function Description() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { getDomainFromEndpoint } = useDomainEndpoint();
+
   const businessName = useSelector(
     (state: RootState) => state.userData.businessName
   );
   const category = useSelector((state: RootState) => state.userData.category);
-  const initialDescription1 = useSelector(
-    (state: RootState) => state.userData.description1
-  );
-  const initialDescription2 = useSelector(
-    (state: RootState) => state.userData.description2
-  );
 
-  const [description1, setDescription1] = useState<string>(
-    initialDescription1 || ""
-  );
-  const [description2, setDescription2] = useState<string>(
-    initialDescription2 || ""
-  );
-  const [loader1, setLoader1] = useState<boolean>(false); // Loader for Description 1
-  const [loader2, setLoader2] = useState<boolean>(false); // Loader for Description 2
+  const [description1, setDescription1] = useState<string>("");
+  const [description2, setDescription2] = useState<string>("");
+  const [loader1, setLoader1] = useState<boolean>(false);
+  const [loader2, setLoader2] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [isAIWriting, setIsAIWriting] = useState<{ [key: number]: boolean }>({
+    1: false,
+    2: false,
+  });
+
+  // Fetch content from the database on component mount
+  useEffect(() => {
+    const fetchInitialDescriptions = async () => {
+      const result = await getDescriptions(getDomainFromEndpoint);
+      if (result) {
+        if (result.description1) {
+          setDescription1(result.description1);
+          dispatch(setDescriptionOne(result.description1));
+        }
+        if (result.description2) {
+          setDescription2(result.description2);
+          dispatch(setDescriptionTwo(result.description2));
+        }
+      }
+    };
+
+    fetchInitialDescriptions();
+  }, [dispatch, getDomainFromEndpoint]);
 
   useEffect(() => {
-    setDescription1(initialDescription1 || "");
-    setDescription2(initialDescription2 || "");
-  }, [initialDescription1, initialDescription2]);
+    if (description1 && !isAIWriting[1]) {
+      updateDescriptions("description1", description1, getDomainFromEndpoint);
+    }
+  }, [description1, isAIWriting, getDomainFromEndpoint]);
+
+  useEffect(() => {
+    if (description2 && !isAIWriting[2]) {
+      updateDescriptions("description2", description2, getDomainFromEndpoint);
+    }
+  }, [description2, isAIWriting, getDomainFromEndpoint]);
 
   const handleAIWrite = async (type: 1 | 2) => {
     if (type === 2 && !description1) {
       setError("Description 1 is required before generating Description 2.");
       return;
     }
+
+    setIsAIWriting((prev) => ({ ...prev, [type]: true }));
+
     if (type === 1) {
       setLoader1(true);
       setLoader2(false);
@@ -65,6 +92,7 @@ function Description() {
       const decoder = new TextDecoder("utf-8");
       let done = false;
       let buffer = "";
+      let completeDescription = "";
 
       while (!done) {
         const { value, done: readerDone } = await reader.read();
@@ -77,18 +105,41 @@ function Description() {
         for (const line of lines) {
           if (line.trim()) {
             try {
+              if (line === "data: [DONE]") {
+                if (type === 1) {
+                  updateDescriptions(
+                    "description1",
+                    completeDescription,
+                    getDomainFromEndpoint
+                  );
+                } else {
+                  updateDescriptions(
+                    "description2",
+                    completeDescription,
+                    getDomainFromEndpoint
+                  );
+                }
+
+                setIsAIWriting((prev) => ({ ...prev, [type]: false }));
+                setLoader1(false);
+                setLoader2(false);
+                return;
+              }
+
               const json = JSON.parse(line.replace(/^data: /, ""));
               const deltaContent = json.choices[0]?.delta?.content || "";
 
               if (type === 1) {
                 setDescription1((prev) => {
                   const newDescription = prev + deltaContent;
+                  completeDescription = newDescription;
                   dispatch(setDescriptionOne(newDescription));
                   return newDescription;
                 });
               } else {
                 setDescription2((prev) => {
                   const newDescription = prev + deltaContent;
+                  completeDescription = newDescription;
                   dispatch(setDescriptionTwo(newDescription));
                   return newDescription;
                 });
@@ -99,16 +150,15 @@ function Description() {
           }
         }
       }
-      setLoader1(false);
-      setLoader2(false);
     } catch (error) {
       console.error("Error fetching streaming data:", error);
+      setIsAIWriting((prev) => ({ ...prev, [type]: false }));
       setLoader1(false);
       setLoader2(false);
     }
   };
 
-  const setReduxValue = () => {
+  const setReduxValue = async () => {
     if (!description1 || !description2) {
       setError("Both descriptions are required.");
     } else {
@@ -134,6 +184,7 @@ function Description() {
           </div>
           <div className="mt-8">
             <form>
+              {/* Description 1 */}
               <div className="flex gap-1 items-center ml-[20px]">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -159,7 +210,7 @@ function Description() {
                 </label>
               </div>
               <textarea
-                className={`bg-white p-4 border h-[100px]  border-[rgba(205, 212, 219, 1)]  w-[720px] mt-4 ${
+                className={`bg-white p-4 border h-[100px] border-[rgba(205, 212, 219, 1)] w-[720px] mt-4 ${
                   error && "border-red-500 rounded-lg"
                 } focus:border-palatinate-blue-500 active:border-palatinate-blue-500 active:outline-palatinate-blue-500 focus:outline-palatinate-blue-500 ml-[50px]`}
                 value={description1}
@@ -170,18 +221,22 @@ function Description() {
                   if (error) setError(null);
                 }}
               />
+              {/* AI Write Button for Description 1 */}
               <div className="mt-2 flex items-center gap-2 text-app-secondary hover:text-app-accent-hover cursor-pointer ml-[50px]">
                 <div className="flex justify-between w-full">
                   <div
-                    className="flex gap-2  text-palatinate-blue-600 hover:text-palatinate-blue-800 "
+                    className="flex gap-2 text-palatinate-blue-600 hover:text-palatinate-blue-800"
                     onClick={() => handleAIWrite(1)}
                   >
-                    <img src="https://tours.mywpsite.org/wp-content/uploads/2024/08/sparkle.svg" />
+                    <img
+                      src="https://tours.mywpsite.org/wp-content/uploads/2024/08/sparkle.svg"
+                      alt="sparkle"
+                    />
                     <span className="font-semibold text-sm transition duration-150 ease-in-out">
                       Write Using AI
                     </span>
                     {loader1 && (
-                      <button type="button" className=" " disabled>
+                      <button type="button" disabled>
                         <svg
                           className="text-palatinate-blue-600 animate-spin"
                           viewBox="0 0 64 64"
@@ -210,6 +265,7 @@ function Description() {
                   </div>
                 </div>
               </div>
+              {/* Description 2 */}
               <div className="flex gap-1 items-center mt-6 ml-[20px]">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -248,18 +304,22 @@ function Description() {
                   if (error) setError(null);
                 }}
               />
+              {/* AI Write Button for Description 2 */}
               <div className="mt-2 flex items-center gap-2 text-app-secondary hover:text-app-accent-hover cursor-pointer ml-[50px]">
                 <div className="flex justify-between w-full">
                   <div
-                    className="flex gap-2  text-palatinate-blue-600 hover:text-palatinate-blue-800 "
+                    className="flex gap-2 text-palatinate-blue-600 hover:text-palatinate-blue-800"
                     onClick={() => handleAIWrite(2)}
                   >
-                    <img src="https://tours.mywpsite.org/wp-content/uploads/2024/08/sparkle.svg" />
+                    <img
+                      src="https://tours.mywpsite.org/wp-content/uploads/2024/08/sparkle.svg"
+                      alt="sparkle"
+                    />
                     <span className="font-semibold text-sm transition duration-150 ease-in-out">
                       Write Using AI
                     </span>
                     {loader2 && (
-                      <button type="button" className=" " disabled>
+                      <button type="button" disabled>
                         <svg
                           className="text-palatinate-blue-600 animate-spin"
                           viewBox="0 0 64 64"
