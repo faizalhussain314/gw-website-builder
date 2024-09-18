@@ -28,6 +28,17 @@ const FinalPreview: React.FC = () => {
   const [selectedPage, setSelectedPage] = useState<string | null>("Home");
   const [showGwLoader, setShowGwLoader] = useState(false);
   const [oldNewContent, setOldNewContent] = useState<Record<string, any>>({});
+  const [generatedPagesList, setGeneratedPagesList] = useState<Page[]>([]); // To store the list of generated pages
+  const [generatedPage, setGeneratedPage] = useState<any>({}); // To store generated page HTML content
+  const [pageContents, setPageContents] = useState<any>({});
+  const [showPopup, setShowPopup] = useState(false);
+  const [previousClicked, setPreviousClicked] = useState(false);
+  const [iframeSrc, setIframeSrc] = useState<string>("");
+  const [currentContent, setCurrentContent] = useState<string>("");
+  const [showUpgradePopup, setShowUpgradePopup] = useState(false);
+  const [showIframe, setShowIframe] = useState(true);
+  const [Loaded, setLoaded] = useState(false);
+  const [contentForBackend, setContentForBackend] = useState<any[]>([]);
 
   const businessName = useSelector(
     (state: RootState) => state.userData.businessName
@@ -49,17 +60,6 @@ const FinalPreview: React.FC = () => {
     { name: "Blog", status: "", slug: "blog", selected: false },
     { name: "Contact", status: "", slug: "contact", selected: false },
   ]);
-
-  const [pageContents, setPageContents] = useState<any>({});
-  const [showPopup, setShowPopup] = useState(false);
-  const [previousClicked, setPreviousClicked] = useState(false);
-  const [generatedPage, setGeneratedPage] = useState<any>({});
-  const [iframeSrc, setIframeSrc] = useState<string>("");
-  const [currentContent, setCurrentContent] = useState<string>("");
-  const [showUpgradePopup, setShowUpgradePopup] = useState(false);
-  const [showIframe, setShowIframe] = useState(true);
-  const [Loaded, setLoaded] = useState(false);
-  const [contentForBackend, setContentForBackend] = useState<any[]>([]);
 
   const navigate = useNavigate();
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -88,6 +88,42 @@ const FinalPreview: React.FC = () => {
     toast.success("Content generation complete!");
     updatePageStatus(selectedPage!, "Generated");
   };
+
+  // Fetch the list of already generated pages
+  const fetchGeneratedPages = useCallback(async () => {
+    try {
+      const endpoint = getDomainFromEndpoint(
+        "/wp-json/custom/v1/get-html-data-details"
+      );
+      if (!endpoint) {
+        console.error("Endpoint is not available.");
+        return;
+      }
+
+      const response = await axios.post(endpoint);
+
+      if (response.status === 200) {
+        setGeneratedPagesList(response.data);
+        response.data.forEach(
+          (page: {
+            page_name: string;
+            template_name: string;
+            version_name: string;
+          }) => {
+            fetchAndStorePageData(
+              page.page_name,
+              page.template_name,
+              page.version_name
+            );
+          }
+        );
+      } else {
+        console.error("Failed to fetch generated pages:", response);
+      }
+    } catch (error) {
+      console.error("Error fetching generated pages:", error);
+    }
+  }, [getDomainFromEndpoint]);
 
   const storeHtmlContent = useCallback(
     async (pageName: string, htmlContent: string) => {
@@ -119,6 +155,79 @@ const FinalPreview: React.FC = () => {
     [getDomainFromEndpoint, templateName]
   );
 
+  // Fetch and store HTML content for each page
+  const fetchAndStorePageData = useCallback(
+    async (pageName: string, templateName: string, versionName: string) => {
+      try {
+        const endpoint = getDomainFromEndpoint(
+          "/wp-json/custom/v1/get-saved-html-data"
+        );
+        if (!endpoint) {
+          console.error("Endpoint is not available.");
+          return;
+        }
+        const currentPageIndex = pages.findIndex(
+          (page) => page.name === selectedPage
+        );
+        const response = await axios.post(endpoint, {
+          version_name: versionName,
+          page_name: pageName,
+          template_name: templateName,
+        });
+
+        if (
+          response.status === 200 &&
+          response.data &&
+          response.data.length > 0
+        ) {
+          const rawHtmlContent = response.data[0].html_data;
+          const cleanedHtmlContent = rawHtmlContent
+            .replace(/^"(.*)"$/, "$1")
+            .replace(/\\"/g, '"')
+            .replace(/\\n/g, "")
+            .replace(/\\t/g, "")
+            .replace(/\\\\/g, "");
+
+          console.log("Cleaned HTML Content:", cleanedHtmlContent);
+
+          // Store the parsed HTML content in the state
+          setGeneratedPage((prevPages: any) => {
+            const updatedPages = {
+              ...prevPages,
+              spinner: false,
+              [pageName]: {
+                0: cleanedHtmlContent, // Store the parsed HTML
+              },
+            };
+            updatePageStatus(pageName, "Generated");
+
+            // If the fetched page matches the selected page, update the iframe source
+            if (selectedPage === pageName) {
+              updateIframeSrc(cleanedHtmlContent);
+              setShowIframe(false);
+              setIsPageGenerated(true);
+            }
+
+            return updatedPages;
+          });
+
+          // Store the HTML content
+          storeHtmlContent(pageName, cleanedHtmlContent);
+        } else {
+          console.error("Failed to store page data:", response);
+          return false;
+        }
+      } catch (error) {
+        console.error("Error storing page data:", error);
+      }
+    },
+    [getDomainFromEndpoint, selectedPage, storeHtmlContent]
+  );
+
+  useEffect(() => {
+    fetchGeneratedPages();
+  }, [fetchGeneratedPages]);
+
   const storeOldNewContent = useCallback(
     async (pageName: string, jsonContent: Record<string, any>) => {
       try {
@@ -132,10 +241,11 @@ const FinalPreview: React.FC = () => {
 
         const response = await axios.post(endpoint, {
           version_name: "5.5",
-          page_name: pageName,
+          page_name: selectedPage,
           template_name: templateName,
           json_content: jsonContent,
         });
+        console.log("page name", pageName);
 
         if (response.status === 200) {
           console.log(
@@ -166,7 +276,7 @@ const FinalPreview: React.FC = () => {
     [storeOldNewContent]
   );
 
-  const onLoadMsg = () => {
+  const onLoadMsg = async () => {
     const iframe = iframeRef.current;
     const currentPage = pages.find((page) => page.name === selectedPage);
 
@@ -202,34 +312,81 @@ const FinalPreview: React.FC = () => {
       changeLogo(logoUrl);
     }
 
-    // Additional handling based on the page type and generation status
-    if (selectedPage && generatedPage[selectedPage] && isPageGenerated) {
+    if (selectedPage && generatedPage[selectedPage]) {
       const existingContent = generatedPage[selectedPage][0];
       updateIframeSrc(existingContent);
       setShowIframe(false);
-    } else if (selectedPage === "Home" && pages[0].status !== "Generated") {
-      iframe.contentWindow.postMessage(
-        {
-          type: "start",
-          templateName: templateName,
-          pageName: currentPage?.slug,
-          bussinessname: businessName,
-          description: Description,
-        },
-        "*"
+      console.log("first block executed");
+    } else if (selectedPage && !generatedPage[selectedPage]) {
+      const fetchresult = await fetchAndStorePageData(
+        selectedPage,
+        templateName,
+        "5.5"
       );
+      if (!fetchresult) {
+        if (
+          selectedPage !== "Home" &&
+          currentPage &&
+          currentPage.status !== "Generated" &&
+          currentPage.status !== "Skipped"
+        ) {
+          setTimeout(() => {
+            setShowPopup(true);
+          }, 100);
+        } else if (fetchresult) {
+          console.log("fetchresult is true");
+          // updatePageStatus(selectedPage, "Generated");
+        }
+      }
+      console.log("second block executed", generatedPage[selectedPage]);
+    } else {
+      console.log("third block executed");
+      if (selectedPage && generatedPage[selectedPage] && isPageGenerated) {
+        const existingContent = generatedPage[selectedPage][0];
+        updateIframeSrc(existingContent);
+        setShowIframe(false);
+      } else if (selectedPage === "Home" && pages[0].status !== "Generated") {
+        iframe.contentWindow.postMessage(
+          {
+            type: "start",
+            templateName: templateName,
+            pageName: currentPage?.slug,
+            bussinessname: businessName,
+            description: Description,
+          },
+          "*"
+        );
+      }
+
+      if (
+        selectedPage !== "Home" &&
+        currentPage &&
+        currentPage.status !== "Generated" &&
+        currentPage.status !== "Skipped"
+      ) {
+        setTimeout(() => {
+          setShowPopup(true);
+        }, 100);
+      }
     }
 
-    if (
-      selectedPage !== "Home" &&
-      currentPage &&
-      currentPage.status !== "Generated" &&
-      currentPage.status !== "Skipped"
-    ) {
-      setTimeout(() => {
-        setShowPopup(true);
-      }, 100);
-    }
+    // Additional handling based on the page type and generation status
+    // if (selectedPage && generatedPage[selectedPage] && isPageGenerated) {
+    //   const existingContent = generatedPage[selectedPage][0];
+    //   updateIframeSrc(existingContent);
+    //   setShowIframe(false);
+    // } else if (selectedPage === "Home" && pages[0].status !== "Generated") {
+    //   iframe.contentWindow.postMessage(
+    //     {
+    //       type: "start",
+    //       templateName: templateName,
+    //       pageName: currentPage?.slug,
+    //       bussinessname: businessName,
+    //       description: Description,
+    //     },
+    //     "*"
+    //   );
+    // }
 
     if (!isContentGenerating) {
       setIsLoading(false);
@@ -315,10 +472,11 @@ const FinalPreview: React.FC = () => {
   };
 
   const updatePageStatus = (pageName: string, status: string) => {
-    const updatedPages = pages.map((page) =>
-      page.name === pageName ? { ...page, status } : page
+    setPages((prevPages) =>
+      prevPages.map((page) =>
+        page.name === pageName ? { ...page, status } : page
+      )
     );
-    setPages(updatedPages);
   };
 
   const handleClosePopup = () => {
@@ -387,10 +545,10 @@ const FinalPreview: React.FC = () => {
         iframeRef.current.style.width = "100%";
         iframeRef.current.style.height = "100%";
       } else if (viewMode === "tablet") {
-        iframeRef.current.style.width = "768px"; // Typical width for tablet
+        iframeRef.current.style.width = "768px";
         iframeRef.current.style.height = "100%";
       } else if (viewMode === "mobile") {
-        iframeRef.current.style.width = "375px"; // Typical width for mobile
+        iframeRef.current.style.width = "375px";
         iframeRef.current.style.height = "100%";
       }
     }
@@ -538,7 +696,7 @@ const FinalPreview: React.FC = () => {
               alertType="regenerate"
             />
           )}
-          <div className="relative inline-block text-left my-4 flex justify-between">
+          <div className="relative  text-left my-4 flex justify-between">
             <ViewModeSwitcher
               isOpen={isOpen}
               viewMode={viewMode}

@@ -315,12 +315,18 @@ function fetch_html_data($request) {
 
 function save_generated_html_data($request) {
     global $wpdb;
-    $table_name = $wpdb->prefix . 'generated_html_content'; 
+    $table_name = $wpdb->prefix . 'generated_html_content';
 
     $version_name = sanitize_text_field($request->get_param('version_name'));
     $page_name = sanitize_text_field($request->get_param('page_name'));
     $template_name = sanitize_text_field($request->get_param('template_name'));
     $html_data = $request->get_param('html_data'); // Assuming HTML data is passed as a string
+
+    // Check if the data already exists
+    $exists = $wpdb->get_var($wpdb->prepare(
+        "SELECT id FROM $table_name WHERE version_name = %s AND page_name = %s AND template_name = %s",
+        $version_name, $page_name, $template_name
+    ));
 
     $data = array(
         'version_name' => $version_name,
@@ -330,10 +336,17 @@ function save_generated_html_data($request) {
     );
 
     $format = array('%s', '%s', '%s', '%s');
-    $wpdb->insert($table_name, $data, $format);
 
-    if ($wpdb->insert_id) {
-        return new WP_REST_Response(['success' => true, 'id' => $wpdb->insert_id], 200);
+    if ($exists) {
+        // Update existing record
+        $result = $wpdb->update($table_name, $data, array('id' => $exists), $format, array('%d'));
+    } else {
+        // Insert new record
+        $result = $wpdb->insert($table_name, $data, $format);
+    }
+
+    if ($result !== false) {
+        return new WP_REST_Response(['success' => true, 'id' => $exists ? $exists : $wpdb->insert_id], 200);
     } else {
         return new WP_Error('db_error', 'Failed to save HTML data', ['status' => 500]);
     }
@@ -348,23 +361,35 @@ function save_generated_data(WP_REST_Request $request) {
     $version_name = $request->get_param('version_name');
     $json_content = $request->get_param('json_content');
 
-    // Insert data into the custom table
-    $result = $wpdb->insert(
-        $table_name,
-        array(
-            'page_name' => $page_name,
-            'template_name' => $template_name,
-            'version_name' => $version_name,
-            'json_content' => $json_content
-        ),
-        array('%s', '%s', '%s', '%s')
+    // Check if the entry already exists
+    $exists = $wpdb->get_var($wpdb->prepare(
+        "SELECT id FROM $table_name WHERE page_name = %s AND template_name = %s AND version_name = %s",
+        $page_name, $template_name, $version_name
+    ));
+
+    $data = array(
+        'page_name' => $page_name,
+        'template_name' => $template_name,
+        'version_name' => $version_name,
+        'json_content' => $json_content
     );
 
-    if ($result) {
-        
+    $data_format = array('%s', '%s', '%s', '%s');
+
+    if ($exists) {
+        // Update existing record
+        $result = $wpdb->update($table_name, $data, array('id' => $exists), $data_format, array('%d'));
+    } else {
+        // Insert new record
+        $result = $wpdb->insert($table_name, $data, $data_format);
+    }
+
+    if ($result !== false) {
+        $response_id = $exists ? $exists : $wpdb->insert_id;
         return new WP_REST_Response([
             'success' => true,
-            'message' => 'Data successfully saved'
+            'message' => 'Data successfully saved',
+            'id' => $response_id
         ], 200); 
     } else {
         return new WP_REST_Response([
@@ -373,6 +398,7 @@ function save_generated_data(WP_REST_Request $request) {
         ], 500); 
     }
 }
+
 function regenerate_global_elementor_css() {
     if (!class_exists('\Elementor\Plugin')) {
         return new WP_REST_Response(['success' => false, 'message' => 'Elementor is not active'], 500);

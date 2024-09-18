@@ -47,7 +47,7 @@ const postData = async (endpoint: string, data: object) => {
 
 function ProcessingScreen() {
   const [progress, setProgress] = useState(0);
-  const totalSteps = 9; // Adjusted for the removed API step
+  const totalSteps = 9;
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const [status, setStatus] = useState("");
@@ -69,6 +69,14 @@ function ProcessingScreen() {
     },
     { name: "Theme", endpoint: "/wp-json/custom/v1/install-theme", body: {} },
     {
+      name: "Forms",
+      endpoint: "/wp-json/custom/v1/install-forms",
+      body: {
+        fileurl:
+          "https://plugin.mywpsite.org/creativeagency/creativeagency-forms.xml",
+      },
+    },
+    {
       name: "Post",
       endpoint: "/wp-json/custom/v1/install-posts",
       body: {
@@ -84,14 +92,7 @@ function ProcessingScreen() {
           "https://plugin.mywpsite.org/creativeagency/creativeagency-pages-data.xml",
       },
     },
-    {
-      name: "Forms",
-      endpoint: "/wp-json/custom/v1/install-forms",
-      body: {
-        fileurl:
-          "https://plugin.mywpsite.org/creativeagency/creativeagency-forms.xml",
-      },
-    },
+
     {
       name: "Elementor Kit",
       endpoint: "/wp-json/custom/v1/install-elementor-kit",

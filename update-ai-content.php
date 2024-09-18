@@ -2,7 +2,7 @@
 function update_elementor_page_content_directly(WP_REST_Request $request) {
     global $wpdb; // Global WordPress database class instance
     $params = json_decode($request->get_body(), true);
-    $page_title = 'Home'; // Adjust to your needs
+    $page_title = sanitize_text_field($request->get_param('page_name')); // Adjust to your needs
     $page = get_page_by_title($page_title);
 
     if (!$page) {

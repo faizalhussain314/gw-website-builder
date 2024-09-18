@@ -130,9 +130,9 @@ const CustomizeSidebar: React.FC = () => {
     };
 
     const fetchInitialData = async () => {
-      // const url = getDomainFromEndpoint("/wp-json/custom/v1/get-form-details");
-      const url =
-        "https://solitaire-sojourner-02c.zipwp.link/wp-json/custom/v1/get-form-details";
+      const url = getDomainFromEndpoint("/wp-json/custom/v1/get-form-details");
+      // const url =
+      //   "https://solitaire-sojourner-02c.zipwp.link/wp-json/custom/v1/get-form-details";
       try {
         const response = await fetch(url, {
           method: "POST",
