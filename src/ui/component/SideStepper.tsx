@@ -80,11 +80,11 @@ const SideStepper: React.FC = () => {
     "& .Mui-active": {
       "&.MuiStepIcon-root": {
         color: "white",
-        border: "rgba(46, 66, 255, 1) 1.2px solid",
+        border: "rgba(46, 66, 255, 1) 1px solid",
         borderRadius: "50%",
         backgroundColor: "rgba(46, 66, 255, 1)",
-        width: "30px",
-        height: "30px",
+        width: "28px",
+        height: "28px",
         "&.css-117w1su-MuiStepIcon-text": {
           fill: "rgba(46, 66, 255, 1) !important",
         },
@@ -98,7 +98,7 @@ const SideStepper: React.FC = () => {
         activeStep={activeStep}
         orientation="vertical"
         sx={stepStyle}
-        style={{ padding: "25px 30px" }}
+        style={{ padding: "25px 20px" }}
       >
         {steps.map((step, index) => (
           <Step key={step.label}>
@@ -112,13 +112,16 @@ const SideStepper: React.FC = () => {
               <Typography className="!font-medium text-txt-black-600 tracking-[-0.32px] text-base">
                 {step.label}
               </Typography>
-            </StepLabel>
-            <StepContent className="!p-0">
-              <Typography className="!font-light !text-sm !pl-6 text-[#88898A] tracking-[-0.28px] leading-[22px] -mt-1">
+              <Typography className="!text-sm !font-light text-[#88898A]">
                 {step.description}
               </Typography>
+            </StepLabel>
+            {/* <StepContent className="!p-0">
+              <Typography className="!font-light !text-sm !pl-6 text-[#88898A] tracking-[-0.28px] leading-[22px] -mt-1">
+                {step.description}
+              </Typography> */}
               {/* <Box sx={{ mb: 2 }}></Box> */}
-            </StepContent>
+            {/* </StepContent> */}
           </Step>
         ))}
       </Stepper>

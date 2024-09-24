@@ -27,6 +27,41 @@ body {
   background-color: #f9fafb;
 }
 
+/**
+   scroll bar styles 
+ */
+
+*::-webkit-scrollbar {
+  width: 5px !important;
+  background-color: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: #4755697e;
+  border-radius: 20px;
+  min-height: 10% !important;
+}
+
+/**
+If you wanna remove scrollbar please use this class called "no-scrollbar"
+*/
+
+.no-scrollbar::-webkit-scrollbar {
+  width: 0 !important;
+  /* Remove scrollbar space */
+  background: transparent;
+  /* Optional: just make scrollbar invisible */
+}
+
+.textarea::-webkit-scrollbar {
+  width: 8px !important;
+  /* Remove scrollbar space */
+  background: transparent;
+  /* Optional: just make scrollbar invisible */
+}
+
+
+
 .tertiary {
   background: linear-gradient(132deg, #963fff -9.83%, #2e42ff 91.64%);
   color: #fff;
@@ -58,16 +93,16 @@ body {
 } */
 .MuiStepLabel-labelContainer>.Mui-active {
   font-size: 16px;
-  line-height: 22px;
   font-weight: 600 !important;
   font-family: inter;
 }
+
+
 
 .MuiStepLabel-label .Mui-completed {
   color: rgba(136, 137, 138, 1);
   font-size: 14px !important;
   font-weight: 400 !important;
-  line-height: 22px !important;
 }
 
 .MuiStepLabel-iconContainer svg.Mui-completed {
@@ -116,19 +151,13 @@ body {
 
 /* .css-1j0qgw8-MuiAutocomplete-root.Mui-focused > */
 
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
+
 
 .transition-fade {
   transition: all 0.5s ease-in-out;
 }
 
-::-webkit-scrollbar {
-  width: 2px;
-  color: #d9d9d9;
-  background: #d9d9d9;
-}
+
 
 .loader {
   border-top-color: #3498db;

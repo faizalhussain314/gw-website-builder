@@ -28,7 +28,7 @@ function Success() {
   return (
     <>
       <MainLayout>
-        <div className="items-center justify-center bg-[#F9FAFB] bg-opacity-90 flex h-[90vh] relative">
+        <div className="bg-[#F9FAFB] bg-opacity-90 flex items-center justify-center h-[90vh] relative">
           {/* <div className="absolute inset-0 flex  justify-center pointer-events-none">
             {isConfettiActive && (
               <div className="confetti-container">
@@ -36,8 +36,8 @@ function Success() {
               </div>
             )}
           </div> */}
-          <div className="bg-white rounded-lg shadow-lg text-center p-8 max-w-lg mx-auto">
-            <div className="flex justify-center items-center mb-6">
+          <div className="bg-white rounded-[10px] shadow-lg text-center p-10 max-w-[560px] mx-auto">
+            <div className="flex justify-center items-center mb-5">
               <span className="text-3xl">🎉</span>
               <span className="mx-2 text-3xl">🎊</span>
               <span className="text-3xl">🥳</span>
@@ -54,15 +54,15 @@ function Success() {
             >
               Visit your Website
             </button>
-            <div className="bg-gray-100 rounded-lg p-4 mt-6">
-              <p className="text-left text-gray-700 mb-2">
+            <div className="bg-gray-100 rounded-[10px] p-6 mt-7">
+              <p className="text-center text-[#656767] mb-4">
                 🚀🧑‍💻 I embarked on my website creation journey today and guess
                 what? It's already 70% done! 🎉🇺🇸 Thanks to the incredible
                 @GravityWrite Ai builder, my ideas transformed into a
                 breathtaking website in just seconds! All it took was a chat
                 about my vision, and voilà - magic happened. 🎉🛠️
               </p>
-              <p className="text-left text-gray-500">
+              <p className="text-center text-[#656767]">
                 #AI #WebsiteBuilder #Wordpress #Innovation
               </p>
             </div>

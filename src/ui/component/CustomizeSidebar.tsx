@@ -327,136 +327,139 @@ const CustomizeSidebar: React.FC = () => {
   }, []);
 
   return (
-    <div className="bg-white min-h-screen h-screen z-10 border-2">
-      <div className="flex items-center justify-between p-4">
-        <img
-          src={GravityWriteLogo}
-          alt="Gravity Write Logo"
-          className="h-10 cursor-pointer w-44"
-        />
-      </div>
-      <div className="px-5 py-3 block lg:block">
-        <h2 className="text-xl font-semibold">Customize</h2>
-        <p className="text-sm text-gray-500 mt-2.5">
-          Add your own Logo, Change Color and Fonts
-        </p>
-        <div className="mt-6">
-          <label className="block text-sm font-medium mb-2.5">Site Logo</label>
-          <input
-            type="file"
-            className="w-full p-3 border border-[#DFEAF6] rounded-md"
-            onChange={handleLogoChange}
+    <div className="bg-white min-h-screen h-screen z-10 border-2 flex flex-col justify-between">
+      <div className="">
+        <div className="flex items-center justify-between p-4">
+          <img
+            src={GravityWriteLogo}
+            alt="Gravity Write Logo"
+            className="h-10 cursor-pointer w-44"
           />
-          {logoUrl && (
-            <img
-              src={logoUrl}
-              alt="Uploaded Logo"
-              className="mt-2 h-10 cursor-pointer"
-            />
-          )}
         </div>
-        <div className="mt-6">
-          <div className="flex w-full justify-between items-center mb-2.5">
-            <label className="block text-base font-medium">Font Pair</label>
-            <span
-              onClick={resetStyles}
-              className="text-gray-400 text-base font-medium cursor-pointer hover:text-palatinate-blue-600"
-            >
-              Reset
-            </span>
+
+        <div className="mb-auto p-4">
+          <h2 className="text-xl font-semibold">Customize</h2>
+          <p className="text-sm text-gray-500 mt-2.5">
+            Add your own Logo, Change Color and Fonts
+          </p>
+          <div className="mt-6">
+            <label className="block text-sm font-medium mb-2.5">
+              Site Logo
+            </label>
+            <input
+              type="file"
+              className="w-full p-3 border border-[#DFEAF6] rounded-md"
+              onChange={handleLogoChange}
+            />
+            {logoUrl && (
+              <img
+                src={logoUrl}
+                alt="Uploaded Logo"
+                className="mt-2 h-10 cursor-pointer"
+              />
+            )}
           </div>
-          <div className="relative" ref={dropdownRef}>
-            <button
-              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className="w-full p-2 border rounded-md flex items-center justify-between bg-white text-left focus:border-palatinate-blue-500 active:border-palatinate-blue-500"
-            >
-              {selectedFont ? selectedFont.label : "Choose Your Font"}
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                className={`${
-                  isDropdownOpen && "rotate-180"
-                } transition-all duration-300 ease-in-out`}
+          <div className="mt-6">
+            <div className="flex w-full justify-between items-center mb-2.5">
+              <label className="block text-base font-medium">Font Pair</label>
+              <span
+                onClick={resetStyles}
+                className="text-gray-400 text-base font-medium cursor-pointer hover:text-palatinate-blue-600"
               >
-                <path
-                  d="M7 10L12 15L17 10"
-                  stroke="#88898A"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                />
-              </svg>
-            </button>
-            {isDropdownOpen && (
-              <div className="absolute z-10 w-full bg-white border rounded-md mt-1 max-h-60 overflow-y-auto">
-                {fontCombinations.map((fontCombination) => (
+                Reset
+              </span>
+            </div>
+            <div className="relative" ref={dropdownRef}>
+              <button
+                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                className="w-full p-2 border rounded-md flex items-center justify-between bg-white text-left focus:border-palatinate-blue-500 active:border-palatinate-blue-500"
+              >
+                {selectedFont ? selectedFont.label : "Choose Your Font"}
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  className={`${
+                    isDropdownOpen && "rotate-180"
+                  } transition-all duration-300 ease-in-out`}
+                >
+                  <path
+                    d="M7 10L12 15L17 10"
+                    stroke="#88898A"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </button>
+              {isDropdownOpen && (
+                <div className="absolute z-10 w-full bg-white border rounded-md mt-1 max-h-60 overflow-y-auto">
+                  {fontCombinations.map((fontCombination) => (
+                    <div
+                      key={fontCombination.label}
+                      className={`p-2 hover:bg-[#F9FAFB] cursor-pointer ${
+                        selectedFont?.label === fontCombination.label
+                          ? "bg-[#F9FAFB]"
+                          : ""
+                      }`}
+                      onClick={() => handleFontChange(fontCombination)}
+                    >
+                      {fontCombination.label}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="mt-4">
+            <div className="flex w-full justify-between items-center mb-2.5">
+              <label className="block text-base font-medium">Color</label>
+              <span
+                onClick={resetStyles}
+                className="text-gray-400 text-base font-medium cursor-pointer hover:text-palatinate-blue-600"
+              >
+                Reset
+              </span>
+            </div>
+            <div className="border border-[#DFEAF6] p-2.5 rounded-md">
+              <div className="grid grid-cols-5 gap-x-5 gap-y-4">
+                {colorCombination.map((color) => (
                   <div
-                    key={fontCombination.label}
-                    className={`p-2 hover:bg-[#F9FAFB] cursor-pointer ${
-                      selectedFont?.label === fontCombination.label
-                        ? "bg-[#F9FAFB]"
+                    key={color.primary}
+                    className={`${
+                      selectedColor.primary === color.primary &&
+                      selectedColor.secondary === color.secondary
+                        ? "border-2 border-palatinate-blue-500 rounded-md"
                         : ""
-                    }`}
-                    onClick={() => handleFontChange(fontCombination)}
+                    } flex items-center justify-center p-1 shrink-0`}
                   >
-                    {fontCombination.label}
+                    <button
+                      className="size-5 rounded-full shrink-0"
+                      style={{ backgroundColor: color.primary }}
+                      onClick={() => handleColorChange(color, true)}
+                    />
                   </div>
                 ))}
               </div>
-            )}
-          </div>
-        </div>
-        <div className="mt-4">
-          <div className="flex w-full justify-between items-center mb-2.5">
-            <label className="block text-base font-medium">Color</label>
-            <span
-              onClick={resetStyles}
-              className="text-gray-400 text-base font-medium cursor-pointer hover:text-palatinate-blue-600"
-            >
-              Reset
-            </span>
-          </div>
-          <div className="border border-[#DFEAF6] p-2.5 rounded-md">
-            <div className="grid grid-cols-5 gap-x-5 gap-y-4">
-              {colorCombination.map((color) => (
-                <div
-                  key={color.primary}
-                  className={`${
-                    selectedColor.primary === color.primary &&
-                    selectedColor.secondary === color.secondary
-                      ? "border-2 border-palatinate-blue-500 rounded-md"
-                      : ""
-                  } flex items-center justify-center p-1 shrink-0`}
-                >
-                  <button
-                    className="size-5 rounded-full shrink-0"
-                    style={{ backgroundColor: color.primary }}
-                    onClick={() => handleColorChange(color, true)}
-                  />
-                </div>
-              ))}
             </div>
           </div>
         </div>
+      </div>
 
-        <div className="mt-4 flex absolute bottom-0 justify-between">
-          <div className="mb-4 w-full flex justify-between gap-2">
-            <Link to={"/design"}>
-              <button className="border previous-btn flex px-4 py-3 text-base text-white sm:mt-2 rounded-md gap-2.5 justify-center">
-                <ArrowBackIcon /> Previous
-              </button>
-            </Link>
-            <button
-              onClick={nextPage}
-              className="px-4 py-3 bg-blue-500 text-white rounded-md tertiary text-base sm:mt-2"
-            >
-              Continue
-            </button>
-          </div>
-        </div>
+      <div className="w-full flex items-center gap-4 p-4">
+        <Link to={"/design"} className="w-full">
+          <button className="border previous-btn flex px-4 py-3 text-base text-white sm:mt-2 rounded-md gap-2.5 justify-center w-full">
+            <ArrowBackIcon fontSize="small" /> Previous
+          </button>
+        </Link>
+        <button
+          onClick={nextPage}
+          className="px-4 py-3 bg-blue-500 text-white rounded-md tertiary text-base sm:mt-2 w-full"
+        >
+          Continue
+        </button>
       </div>
     </div>
   );

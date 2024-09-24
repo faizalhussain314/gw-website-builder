@@ -118,7 +118,7 @@ function Design() {
         />
       )}
       <div className="relative w-full h-full p-10">
-        <div className="flex flex-col items-center w-full max-h-[76vh] overflow-y-auto bg-app-light-background">
+        <div className="flex flex-col items-center w-full max-h-[76vh] bg-app-light-background">
           <div className="flex flex-col w-full mx-auto overflow-x-hidden">
             <div className="">
               <h1 className="text-3xl font-semibold">
@@ -164,7 +164,7 @@ function Design() {
               </div>
             </form>
 
-            <div className="relative custom-confirmation-modal-scrollbar md:px-10 lg:px-14 xl:px-15 xl:max-w-full">
+            <div className="relative custom-confirmation-modal-scrollbar md:px-10 lg:px-14 xl:px-15 xl:max-w-full overflow-auto">
               <div className="grid items-start justify-center grid-cols-3 gap-6 lg:grid-cols-2 xl:grid-cols-3 auto-rows-auto">
                 {templateList.map((list: templatelist, index: number) => (
                   <div
