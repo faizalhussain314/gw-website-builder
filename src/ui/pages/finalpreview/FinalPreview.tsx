@@ -18,6 +18,8 @@ import { Page } from "../../../types/page.type";
 import PlumberPageSkeleton from "../../component/PlumberPageSkeleton ";
 import GwLoader from "../../component/loader/gwLoader";
 import useDomainEndpoint from "../../../hooks/useDomainEndpoint";
+import usePageData from "../../../hooks/usePageData";
+import { savePagesToDB } from "../../../infrastructure/api/wordpress-api/final-preview/savePagesApi.api";
 
 const FinalPreview: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -28,8 +30,8 @@ const FinalPreview: React.FC = () => {
   const [selectedPage, setSelectedPage] = useState<string | null>("Home");
   const [showGwLoader, setShowGwLoader] = useState(false);
   const [oldNewContent, setOldNewContent] = useState<Record<string, any>>({});
-  const [generatedPagesList, setGeneratedPagesList] = useState<Page[]>([]); // To store the list of generated pages
-  const [generatedPage, setGeneratedPage] = useState<any>({}); // To store generated page HTML content
+  const [generatedPagesList, setGeneratedPagesList] = useState<Page[]>([]);
+  const [generatedPage, setGeneratedPage] = useState<any>({});
   const [pageContents, setPageContents] = useState<any>({});
   const [showPopup, setShowPopup] = useState(false);
   const [previousClicked, setPreviousClicked] = useState(false);
@@ -86,7 +88,7 @@ const FinalPreview: React.FC = () => {
 
   const showSuccessToast = () => {
     toast.success("Content generation complete!");
-    updatePageStatus(selectedPage!, "Generated");
+    updatePageStatus(selectedPage!, "Generated", false);
   };
 
   // Fetch the list of already generated pages
@@ -188,8 +190,6 @@ const FinalPreview: React.FC = () => {
             .replace(/\\t/g, "")
             .replace(/\\\\/g, "");
 
-          console.log("Cleaned HTML Content:", cleanedHtmlContent);
-
           // Store the parsed HTML content in the state
           setGeneratedPage((prevPages: any) => {
             const updatedPages = {
@@ -199,7 +199,7 @@ const FinalPreview: React.FC = () => {
                 0: cleanedHtmlContent, // Store the parsed HTML
               },
             };
-            updatePageStatus(pageName, "Generated");
+            updatePageStatus(pageName, "Generated", true);
 
             // If the fetched page matches the selected page, update the iframe source
             if (selectedPage === pageName) {
@@ -207,6 +207,7 @@ const FinalPreview: React.FC = () => {
               setShowIframe(false);
               setIsPageGenerated(true);
             }
+            console.log("api triggered");
 
             return updatedPages;
           });
@@ -284,10 +285,7 @@ const FinalPreview: React.FC = () => {
 
     setLoaded(true);
 
-    console.log("Iframe loaded, applying styles and fonts...");
-
-    // Always apply font and color changes if applicable
-    if (Color.primary || Color.secondary || fontFamily) {
+    if (fontFamily) {
       console.log(
         `Applying colors: Primary ${Color.primary}, Secondary ${Color.secondary}`
       );
@@ -297,6 +295,9 @@ const FinalPreview: React.FC = () => {
         { type: "changeFont", font: fontFamily },
         "*"
       );
+    }
+
+    if (Color.primary || Color.secondary) {
       iframe.contentWindow.postMessage(
         {
           type: "changeGlobalColors",
@@ -307,7 +308,6 @@ const FinalPreview: React.FC = () => {
       );
     }
 
-    // Change logo if applicable
     if (logoUrl) {
       changeLogo(logoUrl);
     }
@@ -323,7 +323,27 @@ const FinalPreview: React.FC = () => {
         templateName,
         "5.5"
       );
+      iframe.contentWindow.postMessage(
+        {
+          type: "changeGlobalColors",
+          primaryColor: Color.primary,
+          secondaryColor: Color.secondary,
+        },
+        "*"
+      );
       if (!fetchresult) {
+        if (selectedPage === "Home" && pages[0].status !== "Generated") {
+          iframe.contentWindow.postMessage(
+            {
+              type: "start",
+              templateName: templateName,
+              pageName: currentPage?.slug,
+              bussinessname: businessName,
+              description: Description,
+            },
+            "*"
+          );
+        }
         if (
           selectedPage !== "Home" &&
           currentPage &&
@@ -471,12 +491,17 @@ const FinalPreview: React.FC = () => {
     }
   };
 
-  const updatePageStatus = (pageName: string, status: string) => {
+  const updatePageStatus = (
+    pageName: string,
+    status: string,
+    selected: boolean
+  ) => {
     setPages((prevPages) =>
       prevPages.map((page) =>
-        page.name === pageName ? { ...page, status } : page
+        page.name === pageName ? { ...page, status, selected } : page
       )
     );
+    console.log("pages", status, selected);
   };
 
   const handleClosePopup = () => {
@@ -605,6 +630,37 @@ const FinalPreview: React.FC = () => {
     navigate("/processing", { state: { pageName: selectedPage } });
   };
 
+  const handlePageUpdate = (
+    slug: string,
+    newStatus: string,
+    isSelected: boolean
+  ) => {
+    setPages((prevPages) =>
+      prevPages.map((page) =>
+        page.slug === slug
+          ? { ...page, status: newStatus, selected: isSelected }
+          : page
+      )
+    );
+  };
+
+  const savePageEndPoint = getDomainFromEndpoint(
+    "/wp-json/custom/v1/save-selected-template"
+  );
+  useEffect(() => {
+    const storePagesInDB = async () => {
+      if (savePageEndPoint) {
+        try {
+          await savePagesToDB(savePageEndPoint, pages); // Pass the endpoint and pages to savePagesToDB
+        } catch (error) {
+          console.error("Failed to store pages:", error);
+        }
+      }
+    };
+
+    storePagesInDB();
+  }, [savePageEndPoint, pages]);
+
   return (
     <div className="h-screen flex font-[inter] w-screen">
       <div className="w-[23%] lg:w-[30%]">
@@ -651,6 +707,8 @@ const FinalPreview: React.FC = () => {
               lateloader={setLoaded}
               handleImportSelectedPage={handleImportSelectedPage}
               updatePageStatus={updatePageStatus}
+              handlePageUpdate={handlePageUpdate}
+              setPages={setPages}
             />
           </div>
         </aside>

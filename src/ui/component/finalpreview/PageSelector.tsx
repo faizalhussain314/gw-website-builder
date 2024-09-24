@@ -5,6 +5,7 @@ import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import { Page } from "../../../types/page.type";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import Tooltip from "@mui/material/Tooltip";
 
 type Props = {
   pages: Page[];
@@ -15,6 +16,11 @@ type Props = {
   handleSkipPage: () => void;
   setShowPopup: (show: boolean) => void;
   previousClicked: boolean;
+  handlePageUpdate: (
+    slug: string,
+    newStatus: string,
+    isSelected: boolean
+  ) => void;
   handlePrevious: () => void;
   handleImportSelectedPage: () => void;
   lateloader: (show: boolean) => void;
@@ -23,13 +29,14 @@ type Props = {
     status: string,
     selected: boolean
   ) => void;
+  setPages: (pages: Page[]) => void;
 };
 
 const PageSelector: React.FC<Props> = ({
   pages,
   selectedPage,
   isContentGenerating,
-
+  handlePageUpdate,
   togglePage,
   handleNext,
   handleSkipPage,
@@ -39,6 +46,7 @@ const PageSelector: React.FC<Props> = ({
   handleImportSelectedPage,
   lateloader,
   updatePageStatus,
+  setPages,
 }) => {
   const showWarningToast = () => {
     toast.warn("Please wait while content is being generated.");
@@ -53,7 +61,26 @@ const PageSelector: React.FC<Props> = ({
       showWarningToast();
     } else {
       updatePageStatus(pageName, "Skipped", false);
+
       handleSkipPage();
+    }
+  };
+  const handlePageChange = (slug: string, newSelectedValue: boolean) => {
+    const updatedPages = pages.map((page) =>
+      page.slug === slug ? { ...page, selected: newSelectedValue } : page
+    );
+
+    // Update pages in the state
+    setPages(updatedPages);
+
+    // Call updatePageStatus if necessary
+    const currentPage = updatedPages.find((page) => page.slug === slug);
+    if (currentPage) {
+      updatePageStatus(
+        currentPage.name,
+        currentPage.status,
+        currentPage.selected
+      );
     }
   };
 
@@ -90,11 +117,12 @@ const PageSelector: React.FC<Props> = ({
               <div className="flex items-center">
                 <div className="custom-checkbox">
                   <input
+                    id={`checkbox-${page.slug}`}
                     type="checkbox"
                     className="mr-4 flex items-center w-5 h-5"
-                    checked={page.selected && page.status !== "Skipped"}
-                    onChange={() => handlePageClick(page.name)}
-                    disabled={page.status === ""}
+                    checked={page.selected}
+                    onChange={() => handlePageChange(page.slug, !page.selected)}
+                    // disabled={page.status === "Skipped"}
                   />
                 </div>
                 <span className="font-medium text-base">{page.name}</span>
@@ -158,6 +186,7 @@ const PageSelector: React.FC<Props> = ({
             {selectedPage === page.name && (
               <div className="mt-3 flex justify-evenly text-sm">
                 {page.status === "Generated" ||
+                page.status === "Skipped" ||
                 page.name === "Blog" ||
                 page.name === "Contact" ||
                 page.name === "Home" ? (
@@ -177,17 +206,20 @@ const PageSelector: React.FC<Props> = ({
                     >
                       Keep & Next
                     </button>
-                    <button
-                      className={`bg-white text-palatinate-blue-600 rounded px-3 py-1.5 w-full text-sm font-medium opacity-50 ${
-                        isContentGenerating ? "opacity-50" : ""
-                      }`}
-                      // onClick={() => handleSkipClick(page.name)}
-                      // disabled={isContentGenerating}
-                      disabled
-                    >
-                      Skip Page
-                    </button>
-                  </div>
+                    <Tooltip title="Home page can't skip" placement="top">
+                      <button
+                        className={`bg-white text-black rounded px-3 py-1 ${
+                          isContentGenerating || page.name == "Home"
+                            ? "opacity-50 cursor-not-allowed "
+                            : ""
+                        }`}
+                        onClick={() => handleSkipClick(page.name)}
+                        disabled={isContentGenerating || page.name == "Home"}
+                      >
+                        Skip Page
+                      </button>
+                    </Tooltip>
+                  </>
                 ) : (
                   <div className="w-full flex items-center gap-4">
                     <button

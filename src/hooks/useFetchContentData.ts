@@ -47,6 +47,7 @@ const useFetchContentData = () => {
 
       const data = await response.json();
       if (data) {
+        const colors = JSON.parse(data.color);
         dispatch(setBusinessName(data.businessName || ""));
         dispatch(setDescriptionOne(data.description1 || ""));
         dispatch(setDescriptionTwo(data.description2 || ""));
@@ -54,11 +55,17 @@ const useFetchContentData = () => {
         dispatch(setTemplateId(data.templateid || 0));
         dispatch(setTemplatename(data.templatename || ""));
         dispatch(setContent(data.content || []));
-        dispatch(setColor(data.color || { primary: "", secondary: "" }));
+        if (data.color) {
+          dispatch(
+            setColor(
+              colors || { primary: JSON.parse(colors.primary), secondary: "" }
+            )
+          );
+        }
         dispatch(setFont(data.font || ""));
         dispatch(setTemplateList(data.templateList || []));
       }
-
+      console.log("colors: ", JSON.parse(data.color));
       return data;
     } catch (error) {
       console.error("Error fetching content:", error);

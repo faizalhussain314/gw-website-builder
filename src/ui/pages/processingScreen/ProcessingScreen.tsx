@@ -34,7 +34,7 @@ const postData = async (endpoint: string, data: object) => {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(data), // Convert the object to a JSON string
+      body: JSON.stringify(data),
     });
 
     const result = await response.json();

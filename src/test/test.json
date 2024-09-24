@@ -1,0 +1,113 @@
+{
+  "pages": [
+    {
+      "id": 11,
+      "title": "Home",
+      "slug": "homepage",
+      "xml_url": "https://plugin.mywpsite.org/tours-template-home-page.xml"
+    },
+    {
+      "id": 12,
+      "title": "About",
+      "slug": "about",
+      "xml_url": "https://plugin.mywpsite.org/tours-template-about-page.xml"
+    },
+    {
+      "id": 13,
+      "title": "Service",
+      "slug": "service",
+      "xml_url": "https://plugin.mywpsite.org/tours-template-services-page.xml"
+    },
+    {
+      "id": 14,
+      "title": "Blog",
+      "slug": "blog",
+      "iframe_url": "https://tours.mywpsite.org/blog/",
+      "xml_url": "https://plugin.mywpsite.org/tours-template-blog-page.xml"
+    },
+    {
+      "id": 15,
+      "title": "Contact Us",
+      "slug": "contact-us",
+      "iframe_url": "https://tours.mywpsite.org/contact-us/",
+      "xml_url": "https://plugin.mywpsite.org/tours-template-contactus-page.xml"
+    }
+  ],
+
+  "plugins": [
+    {
+      "id": 5,
+      "name": "Elementor",
+      "download_link": "elementor",
+      "template_id": 2
+    },
+    {
+      "id": 6,
+      "name": "Elementor Header & Footer Builder",
+      "download_link": "header-footer-elementor",
+      "template_id": 2
+    },
+    {
+      "id": 7,
+      "name": "ElementsKit Lite",
+      "download_link": "elementskit-lite",
+      "template_id": 2
+    },
+    {
+      "id": 8,
+      "name": "Jeg Elementor Kit",
+      "download_link": "jeg-elementor-kit",
+      "template_id": 2
+    },
+    {
+      "id": 9,
+      "name": "MetForm",
+      "download_link": "metform",
+      "template_id": 2
+    }
+  ],
+  "template_import_urls": [
+    {
+      "id": 11,
+      "name": "Forms Data",
+      "template_id": 2,
+      "url": "https://plugin.mywpsite.org/tours-forms.xml",
+      "status": "1"
+    },
+    {
+      "id": 12,
+      "name": "Elementor Header Footer Data",
+      "template_id": 2,
+      "url": "https://plugin.mywpsite.org/tours-elementor-head-foot.xml",
+      "status": "1"
+    },
+    {
+      "id": 13,
+      "name": "Templates Data",
+      "template_id": 2,
+      "url": "https://plugin.mywpsite.org/tours-template.xml",
+      "status": "1"
+    },
+    {
+      "id": 14,
+      "name": "Site Settings Data",
+      "template_id": 2,
+      "url": "https://plugin.mywpsite.org/site-settings.json",
+      "status": "1"
+    },
+    {
+      "id": 15,
+      "name": "Menu Css Data",
+      "template_id": 2,
+      "url": "https://plugin.mywpsite.org/tours-menus-css.json",
+      "status": "1"
+    },
+    {
+      "id": 16,
+      "name": "Posts Data",
+      "template_id": 2,
+      "url": "https://plugin.mywpsite.org/tours-template-posts.xml",
+      "status": "1"
+    }
+  ]
+}
