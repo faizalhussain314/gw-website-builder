@@ -170,22 +170,21 @@ function Description() {
 
   return (
     <MainLayout>
-      <div className="bg-[rgba(249, 252, 255, 1)] flex font-['inter']">
-        <div className="p-8">
-          <div className="mt-8 ml-[50px] flex flex-col">
-            <h1 className="text-txt-black-600 leading-5 font-semibold text-3xl font-[inter] mb-4">
+      <div className="bg-[rgba(249, 252, 255, 1)] flex font-['inter'] w-full p-10">
+        <div className=" w-full">
+          <div className="flex flex-col">
+            <h1 className="text-txt-black-600 font-semibold text-3xl font-[inter]">
               What is {businessName}? Tell us more about the {businessName}.
             </h1>
-            <span className="mt-4 text-lg leading-6 text-txt-secondary-400">
+            <span className="mt-2.5 text-lg leading-6 text-txt-secondary-400 max-w-[617px]">
               Please be as descriptive as you can. Share details such as a brief
-              <br />
               about the {businessName}, specialty, menu, etc.
             </span>
           </div>
           <div className="mt-8">
             <form>
               {/* Description 1 */}
-              <div className="flex gap-1 items-center ml-[20px]">
+              <div className="flex gap-6 items-center">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="26"
@@ -205,12 +204,12 @@ function Description() {
                     fill="#2E42FF"
                   />
                 </svg>
-                <label className="leading-5 font-semibold text-lg">
+                <label className="text-lg font-semibold leading-5">
                   What do you offer/sell? or what services do you provide?
                 </label>
               </div>
               <textarea
-                className={`bg-white p-4 border h-[100px] border-[rgba(205, 212, 219, 1)] w-[720px] mt-4 ${
+                className={`bg-white px-4 py-2.5 border h-[100px] border-[rgba(205,212,219,1)] w-[96%] mt-5 rounded-lg placeholder:font-normal text-[#5f5f5f] ${
                   error && "border-red-500 rounded-lg"
                 } focus:border-palatinate-blue-500 active:border-palatinate-blue-500 active:outline-palatinate-blue-500 focus:outline-palatinate-blue-500 ml-[50px]`}
                 value={description1}
@@ -232,7 +231,7 @@ function Description() {
                       src="https://tours.mywpsite.org/wp-content/uploads/2024/08/sparkle.svg"
                       alt="sparkle"
                     />
-                    <span className="font-semibold text-sm transition duration-150 ease-in-out">
+                    <span className="text-sm font-normal transition duration-150 ease-in-out">
                       Write Using AI
                     </span>
                     {loader1 && (
@@ -266,7 +265,7 @@ function Description() {
                 </div>
               </div>
               {/* Description 2 */}
-              <div className="flex gap-1 items-center mt-6 ml-[20px]">
+              <div className="flex gap-6 items-center mt-6">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="26"
@@ -286,14 +285,14 @@ function Description() {
                     fill="#2E42FF"
                   />
                 </svg>
-                <label className="leading-5 font-semibold text-lg">
+                <label className="text-lg font-semibold max-w-[639px]">
                   What steps do customers need to take to start working with the
-                  business?
-                  <br /> What actions do visitors need to take to work with you?
+                  business? What actions do visitors need to take to work with
+                  you?
                 </label>
               </div>
               <textarea
-                className={`bg-white p-4 border h-[100px] border-[rgba(205, 212, 219, 1)] w-[720px]  scroll- mt-4 ${
+                className={`bg-white p-4 border h-[100px] border-[rgba(205,212,219,1)] w-[96%] mt-4 placeholder:font-normal rounded-lg text-[#5f5f5f] ${
                   error && "border-red-500 rounded-lg"
                 } focus:border-palatinate-blue-500 active:border-palatinate-blue-500 active:outline-palatinate-blue-500 focus:outline-palatinate-blue-500 ml-[50px]`}
                 value={description2}
@@ -315,7 +314,7 @@ function Description() {
                       src="https://tours.mywpsite.org/wp-content/uploads/2024/08/sparkle.svg"
                       alt="sparkle"
                     />
-                    <span className="font-semibold text-sm transition duration-150 ease-in-out">
+                    <span className="text-sm font-normal transition duration-150 ease-in-out">
                       Write Using AI
                     </span>
                     {loader2 && (
@@ -349,23 +348,21 @@ function Description() {
                 </div>
               </div>
               {error && (
-                <div className="text-red-500 font-semibold mt-4 ml-[50px]">
-                  {error}
-                </div>
+                <div className="text-red-500 mt-4 ml-[50px]">{error}</div>
               )}
             </form>
             <div className="flex gap-4 ml-[50px] mt-2">
               <Link to="/name">
-                <button className="previous-btn flex px-[10px] py-[13px] text-lg sm:text-sm text-white mt-8 sm:mt-2 rounded-lg w-[150px] gap-3 justify-center">
-                  <ArrowBackIcon />
-                  Back
+                <button className="previous-btn flex px-[10px] py-[13px] text-base text-white mt-8 sm:mt-2 rounded-lg w-[150px] gap-3 justify-center font-medium">
+                  <ArrowBackIcon fontSize="small" />
+                  Previous
                 </button>
               </Link>
               <button
                 onClick={setReduxValue}
-                className="tertiary px-[30px] py-[10px] text-lg sm:text-sm text-white mt-8 sm:mt-2 rounded-md w-[150px]"
+                className="tertiary px-[30px] py-[10px] text-base text-white mt-8 sm:mt-2 font-medium rounded-md w-[150px]"
               >
-                Next
+                Continue
               </button>
             </div>
           </div>

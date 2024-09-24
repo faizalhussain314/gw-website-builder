@@ -8,7 +8,7 @@ interface IntroLayoutProps {
 const IntroLayout: React.FC<IntroLayoutProps> = ({ children }) => {
   return (
     <div className="h-screen">
-      <Header active={true} />
+      {/* <Header active={true} /> */}
       <main className="h-[90vh]">{children}</main>
     </div>
   );

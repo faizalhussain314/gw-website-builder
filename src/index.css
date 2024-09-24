@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
+/* @layer base {
   @font-face {
     font-family: "inter";
     font-style: normal;
@@ -10,6 +10,7 @@
     font-display: swap;
     src: url("./assets/Inter/static/Inter-Black.ttf") format("woff2");
   }
+
   @font-face {
     font-family: "inter";
     font-style: normal;
@@ -17,6 +18,9 @@
     font-display: swap;
     src: url("./assets/Inter/static/Inter-Medium.ttf") format("woff2");
   }
+} */
+* {
+  font-family: "Inter", sans-serif, system-ui;
 }
 
 body {
@@ -28,66 +32,81 @@ body {
   color: #fff;
   transition: all 0.3s;
 }
+
 .tertiary:hover {
   background: linear-gradient(132deg, #963fff -9.83%, #2e42ff 91.64%);
   box-shadow: 0 4px 18px #4d42ff99;
 }
+
 .tertiary:active {
   background: linear-gradient(132deg, #7137d5 -9.83%, #2939d5 91.64%);
 }
+
 .previous-btn {
   background: rgba(230, 240, 254, 1);
   color: rgba(30, 32, 34, 1);
   font-weight: 600;
   line-height: 22px;
 }
+
 .previous-btn:hover {
   background-color: rgba(230, 237, 254, 22);
 }
+
 /* .css-117w1su-MuiStepIcon-text {
   fill: rgba(46, 66, 255, 1) !important;
 } */
-.MuiStepLabel-labelContainer > .Mui-active {
+.MuiStepLabel-labelContainer>.Mui-active {
   font-size: 16px;
   line-height: 22px;
   font-weight: 600 !important;
   font-family: inter;
 }
+
 .MuiStepLabel-label .Mui-completed {
   color: rgba(136, 137, 138, 1);
   font-size: 14px !important;
   font-weight: 400 !important;
   line-height: 22px !important;
 }
+
 .MuiStepLabel-iconContainer svg.Mui-completed {
   color: rgba(2, 210, 90, 1) !important;
   border: rgba(2, 210, 90, 1) 1px solid;
 }
-.MuiStepLabel-labelContainer > .Mui-completed {
+
+.MuiStepLabel-labelContainer>.Mui-completed {
   color: rgba(136, 137, 138, 1) !important;
   font-size: 20px !important;
 }
-.MuiStepLabel-iconContainer > .MuiSvgIcon-root {
+
+.MuiStepLabel-iconContainer>.MuiSvgIcon-root {
   color: white !important;
   border: rgba(136, 137, 138, 1) 1px solid;
   border-radius: 50%;
 }
-.Mui-disabled .css-vnkopk-MuiStepLabel-iconContainer > .MuiSvgIcon-root > text {
+
+.Mui-disabled .css-vnkopk-MuiStepLabel-iconContainer>.MuiSvgIcon-root>text {
   fill: rgba(136, 137, 138, 1) !important;
 }
-.Mui-active.MuiStepIcon-root > .MuiStepIcon-text {
+
+.Mui-active.MuiStepIcon-root>.MuiStepIcon-text {
   fill: rgba(46, 66, 255, 1) !important;
 }
+
 .MuiStepConnector-line {
-  min-height: 32px !important;
+  min-height: 24px !important;
 }
+
 .MuiAutocomplete-endAdornment {
   left: 9px;
 }
+
 .MuiAutocomplete-input {
   padding-left: 25px !important;
 }
-.MuiStepLabel-iconContainer > .MuiSvgIcon-root > text {
+
+.MuiStepLabel-iconContainer>.MuiSvgIcon-root>text {
   color: rgba(136, 137, 138, 1) !important;
 }
 
@@ -104,6 +123,7 @@ body {
 .transition-fade {
   transition: all 0.5s ease-in-out;
 }
+
 ::-webkit-scrollbar {
   width: 2px;
   color: #d9d9d9;
@@ -120,6 +140,7 @@ body {
   0% {
     -webkit-transform: rotate(0deg);
   }
+
   100% {
     -webkit-transform: rotate(360deg);
   }
@@ -129,6 +150,7 @@ body {
   0% {
     transform: rotate(0deg);
   }
+
   100% {
     transform: rotate(360deg);
   }
@@ -136,7 +158,7 @@ body {
 
 /* styles.css */
 .custom-checkbox input[type="checkbox"] {
-  @apply appearance-none h-5 w-5 border border-gray-300 rounded-md   checked:border-transparent focus:outline-none;
+  @apply appearance-none h-5 w-5 border border-gray-300 rounded-md checked:border-transparent focus:outline-none;
 }
 
 .custom-checkbox input[type="checkbox"]:checked::after {
@@ -180,6 +202,7 @@ body {
   padding: 0.5rem;
   font-size: 1rem;
 }
+
 @media (max-width: 600px) {
   .profileSection {
     flex-direction: column;
@@ -234,7 +257,8 @@ body {
 .slider-container {
   position: relative;
   width: 100%;
-  max-width: 800px; /* Adjust as needed */
+  max-width: 800px;
+  /* Adjust as needed */
   margin: 0 auto;
   overflow: hidden;
 }

@@ -75,36 +75,38 @@ function Images() {
 
   return (
     <MainLayout>
-      <div className="bg-[rgba(249, 252, 255, 1)] flex font-['inter']">
-        <div className="p-8">
-          <div className="mt-8 ml-[50px] flex flex-col">
-            <h1 className="text-txt-black-600 leading-5 font-semibold text-3xl font-[inter] mb-4">
+      <div className="p-10 pb-0 bg-[#F9FCFF] ">
+        <div>
+          <div className="flex flex-col">
+            <h1 className="text-txt-black-600 font-semibold tracking-[-0.9px] text-3xl mb-6">
               Select Images
             </h1>
 
             <form onSubmit={(e) => e.preventDefault()}>
-              {keywords.map((kw, index) => (
-                <input
-                  key={index}
-                  type="text"
-                  value={kw.keyword}
-                  onChange={handleInputChange(index)}
-                  className="bg-white p-3 border border-[rgba(205, 212, 219, 1)] rounded-md w-[720px] mt-4 focus:border-palatinate-blue-500 active:border-palatinate-blue-500 active:outline-palatinate-blue-500 focus:outline-palatinate-blue-500"
-                />
-              ))}
+              <div className="flex items-center gap-x-2">
+                {keywords.map((kw, index) => (
+                  <input
+                    key={index}
+                    type="text"
+                    value={kw.keyword}
+                    onChange={handleInputChange(index)}
+                    className="bg-white px-4 py-2.5 border border-[rgba(205, 212, 219, 1)] rounded-lg w-full focus:border-palatinate-blue-500 active:border-palatinate-blue-500 active:outline-palatinate-blue-500 focus:outline-palatinate-blue-500"
+                  />
+                ))}
 
-              <button
-                type="button"
-                onClick={handleSearch}
-                className="mt-4 bg-palatinate-blue-500 text-white px-3 py-1 rounded-md"
-              >
-                Search
-              </button>
-              <div className="flex gap-3 m-6 cursor-pointer">
-                <span className="text-md leading-6 underline text-palatinate-blue-500 indent-px">
+                <button
+                  type="button"
+                  onClick={handleSearch}
+                  className="bg-palatinate-blue-600 px-[30px] py-[10px] text-lg sm:text-sm text-white rounded-md w-[150px]"
+                >
+                  Search
+                </button>
+              </div>
+              <div className="flex gap-5 mt-8 mb-6 items-center">
+                <span className="text-base cursor-pointer text-palatinate-blue-600 py-1.5 border-b border-palatinate-blue-600">
                   Search Result
                 </span>
-                <span className="text-md leading-6 indent-px">
+                <span className="text-base py-1.5 cursor-pointer">
                   Selected Images({selectedImageIds.length})
                 </span>
               </div>
@@ -114,21 +116,21 @@ function Images() {
                     key={img.id}
                     className={`relative w-full h-40 rounded-md overflow-hidden cursor-pointer ${
                       selectedImageIds.includes(img.id)
-                        ? "border-4 border-palatinate-blue-500"
+                        ? "border-4 border-palatinate-blue-600"
                         : "border"
                     }`}
                     onClick={() => handleImageClick(img.id, img.imagelink)}
                   >
                     <img
                       src={img.imagelink}
-                      className="w-full h-full object-cover"
+                      className="object-cover w-full h-full"
                       alt="Selected"
                     />
                     {selectedImageIds.includes(img.id) && (
-                      <div className="absolute top-0 right-0 m-2 bg-palatinate-blue-500 rounded-full p-1">
+                      <div className="absolute top-0 right-0 p-1 m-2 rounded-full bg-palatinate-blue-600">
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
-                          className="h-4 w-4 text-white"
+                          className="w-4 h-4 text-white"
                           viewBox="0 0 20 20"
                           fill="currentColor"
                         >
@@ -147,25 +149,23 @@ function Images() {
           </div>
         </div>
       </div>
-      <div className="sticky bottom-0 left-0 pb-8 bg-app-light-background  px-8 pb-4 lg:px-16 xl:px-36 z-30 bg-[#F9FCFF] w-full flex justify-between">
-        <div className="flex gap-4">
+      <div className="flex px-[60px] justify-between items-center py-10">
+        <div className="flex gap-4 items-center">
           <Link to={"/description"}>
-            <button className="previous-btn flex px-[10px] py-[13px] text-lg sm:text-sm text-white mt-8 sm:mt-2 rounded-md w-[150px] gap-3 justify-center">
-              <ArrowBackIcon />
+            <button className="previous-btn flex px-[10px] py-[13px] text-base text-white sm:mt-2 font-medium rounded-md w-[150px] gap-3 justify-center">
+              <ArrowBackIcon fontSize="small" />
               Previous
             </button>
           </Link>
           <Link to={"/contact"}>
-            <button className="tertiary px-[30px] py-[10px] text-lg sm:text-sm text-white mt-8 sm:mt-2 rounded-md w-[150px]">
+            <button className="tertiary px-[30px] py-[10px] text-base text-white sm:mt-2 rounded-md w-[150px] font-medium">
               Continue
             </button>
           </Link>
         </div>
-        <div className="mt-8 cursor-pointer flex items-center">
+        <div className="cursor-pointer">
           <Link to={"/contact"}>
-            <span className="text-base text-[#6C777D] leading-5">
-              Skip This Step
-            </span>
+            <span className="text-base text-[#6C777D] hover:text-palatinate-blue-600">Skip Step</span>
           </Link>
         </div>
       </div>

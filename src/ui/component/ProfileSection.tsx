@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import ProfileArrowIcon from "../../assets/icons/profile-arrow-icon.svg";
 import CrownIcon from "../../assets/icons/crown.svg";
+import ProfilePicture from "../../assets/profilepic.svg";
 import AiGenerate from "../../assets/icons/aigenerate.svg";
 import LogoutIcon from "../../assets/icons/logout.svg";
 
@@ -12,98 +13,89 @@ const ProfileSection: React.FC = () => {
   };
 
   return (
-    <>
-      <div>
-        <div className="flex flex-col absolute bottom-0  w-[97%] mac:w-[90%] rounded-lg   justify-center  py-2 my-4 mx-2 ">
-          {isOpen && (
-            <div className="  mt-2 w-full bg-white rounded-lg shadow-xl z-20 pt-2 justify-evenly absolute bottom-20">
-              <div className="flex items-center justify-center  ">
-                <img
-                  src={CrownIcon}
-                  alt="Profile"
-                  className="w-7 h-7 rounded-full mr-3"
-                />
-                <div className="flex gap-1 justify-center items-center">
-                  <div className="flex flex-col ">
-                    <p className="mac:text-lg text-sm  font-medium m-0 ">
-                      Adam Zamba
-                    </p>
-                    <p className="mac:text-sm text-xs  text-gray-600 m-0">
-                      adamzamba@gmail.com
-                    </p>
-                  </div>
-                  <div className="h-full flex items-center  w-full">
-                    <span className="text-xs text-center text-gray-500">
-                      Free plan
-                    </span>
-                  </div>
-                </div>
-              </div>
-              <div className="flex  justify-center items-center p-2">
-                <button
-                  onClick={toggleMenu}
-                  className=" text-lg tertiary w-full text-white flex items-center justify-center gap-2 px-4 py-1 rounded-md"
-                >
-                  <img src={CrownIcon} />
-                  Upgrade
-                </button>
-              </div>
-
-              <div className="border-t border-gray-200">
-                <div className="flex items-center justify-center gap-2 w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-100">
-                  <div className="flex-none">
-                    {" "}
-                    <img src={AiGenerate} />
-                  </div>{" "}
-                  <div className="w-full">
-                    <span className="flex flex-1 justify-evenly w-full gap-2">
-                      AI Website Generation <span>1/2</span>
-                    </span>
-
-                    <div className="w-full bg-blue-200 rounded-full h-1.5 mb-4 dark:bg-blue-100">
-                      <div
-                        className="h-1.5 rounded-full bg-blue-gradient"
-                        style={{ width: "45%" }}
-                      ></div>
-                    </div>
-                  </div>
-                </div>
-                <div className="px-3"></div>
-                <button
-                  onClick={toggleMenu}
-                  className="flex items-center gap-1 justify-start  w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-100"
-                >
-                  <img src={LogoutIcon} className="flex-none" />
-                  <span className="flex-1"> Log out</span>
-                </button>
-              </div>
-            </div>
-          )}
-          <div className="absolute bottom-0 border w-[90%] px-2 mac:w-full rounded-lg gap-1  z-0 shadow flex justify-between  py-2 ">
+    <div className="absolute bottom-1 w-[90%] left-3 rounded-lg">
+      {isOpen && (
+        <div className="w-full bg-white rounded-lg border border-[#DAE1E9] shadow-xl z-20 py-4 justify-evenly absolute bottom-20 px-2">
+          <div className="flex items-center justify-center px-4">
             <img
-              src={CrownIcon}
+              src={ProfilePicture}
               alt="Profile"
-              className="w-10 h-10 rounded-full"
+              className="w-7 h-7 rounded-full mr-3"
             />
-            <div>
-              <h3 className=" font-semibold mac:text-base text-sm">
-                Adam Zamba
-              </h3>
-              <p className=" font-normal mac:text-sm text-xs ">
-                {" "}
-                Adamzamba@gmail.com
-              </p>
+            <div className="flex gap-2 justify-between items-center w-full">
+              <div className="flex flex-col max-w-[60%]">
+                <p className="text-base font-semibold truncate w-full">
+                  Adam Zamba
+                </p>
+                <p className="text-sm text-[#6B7280] w-full truncate">
+                  adamzamba@gmail.com
+                </p>
+              </div>
+              <span className="text-sm text-[#8E9AAC] w-fit">Free plan</span>
             </div>
+          </div>
+          <div className="flex justify-center items-center my-5 px-4">
             <button
               onClick={toggleMenu}
-              className="flex items-center bg-transparent border-none cursor-pointer p-0 focus:outline-none"
+              className="text-base tertiary w-full text-white flex items-center justify-center gap-2 px-4 py-3 rounded-lg"
             >
-              <img src={ProfileArrowIcon} />
+              <img src={CrownIcon} />
+              Upgrade
             </button>
           </div>
+          <div className="h-[1px] w-full bg-gray-200"></div>
+
+          <div className="px-4 py-2 pt-4">
+            <div className="flex items-center justify-between gap-2 w-full text-gray-700">
+              <div className="flex items-center gap-x-2.5">
+                <img src={AiGenerate} />
+                <span className="">AI Website Generation</span>
+              </div>
+              <span>1/2</span>
+            </div>
+            <div className="w-full bg-blue-200 rounded-full h-2 my-2 dark:bg-blue-100">
+              <div
+                className="h-2 rounded-full bg-blue-gradient"
+                style={{ width: "50%" }}
+              ></div>
+            </div>
+          </div>
+          <button
+            onClick={toggleMenu}
+            className="flex items-center gap-2.5 w-full px-4 py-2 text-left text-gray-700 hover:bg-palatinate-blue-50 cursor-pointer rounded-md"
+          >
+            <img src={LogoutIcon} className="flex-none" />
+            <span className="flex-1"> Log out</span>
+          </button>
         </div>
+      )}
+      <div
+        className="absolute bottom-1 border w-[90%] mac:w-full rounded-lg z-0 shadow flex justify-between px-4 py-2 cursor-pointer"
+        onClick={toggleMenu}
+      >
+        <div className="flex items-center gap-x-3">
+          <img
+            src={ProfilePicture}
+            alt="Profile"
+            className="w-10 h-10 rounded-full"
+          />
+          <div className="flex flex-col w-full">
+            <p className="text-base font-semibold truncate w-full">
+              Adam Zamba
+            </p>
+            <p className="text-sm text-[#6B7280] w-full truncate">
+              adamzamba@gmail.com
+            </p>
+          </div>
+        </div>
+        <button
+          onClick={toggleMenu}
+          className="flex items-center bg-transparent border-none cursor-pointer p-0 focus:outline-none"
+        >
+          <img src={ProfileArrowIcon} />
+        </button>
       </div>
-    </>
+    </div>
   );
 };
 

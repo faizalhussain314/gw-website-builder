@@ -335,16 +335,16 @@ const CustomizeSidebar: React.FC = () => {
           className="h-10 cursor-pointer w-44"
         />
       </div>
-      <div className={`p-4 block lg:block`}>
-        <h2 className="text-xl font-bold">Customize</h2>
-        <p className="text-sm text-gray-500">
+      <div className="px-5 py-3 block lg:block">
+        <h2 className="text-xl font-semibold">Customize</h2>
+        <p className="text-sm text-gray-500 mt-2.5">
           Add your own Logo, Change Color and Fonts
         </p>
-        <div className="mt-4">
-          <label className="block text-sm font-medium mb-2">Site Logo</label>
+        <div className="mt-6">
+          <label className="block text-sm font-medium mb-2.5">Site Logo</label>
           <input
             type="file"
-            className="w-full px-3 py-2 border rounded-md"
+            className="w-full p-3 border border-[#DFEAF6] rounded-md"
             onChange={handleLogoChange}
           />
           {logoUrl && (
@@ -356,13 +356,11 @@ const CustomizeSidebar: React.FC = () => {
           )}
         </div>
         <div className="mt-6">
-          <div className="flex w-full justify-between">
-            <label className="block text-base font-medium mb-2">
-              Font Pair
-            </label>
+          <div className="flex w-full justify-between items-center mb-2.5">
+            <label className="block text-base font-medium">Font Pair</label>
             <span
               onClick={resetStyles}
-              className="text-gray-400 text-base font-medium leading-5 cursor-pointer"
+              className="text-gray-400 text-base font-medium cursor-pointer hover:text-palatinate-blue-600"
             >
               Reset
             </span>
@@ -370,18 +368,36 @@ const CustomizeSidebar: React.FC = () => {
           <div className="relative" ref={dropdownRef}>
             <button
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className="w-full p-2 border rounded-md bg-white text-left"
+              className="w-full p-2 border rounded-md flex items-center justify-between bg-white text-left focus:border-palatinate-blue-500 active:border-palatinate-blue-500"
             >
               {selectedFont ? selectedFont.label : "Choose Your Font"}
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                className={`${
+                  isDropdownOpen && "rotate-180"
+                } transition-all duration-300 ease-in-out`}
+              >
+                <path
+                  d="M7 10L12 15L17 10"
+                  stroke="#88898A"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
             </button>
             {isDropdownOpen && (
               <div className="absolute z-10 w-full bg-white border rounded-md mt-1 max-h-60 overflow-y-auto">
                 {fontCombinations.map((fontCombination) => (
                   <div
                     key={fontCombination.label}
-                    className={`p-2 hover:bg-gray-200 cursor-pointer ${
+                    className={`p-2 hover:bg-[#F9FAFB] cursor-pointer ${
                       selectedFont?.label === fontCombination.label
-                        ? "bg-gray-200"
+                        ? "bg-[#F9FAFB]"
                         : ""
                     }`}
                     onClick={() => handleFontChange(fontCombination)}
@@ -394,9 +410,17 @@ const CustomizeSidebar: React.FC = () => {
           </div>
         </div>
         <div className="mt-4">
-          <label className="block text-sm font-medium mb-2">Color</label>
-          <div className="border-2 border-[#DFEAF6] p-3 rounded-md">
-            <div className="grid grid-cols-5 mac:gap-4 gap-3">
+          <div className="flex w-full justify-between items-center mb-2.5">
+            <label className="block text-base font-medium">Color</label>
+            <span
+              onClick={resetStyles}
+              className="text-gray-400 text-base font-medium cursor-pointer hover:text-palatinate-blue-600"
+            >
+              Reset
+            </span>
+          </div>
+          <div className="border border-[#DFEAF6] p-2.5 rounded-md">
+            <div className="grid grid-cols-5 gap-x-5 gap-y-4">
               {colorCombination.map((color) => (
                 <div
                   key={color.primary}
@@ -405,10 +429,10 @@ const CustomizeSidebar: React.FC = () => {
                     selectedColor.secondary === color.secondary
                       ? "border-2 border-palatinate-blue-500 rounded-md"
                       : ""
-                  } flex items-center justify-center mac:p-1`}
+                  } flex items-center justify-center p-1 shrink-0`}
                 >
                   <button
-                    className="w-4 h-4 rounded-full mac:w-6 mac:h-6"
+                    className="size-5 rounded-full shrink-0"
                     style={{ backgroundColor: color.primary }}
                     onClick={() => handleColorChange(color, true)}
                   />
@@ -418,16 +442,16 @@ const CustomizeSidebar: React.FC = () => {
           </div>
         </div>
 
-        <div className="mt-4 max-w-[18%] flex absolute bottom-0 justify-between">
+        <div className="mt-4 flex absolute bottom-0 justify-between">
           <div className="mb-4 w-full flex justify-between gap-2">
             <Link to={"/design"}>
-              <button className="border previous-btn flex px-4 py-3 text-base sm:text-sm text-white mt-8 sm:mt-2 rounded-md gap-2 mac:gap-3 justify-center">
+              <button className="border previous-btn flex px-4 py-3 text-base text-white sm:mt-2 rounded-md gap-2.5 justify-center">
                 <ArrowBackIcon /> Previous
               </button>
             </Link>
             <button
               onClick={nextPage}
-              className="px-6 py-3 bg-blue-500 text-white rounded-md tertiary text-lg sm:text-sm mt-8 sm:mt-2"
+              className="px-4 py-3 bg-blue-500 text-white rounded-md tertiary text-base sm:mt-2"
             >
               Continue
             </button>
