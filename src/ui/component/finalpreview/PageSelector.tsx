@@ -11,7 +11,6 @@ type Props = {
   pages: Page[];
   selectedPage: string | null;
   isContentGenerating: boolean;
-
   togglePage: (page: string) => void;
   handleNext: () => void;
   handleSkipPage: () => void;
@@ -91,19 +90,19 @@ const PageSelector: React.FC<Props> = ({
   };
 
   return (
-    <div className="p-4">
+    <div className="p-5">
       <h2 className="text-lg font-semibold">
         Select Pages to Import (
         {pages.findIndex((page) => page.name === selectedPage) + 1}/
         {pages.length})
       </h2>
-      <div className="mt-4 p-2">
+      <div className="mt-5">
         {pages.map((page) => (
           <div
             key={page.name}
-            className={`rounded-lg p-2 mb-2 cursor-pointer ${
+            className={`rounded-lg p-3 mb-2 cursor-pointer ${
               selectedPage === page.name
-                ? "border-palatinate-blue-500 border-2 bg-palatinate-blue-50"
+                ? "border-palatinate-blue-600 border bg-palatinate-blue-50"
                 : ""
             }`}
             onClick={() => {
@@ -120,22 +119,22 @@ const PageSelector: React.FC<Props> = ({
                   <input
                     id={`checkbox-${page.slug}`}
                     type="checkbox"
-                    className="mr-2"
+                    className="mr-4 flex items-center w-5 h-5"
                     checked={page.selected}
                     onChange={() => handlePageChange(page.slug, !page.selected)}
                     // disabled={page.status === "Skipped"}
                   />
                 </div>
-                <span className="font-medium">{page.name}</span>
+                <span className="font-medium text-base">{page.name}</span>
               </div>
               <div className="flex items-center">
                 {page.status && (
                   <span
-                    className={`ml-2 text-xs rounded-2xl px-2 ${
+                    className={`ml-2 text-xs rounded-full px-2 py-.5 ${
                       page.status === "Generated"
-                        ? "text-green-700 bg-green-200"
+                        ? "text-[#1E2022] bg-green-200"
                         : page.status === "Skipped"
-                        ? "text-yellow-600 bg-yellow-100"
+                        ? "text-[#1E2002] bg-[#FFDCD5]"
                         : "text-black bg-[#FFDCD5]"
                     }`}
                   >
@@ -161,7 +160,7 @@ const PageSelector: React.FC<Props> = ({
 
                 {selectedPage === page.name ? (
                   <ExpandLessIcon
-                    className="ml-2 text-gray-500 cursor-pointer"
+                    className="ml-2.5 text-[#1E2022] cursor-pointer"
                     onClick={() => {
                       if (isContentGenerating) {
                         showWarningToast();
@@ -172,7 +171,7 @@ const PageSelector: React.FC<Props> = ({
                   />
                 ) : (
                   <ExpandMoreIcon
-                    className="ml-2 text-gray-500 cursor-pointer"
+                    className="ml-2.5 text-[#1E2022] cursor-pointer"
                     onClick={() => {
                       if (isContentGenerating) {
                         showWarningToast();
@@ -191,9 +190,9 @@ const PageSelector: React.FC<Props> = ({
                 page.name === "Blog" ||
                 page.name === "Contact" ||
                 page.name === "Home" ? (
-                  <>
+                  <div className="w-full flex items-center gap-4">
                     <button
-                      className={`bg-blue-600 text-white rounded px-3 py-1 ${
+                      className={`bg-white text-palatinate-blue-600 hover:bg-palatinate-blue-600 hover:text-white rounded px-3 py-1.5 w-full text-sm font-medium ${
                         isContentGenerating ? "opacity-50" : ""
                       }`}
                       onClick={() => {
@@ -222,20 +221,20 @@ const PageSelector: React.FC<Props> = ({
                     </Tooltip>
                   </>
                 ) : (
-                  <>
+                  <div className="w-full flex items-center gap-4">
                     <button
-                      className="bg-palatinate-blue-600 text-white rounded px-3 py-1"
+                      className="bg-white text-palatinate-blue-600 hover:bg-palatinate-blue-600 hover:text-white rounded px-3 py-1.5 w-full text-sm font-medium"
                       onClick={handleGeneratePageClick}
                     >
-                      Generate Page
+                      Keep & Next
                     </button>
                     <button
-                      className="bg-white text-black rounded px-3 py-1"
+                      className="bg-white text-palatinate-blue-600 hover:bg-palatinate-blue-600 hover:text-white rounded px-3 py-1.5 w-full text-sm font-medium"
                       onClick={() => handleSkipClick(page.name)}
                     >
                       Skip Page
                     </button>
-                  </>
+                  </div>
                 )}
               </div>
             )}

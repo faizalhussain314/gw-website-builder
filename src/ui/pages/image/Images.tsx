@@ -75,7 +75,7 @@ function Images() {
 
   return (
     <MainLayout>
-      <div className="p-10 pb-0 bg-[#F9FCFF] ">
+      <div className="p-10 pb-0 bg-[#F9FCFF]">
         <div>
           <div className="flex flex-col">
             <h1 className="text-txt-black-600 font-semibold tracking-[-0.9px] text-3xl mb-6">
@@ -110,7 +110,7 @@ function Images() {
                   Selected Images({selectedImageIds.length})
                 </span>
               </div>
-              <div className="grid grid-cols-4 gap-4 overflow-auto max-h-[600px]">
+              <div className="grid grid-cols-4 gap-4 overflow-auto max-h-[520px]">
                 {images.map((img) => (
                   <div
                     key={img.id}
@@ -149,7 +149,7 @@ function Images() {
           </div>
         </div>
       </div>
-      <div className="flex px-[60px] justify-between items-center py-10">
+      <div className="flex px-10 justify-between items-center py-10">
         <div className="flex gap-4 items-center">
           <Link to={"/description"}>
             <button className="previous-btn flex px-[10px] py-[13px] text-base text-white sm:mt-2 font-medium rounded-md w-[150px] gap-3 justify-center">

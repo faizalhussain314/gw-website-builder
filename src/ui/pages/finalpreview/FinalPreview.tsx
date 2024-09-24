@@ -665,8 +665,8 @@ const FinalPreview: React.FC = () => {
     <div className="h-screen flex font-[inter] w-screen">
       <div className="w-[23%] lg:w-[30%]">
         <aside className="z-10 fixed">
-          <div className="bg-white min-h-screen w-[23vw] lg:w-[30vw] z-10 border-2">
-            <div className="flex items-center justify-between py-4 border-b cursor-pointer pr-7 ps-3 sidebar-header">
+          <div className="bg-white min-h-screen w-[23vw] lg:w-[30vw] z-10 border-r border-[#DFEAF6]">
+            <div className="flex items-center justify-between py-4 border-b cursor-pointer pr-7 ps-3 sidebar-header border-[#DFEAF6]">
               <img
                 src={GravityWriteLogo}
                 alt="gravity write logo"
@@ -680,18 +680,16 @@ const FinalPreview: React.FC = () => {
                 />
               </div>
             </div>
-            <div className="p-4 w-full flex flex-col justify-center">
-              <div className="flex items-center justify-between">
-                <h1 className="text-xl leading-6 pb-2 mt-4 font-bold">
-                  Website Preview
-                </h1>
+            <div className="px-5 py-4 w-full flex flex-col justify-center">
+              <div className="flex items-center justify-between pb-2.5">
+                <h1 className="text-xl font-bold">Website Preview</h1>
                 <Link to={"/custom-design"}>
-                  <button className="bg-button-bg-secondary p-2 rounded-md text-sm">
+                  <button className="bg-button-bg-secondary hover:bg-palatinate-blue-600 hover:text-white px-4 font-medium py-2 rounded-md text-sm cursor-pointer">
                     Back
                   </button>
                 </Link>
               </div>
-              <span className="text-sm text-[#88898A] font-light">
+              <span className="text-base text-[#88898A] font-normal">
                 Preview your website’s potential with our interactive
                 demonstration.
               </span>
@@ -715,7 +713,7 @@ const FinalPreview: React.FC = () => {
           </div>
         </aside>
       </div>
-      <div className="w-[80%] flex-last bg-[#F9FCFF] overflow-x-hidden relative">
+      <div className="w-[77%] flex-last bg-[#F9FCFF] overflow-x-hidden relative">
         <main className="px-12">
           {showPopup &&
             selectedPage !== "Blog" &&
