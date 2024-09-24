@@ -9,9 +9,10 @@ const useDomainEndpoint = () => {
       const baseUrl = currentUrl.substring(0, wpAdminIndex);
       return `${baseUrl}/${endpoint}`;
     } else {
-      console.error("Could not find wp-admin in the current URL.");
-      // const tempurl = `https://uncomfortable-umar-ygho.zipwp.link/${endpoint}`;
-      // return tempurl;
+      // console.error("Could not find wp-admin in the current URL.");
+      const tempurl = `https://uncomfortable-umar-ygho.zipwp.link/${endpoint}`;
+      // const tempurl = `https://opulent-orion-e01k.zipwp.link/${endpoint}`;
+      return tempurl;
     }
   }, []);
 

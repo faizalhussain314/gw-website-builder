@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { templatelist } from "../types/Preview.type";
+import { Template } from "../types/Preview.type"; // Using the updated type
 
 interface ImageState {
   images: { url: string; description: string }[];
@@ -28,7 +28,7 @@ interface UserDataState {
   logo: string;
   color: Color;
   font: string;
-  templateList: templatelist[];
+  templateList: any;
 }
 
 const initialState: UserDataState = {
@@ -44,7 +44,7 @@ const initialState: UserDataState = {
   content: [],
   color: { primary: "", secondary: "" },
   font: "",
-  templateList: [],
+  templateList: [], // Initialize as an empty array of Template
 };
 
 export const activeStepSlice = createSlice({
@@ -60,15 +60,6 @@ export const activeStepSlice = createSlice({
     setDescriptionTwo: (state, action: PayloadAction<string>) => {
       state.description2 = action.payload;
     },
-    // addImage: (
-    //   state,
-    //   action: PayloadAction<{ url: string; description: string }>
-    // ) => {
-    //   state.images.push(action.payload);
-    // },
-    // removeImage: (state, action: PayloadAction<string>) => {
-    //   state.images = state.images.filter((img) => img.url !== action.payload);
-    // },
     setTemplateId: (state, action: PayloadAction<number>) => {
       state.templateid = action.payload;
     },
@@ -110,37 +101,17 @@ export const activeStepSlice = createSlice({
       state.color = { primary: "", secondary: "" };
       state.font = "";
     },
-    setTemplateList: (state, action: PayloadAction<templatelist[]>) => {
+    setTemplateList: (state, action: PayloadAction<any>) => {
+      // Assigning the correct template list structure
       state.templateList = action.payload;
     },
   },
-  // extraReducers: (builder) => {
-  //   builder
-  //     .addCase(
-  //       fetchStepDetail.fulfilled,
-  //       (state, action: PayloadAction<StepDetail>) => {
-  //         state.stepDetail = action.payload;
-  //       }
-  //     )
-  //     .addCase(fetchPost.fulfilled, (state, action: PayloadAction<Post>) => {
-  //       state.post = action.payload;
-  //     })
-  //     .addCase(
-  //       fetchCategory.fulfilled,
-  //       (state, action: PayloadAction<Category[]>) => {
-  //         state.category = action.payload;
-  //       }
-  //     );
-  //
-  // },
 });
 
 export const {
   setBusinessName,
   setDescriptionOne,
   setDescriptionTwo,
-  // addImage,
-  // removeImage,
   addDesign,
   removeDesign,
   clearUserData,

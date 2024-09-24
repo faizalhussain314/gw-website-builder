@@ -1,23 +1,18 @@
+import React, { useLayoutEffect, useState, useEffect } from "react";
 import MainLayout from "../../Layouts/MainLayout";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { RootState } from "../../../store/store";
-import { useDispatch, useSelector } from "react-redux";
-import {
-  setTemplateId,
-  setTemplatename,
-  setTemplateList,
-} from "../../../Slice/activeStepSlice";
+import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import Popup from "../../component/Popup";
 import useTemplateList from "../../../hooks/useTemplateList";
-import { useState, useEffect, useLayoutEffect } from "react";
-import { templatelist } from "../../../types/Preview.type";
+import axios from "axios";
+const API_URL = import.meta.env.VITE_API_BACKEND_URL;
 
 function Design() {
-  const dispatch = useDispatch();
-  const { templateList, activeIndex, selectedTemplateDetails, handleBoxClick } =
+  const { activeIndex, selectedTemplateDetails, handleBoxClick } =
     useTemplateList();
-
+  const [templateList, setTemplateList] = useState([]);
   const businessName = useSelector(
     (state: RootState) => state.userData.businessName
   );
@@ -35,18 +30,6 @@ function Design() {
   const handlePopupClose = () => {
     setShowPopup(false);
   };
-
-  const setDetails = () => {
-    if (selectedTemplateDetails) {
-      const { templateid, templatename } = selectedTemplateDetails;
-      dispatch(setTemplateId(templateid));
-      dispatch(setTemplatename(templatename));
-    }
-  };
-
-  useEffect(() => {
-    setDetails();
-  }, [selectedTemplateDetails]);
 
   useLayoutEffect(() => {
     const handleMouseEnter = (iframe: HTMLIFrameElement) => {
@@ -74,9 +57,6 @@ function Design() {
       const iframe = iframes[i];
       iframe.addEventListener("mouseenter", onMouseEnter);
       iframe.addEventListener("mouseleave", onMouseLeave);
-      iframe.addEventListener("click", () =>
-        dispatch(setTemplateList(templateList))
-      );
     }
 
     return () => {
@@ -86,9 +66,9 @@ function Design() {
         iframe.removeEventListener("mouseleave", onMouseLeave);
       }
     };
-  }, [dispatch, templateList]);
+  }, [templateList]);
 
-  const handleMouseEnter = (event) => {
+  const handleMouseEnter = (event: any) => {
     const iframe = event.currentTarget.querySelector("iframe");
     if (iframe) {
       iframe.contentWindow.postMessage(
@@ -97,7 +77,8 @@ function Design() {
       );
     }
   };
-  const handleMouseLeave = (event) => {
+
+  const handleMouseLeave = (event: any) => {
     const iframe = event.currentTarget.querySelector("iframe");
     if (iframe) {
       iframe.contentWindow.postMessage(
@@ -106,6 +87,27 @@ function Design() {
       );
     }
   };
+
+  // Fetch the template list from API on component mount
+  useEffect(() => {
+    const fetchTemplateList = async () => {
+      try {
+        const response = await axios.get(`${API_URL}getTemplates`);
+        const templates = response.data?.data || []; // Extract data from the API response
+        setTemplateList(templates); // Set the template list in state
+      } catch (error) {
+        console.error("Error fetching templates:", error);
+      }
+    };
+
+    fetchTemplateList();
+  }, []);
+
+  // Handle template selection
+  // const handleTemplateSelect = (template) => {
+  //   setSelectedTemplate(template); // Store the selected template in state
+  //   console.log("Selected Template:", template); // You can use this state later
+  // };
 
   return (
     <MainLayout>
@@ -179,27 +181,31 @@ function Design() {
                           ? "border-2 border-palatinate-blue-500 rounded-lg "
                           : "border"
                       } `}
-                      onClick={() => handleBoxClick(index, templateList[index])}
+                      onClick={() => handleBoxClick(index, list)}
                     >
+                      {/* Iframe Content */}
                       <div className="w-full aspect-[164/179] relative overflow-hidden bg-neutral-300 rounded-xl">
                         <div className="w-full max-h-[calc(19_/_15_*_100%)] pt-[calc(19_/_15_*_100%)] select-none relative shadow-md overflow-hidden origin-top-left bg-neutral-300">
                           <iframe
                             id="myIframe"
-                            title="Child iFrame"
-                            className={`scale-[0.33] w-[1200px] h-[1600px] absolute left-0 top-0 origin-top-left select-none `}
-                            src={list.link}
+                            title={`Template ${index + 1}`}
+                            className={`scale-[0.33] w-[1200px] h-[1600px] absolute left-0 top-0 origin-top-left select-none`}
+                            src={list?.pages?.[0]?.iframe_url} // Use the iframe URL from the first page in the template
                           ></iframe>
                         </div>
-                        <div className="absolute top-3 right-3 text-xs leading-[1em] pt-1 pb-[4px] zw-xs-semibold text-white flex items-center justify-center rounded-3xl bg-[#F90]   px-[12px] pointer-events-none">
+
+                        {/* Premium Label */}
+                        <div className="absolute top-3 right-3 text-xs leading-[1em] pt-1 pb-[4px] zw-xs-semibold text-white flex items-center justify-center rounded-3xl bg-[#F90] px-[12px] pointer-events-none">
                           <div className="flex items-center justify-center gap-1 font-sm">
                             Premium
                           </div>
                         </div>
-                        <div
-                          className="absolute inset-0 w-full h-full bg-transparent cursor-pointer"
-                          // style={{ pointerEvents: "none" }}
-                        ></div>
+
+                        {/* Overlay */}
+                        <div className="absolute inset-0 w-full h-full bg-transparent cursor-pointer"></div>
                       </div>
+
+                      {/* Bottom Info */}
                       <div className="relative h-14">
                         <div className="absolute bottom-0 flex items-center justify-between w-full px-5 bg-white rounded-b-lg h-14 shadow-template-info">
                           <div className="capitalize zw-base-semibold text-app-heading">

@@ -72,6 +72,8 @@ function create_required_tables() {
     $table_name4 = $wpdb->prefix . 'menu_item_details';  
     $table_name5 = $wpdb->prefix . 'generated_content'; 
     $table_name6 = $wpdb->prefix . 'generated_html_content'; 
+    $table_name7 = $wpdb->prefix . 'page_generation_status'; 
+    $table_name8 = $wpdb->prefix . 'selected_template_data'; 
 
     $charset_collate = $wpdb->get_charset_collate();
 
@@ -132,6 +134,21 @@ $sql6 = "CREATE TABLE $table_name6 (
     html_data LONGTEXT,
     PRIMARY KEY (id)
 ) $charset_collate;";
+$sql7 = "CREATE TABLE $table_name7 (
+    id INT NOT NULL AUTO_INCREMENT,
+    page_name VARCHAR(255),
+    page_status VARCHAR(255),
+    page_slug VARCHAR(255),
+    selected VARCHAR(255),
+    PRIMARY KEY (id)
+) $charset_collate;";
+$sql8 = "CREATE TABLE $table_name8 (
+    id INT NOT NULL,
+    template_id VARCHAR(255),
+    template_name VARCHAR(255),
+    template_json_data LONGTEXT,
+    PRIMARY KEY (id)
+) $charset_collate;";
 
     // Check if the tables exist and create them if not
     if ($wpdb->get_var("SHOW TABLES LIKE '{$table_name1}'") != $table_name1) {
@@ -151,6 +168,12 @@ $sql6 = "CREATE TABLE $table_name6 (
     }
     if ($wpdb->get_var("SHOW TABLES LIKE '{$table_name6}'") != $table_name6) {
         dbDelta($sql6);
+    }
+    if ($wpdb->get_var("SHOW TABLES LIKE '{$table_name7}'") != $table_name7) {
+        dbDelta($sql7);
+    }
+    if ($wpdb->get_var("SHOW TABLES LIKE '{$table_name8}'") != $table_name8) {
+        dbDelta($sql8);
     }
 }
 
@@ -251,6 +274,27 @@ add_action('rest_api_init', function () {
         'callback' => 'fetch_html_data_details',
         'permission_callback' => '__return_true'
     ));
+	register_rest_route('custom/v1', '/save-generated-page-status', array(
+		'methods'  => WP_REST_Server::CREATABLE,
+		'callback' => 'save_generated_page_status',
+		'permission_callback' => '__return_true'
+	) );
+
+	register_rest_route( 'custom/v1', '/get-generated-page-status', array(
+		'methods'  => WP_REST_Server::CREATABLE,
+		'callback' => 'get_generated_page_status',
+		'permission_callback' => '__return_true'
+	) );
+	register_rest_route( 'custom/v1', '/save-selected-template', array(
+		'methods'  => WP_REST_Server::CREATABLE,
+		'callback' => 'save_selected_template_data',
+		'permission_callback' => '__return_true'
+	) );
+	register_rest_route( 'custom/v1', '/get-selected-template', array(
+		'methods'  => WP_REST_Server::CREATABLE,
+		'callback' => 'get_selected_template_data',
+		'permission_callback' => '__return_true'
+	) );
     /*
     register_rest_route('custom/v1', '/update-content', array(
         'methods' => WP_REST_Server::CREATABLE,
@@ -265,6 +309,102 @@ add_action('rest_api_init', function () {
     //     'permission_callback' => '__return_true',
     // ));
 });
+function save_selected_template_data(WP_REST_Request $request) {
+    global $wpdb; // Access to the WordPress database
+    $table_name = $wpdb->prefix . 'selected_template_data'; // Define the table name
+    $template_id = $request->get_param('template_id');
+    $template_name = $request->get_param('template_name');
+    $template_json_data = $request->get_param('template_json_data');
+
+    // Check the count of rows in the table
+    $count = $wpdb->get_var("SELECT COUNT(*) FROM $table_name");
+
+    if ($count > 0) {
+        // Update the existing row
+        $result = $wpdb->update(
+            $table_name,
+            [
+                'template_id' => $template_id,
+                'template_name' => $template_name,
+                'template_json_data' => $template_json_data
+            ],
+            ['id' => 1] // Since there's only one row, its ID should be 1
+        );
+    } else {
+        // Insert a new row with ID = 1
+        $result = $wpdb->insert(
+            $table_name,
+            [
+                'id' => 1, // Explicitly setting ID to 1
+                'template_id' => $template_id,
+                'template_name' => $template_name,
+                'template_json_data' => $template_json_data
+            ]
+        );
+    }
+
+    if (false === $result) {
+        return new WP_Error('db_error', 'Database operation failed', array('status' => 500));
+    }
+
+    // Return success response
+    return new WP_REST_Response(['success' => true, 'id' => 1], 200);
+}
+
+function get_selected_template_data( WP_REST_Request $request ) {
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'selected_template_data'; 
+
+    $template_data = $wpdb->get_var($wpdb->prepare(
+        "SELECT * FROM $table_name"
+    ));
+
+    if (null === $template_data) {
+        return new WP_Error('no_template_found', 'No template found with that name', array('status' => 404));
+    }
+
+    return new WP_REST_Response(json_decode($template_data, true), 200);
+}
+
+function save_generated_page_status( WP_REST_Request $request ) {
+	global $wpdb;
+	$params = $request->get_json_params();
+    $page_name = $request->get_param('page_name');
+    $page_slug = $request->get_param('page_slug');
+	$table_name = $wpdb->prefix . 'page_generation_status';
+
+	// Check if entry exists
+	$existing = $wpdb->get_row($wpdb->prepare(
+		"SELECT * FROM $table_name WHERE page_name = %s AND page_slug = %s",
+		$page_name, $page_slug
+	));
+
+	if ( $existing ) {
+		// Update existing
+		$success = $wpdb->update( $table_name, $params, ['id' => $existing->id] );
+	} else {
+		// Insert new
+		$success = $wpdb->insert( $table_name, $params );
+	}
+
+	return new WP_REST_Response( $success ? 'Success' : 'Error', $success ? 200 : 500 );
+}
+function get_generated_page_status(WP_REST_Request $request) {
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'page_generation_status';
+
+    // Query to select distinct combinations of version_name, page_name, and template_name
+    $query = "SELECT * FROM $table_name";
+
+    $results = $wpdb->get_results($query, ARRAY_A);
+
+    if (!empty($results)) {
+        // Optionally, you could manipulate the structure of the returned JSON here
+        return new WP_REST_Response($results, 200);
+    } else {
+        return new WP_Error('no_data', 'No HTML metadata found', ['status' => 404]);
+    }
+}
 function fetch_html_data_details(WP_REST_Request $request) {
     global $wpdb;
     $table_name = $wpdb->prefix . 'generated_html_content';
@@ -303,7 +443,7 @@ function fetch_html_data($request) {
             $clean_html = html_entity_decode($result['html_data']);
 
             // Remove unwanted characters
-            $clean_html = str_replace(array("\n", "\t", "&quot;"), '', $clean_html);
+            $clean_html = str_replace(array("\n", "\t"), '', $clean_html);
 
             $results[$index]['html_data'] = $clean_html;
         }
