@@ -17,8 +17,8 @@ const CustomizeLayout: React.FC<MainLayoutProps> = ({ children }) => {
           </aside>
         </div>
         <div className="w-[80%]">
-          <Header active={false} />
-          <main className="w-full h-[91vh]">{children}</main>
+          {/* <Header active={false} /> */}
+          <main className="w-full h-full">{children}</main>
         </div>
       </div>
     </>

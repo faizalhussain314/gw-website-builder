@@ -119,68 +119,85 @@ function Category() {
 
   return (
     <MainLayout>
-      <div className="bg-[rgba(249, 252, 255, 1)] flex font-['inter']">
-        <div className="p-8">
-          <div className="mt-8 ml-[50px]">
-            <h1 className="text-txt-black-600 leading-5 font-semibold text-3xl font-[inter] mb-4">
+      <div className="bg-[#F9FCFF] min-h-screen p-[40px]">
+        <div className="flex font-['inter']">
+          <div className="mb-[35px]">
+            <h1 className="text-txt-black-600 font-semibold leading-[38px] tracking-[-0.9px] text-3xl mb-2.5">
               I am creating a website for
             </h1>
-            <span className="mt-4 text-lg leading-6 text-txt-secondary-400">
-              Let’s get started by choosing the type of website you’d like to
+            <span className="text-lg tracking-[-0.54px] font-normal leading-[26px] text-txt-secondary-400">
+              Let's get started by choosing the type of website you'd like to
               create
             </span>
           </div>
         </div>
-      </div>
-      <div className="relative  pl-20" ref={dropdownRef}>
-        <div
-          className={`relative w-3/4 ${
-            showDropdown && categoryList.length > 0
-              ? "border border-gray-300 rounded-md"
-              : ""
-          }`}
-        >
-          {!error && (
-            <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-          )}
-
-          <input
-            type="text"
-            value={inputValue}
-            onChange={handleInputChange}
-            placeholder="Enter a keyword to search your business"
-            className={`bg-white rounded-md w-full px-10 py-2 border ${
-              error ? "border-red-500" : "border-gray-300"
-            } focus:outline-none`}
-            aria-required="true"
-            onFocus={() => setShowDropdown(true)}
-          />
-          {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
-          {showDropdown && categoryList.length > 0 && (
-            <ul className="absolute bg-white border border-gray-300 rounded-md w-full mt-1 max-h-60 overflow-y-auto">
-              {categoryList
-                .filter((option) =>
+        <div ref={dropdownRef}>
+          <div className="relative w-full">
+            <input
+              type="text"
+              value={inputValue}
+              onChange={handleInputChange}
+              placeholder="Enter a keyword to search your business"
+              className={`bg-white rounded-lg w-full pl-[40px] pr-[15px] py-3 border placeholder:text-[#A9B0B7] placeholder:!font-normal focus:border-palatinate-blue-500 active:border-palatinate-blue-500 focus:border-2 ${
+                error ? "border-red-500" : "border-[#CDD4DB]"
+              } focus:outline-none`}
+              aria-required="true"
+              onFocus={() => setShowDropdown(true)}
+            />
+            {/* <SearchIcon className="absolute text-gray-400 transform top-[10px] left-[10px]" />  */}
+            <div className="absolute transform top-[14px] left-[10px]">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="17"
+                height="17"
+                viewBox="0 0 17 17"
+                fill="none"
+              >
+                <path
+                  d="M12.6417 14.1521C11.4092 15.2354 9.82167 15.889 8.09083 15.889C4.17667 15.889 1 12.5535 1 8.4445C1 4.3355 4.17667 1 8.09083 1C12.0033 1 15.1808 4.3355 15.1808 8.4445C15.1808 10.2628 14.5583 11.9305 13.5267 13.2229L15.8175 15.6291C15.9392 15.7569 16 15.9249 16 16.0938C16 16.6074 15.5525 16.75 15.375 16.75C15.215 16.75 15.055 16.6861 14.9325 16.5575L12.6417 14.1521ZM8.09083 2.31337C4.8675 2.31337 2.25167 5.06088 2.25167 8.4445C2.25167 11.8281 4.8675 14.5756 8.09083 14.5756C11.3125 14.5756 13.93 11.8281 13.93 8.4445C13.93 5.06088 11.3125 2.31337 8.09083 2.31337Z"
+                  fill="#ABB3BB"
+                  stroke="#ABB3BB"
+                  stroke-width="0.2"
+                />
+              </svg>
+            </div>
+            {error && <p className="mt-2 text-red-500">{error}</p>}
+            {showDropdown && (
+              <ul className="absolute w-full mt-1 overflow-y-auto bg-white border border-gray-300 rounded-md max-h-80 p-4">
+                {categoryList.filter((option) =>
                   option.name.toLowerCase().includes(inputValue.toLowerCase())
-                )
-                .map((option) => (
-                  <li
-                    key={option.id}
-                    onClick={() => handleSelect(option.name)}
-                    className="px-4 py-2 cursor-pointer hover:bg-gray-100"
-                  >
-                    {option.name}
+                ).length > 0 ? (
+                  categoryList
+                    .filter((option) =>
+                      option.name
+                        .toLowerCase()
+                        .includes(inputValue.toLowerCase())
+                    )
+                    .map((option) => (
+                      <li
+                        key={option.id}
+                        onClick={() => handleSelect(option.name)}
+                        className="p-4 cursor-pointer hover:bg-[#EBF4FF] text-[#1E2022] text-base font-normal rounded-md"
+                      >
+                        {option.name}
+                      </li>
+                    ))
+                ) : (
+                  <li className="px-4 py-2 text-gray-500">
+                    No categories found
                   </li>
-                ))}
-            </ul>
-          )}
+                )}
+              </ul>
+            )}
+          </div>
+          <button
+            onClick={handleClick}
+            type="submit"
+            className="tertiary px-[35px] py-[15px] text-base text-white mt-[25px] sm:mt-2 rounded-lg bg-blue-500 hover:bg-blue-600 tracking-[-0.32px] font-medium leading-[22px]"
+          >
+            Continue
+          </button>
         </div>
-        <button
-          onClick={handleClick}
-          type="submit"
-          className="tertiary px-[30px] py-[15px] text-lg sm:text-sm text-white mt-8 sm:mt-2 rounded-lg bg-blue-500 hover:bg-blue-600"
-        >
-          Continue
-        </button>
       </div>
     </MainLayout>
   );

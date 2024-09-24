@@ -93,27 +93,31 @@ const SideStepper: React.FC = () => {
   };
 
   return (
-    <div style={{ maxWidth: 400 }}>
+    <div>
       <Stepper
         activeStep={activeStep}
         orientation="vertical"
         sx={stepStyle}
-        className=""
+        style={{ padding: "25px 30px" }}
       >
         {steps.map((step, index) => (
           <Step key={step.label}>
             <StepLabel
               optional={
                 index === 5 ? (
-                  <Typography variant="caption">Last step</Typography>
+                  <Typography variant="caption"> </Typography>
                 ) : null
               }
             >
-              {step.label}
+              <Typography className="!font-medium text-txt-black-600 tracking-[-0.32px] text-base">
+                {step.label}
+              </Typography>
             </StepLabel>
-            <StepContent>
-              <Typography>{step.description}</Typography>
-              <Box sx={{ mb: 2 }}></Box>
+            <StepContent className="!p-0">
+              <Typography className="!font-light !text-sm !pl-6 text-[#88898A] tracking-[-0.28px] leading-[22px] -mt-1">
+                {step.description}
+              </Typography>
+              {/* <Box sx={{ mb: 2 }}></Box> */}
             </StepContent>
           </Step>
         ))}

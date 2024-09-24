@@ -117,24 +117,24 @@ function Design() {
           secondDescription={description2}
         />
       )}
-      <div className="h-full w-full relative">
-        <div className="w-full h-full flex flex-col items-center bg-app-light-background overflow-y-auto">
-          <div className="mx-auto flex flex-col overflow-x-hidden w-full">
-            <div className="space-y-2 px-5 md:px-10 lg:px-14 xl:px-15 pt-12">
+      <div className="relative w-full h-full p-10">
+        <div className="flex flex-col items-center w-full max-h-[76vh] overflow-y-auto bg-app-light-background">
+          <div className="flex flex-col w-full mx-auto overflow-x-hidden">
+            <div className="">
               <h1 className="text-3xl font-semibold">
                 Choose the structure for your website
               </h1>
-              <p className="text-base font-normal leading-6 text-app-text text-txt-secondary-500">
+              <p className="mt-3 text-base font-normal leading-6 text-app-text text-txt-secondary-500">
                 Select your preferred structure for your website from the
                 options below.
               </p>
             </div>
-            <form className="sticky -top-1.5 z-10 pt-4 pb-4 bg-zip-app-light-bg px-5 md:px-10 lg:px-14 xl:px-15">
+            <form className="my-8">
               <div>
-                <div className="flex relative items-center">
-                  <div className="h-12 flex items-center mr-0">
-                    <div className="absolute left-3 flex items-center">
-                      <button className="w-auto h-auto p-0 flex items-center justify-center cursor-pointer bg-transparent border-0 focus:outline-none">
+                <div className="relative flex items-center">
+                  <div className="flex items-center h-12 mr-0">
+                    <div className="absolute flex items-center left-3">
+                      <button className="flex items-center justify-center w-auto h-auto p-0 bg-transparent border-0 cursor-pointer focus:outline-none">
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
                           fill="none"
@@ -155,7 +155,7 @@ function Design() {
                   </div>
                   <div className="w-full">
                     <input
-                      className=" w-full h-12  placeholder:zw-placeholder zw-input rounded-md px-3 border focus:border-2  outline-none  shadow-sm  border-app-border focus:border-app-secondary focus:ring-transparent pl-11 false "
+                      className="w-full h-12 px-3 border rounded-md shadow-sm outline-none placeholder:zw-placeholder zw-input focus:border-2 border-app-border focus:border-app-secondary focus:ring-transparent pl-11 false"
                       value={category}
                       readOnly
                     />
@@ -164,19 +164,19 @@ function Design() {
               </div>
             </form>
 
-            <div className="custom-confirmation-modal-scrollbar relative px-5 md:px-10 lg:px-14 xl:px-15 xl:max-w-full">
-              <div className="grid grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 auto-rows-auto items-start justify-center gap-6 mb-10">
+            <div className="relative custom-confirmation-modal-scrollbar md:px-10 lg:px-14 xl:px-15 xl:max-w-full">
+              <div className="grid items-start justify-center grid-cols-3 gap-6 lg:grid-cols-2 xl:grid-cols-3 auto-rows-auto">
                 {templateList.map((list: templatelist, index: number) => (
                   <div
                     key={index}
-                    className="w-full flex justify-center rounded-b-2xl cursor-pointer hover-element"
+                    className="flex justify-center w-full cursor-pointer rounded-b-2xl hover-element"
                     onMouseEnter={handleMouseEnter}
                     onMouseLeave={handleMouseLeave}
                   >
                     <div
-                      className={` w-full border border-border-tertiary border-solid rounded-t-xl mb-8 rounded-b-lg ${
+                      className={` w-full border border-border-tertiary border-solid rounded-t-xl rounded-b-lg ${
                         activeIndex === index
-                          ? "border-2 border-palatinate-blue-500  rounded-lg "
+                          ? "border-2 border-palatinate-blue-500 rounded-lg "
                           : "border"
                       } `}
                       onClick={() => handleBoxClick(index, templateList[index])}
@@ -201,8 +201,8 @@ function Design() {
                         ></div>
                       </div>
                       <div className="relative h-14">
-                        <div className="absolute bottom-0 w-full h-14 flex items-center justify-between bg-white px-5 shadow-template-info rounded-b-lg">
-                          <div className="zw-base-semibold text-app-heading capitalize">
+                        <div className="absolute bottom-0 flex items-center justify-between w-full px-5 bg-white rounded-b-lg h-14 shadow-template-info">
+                          <div className="capitalize zw-base-semibold text-app-heading">
                             Option {index + 1}
                           </div>
                           <div className="flex gap-4">
@@ -235,22 +235,20 @@ function Design() {
             </div>
           </div>
         </div>
-        <div className="sticky bottom-0 pb-8 bg-app-light-background  px-10 lg:px-16 xl:px-36 z-30 bg-[#F9FCFF]">
-          <div className="flex xs:items-center items-start justify-between">
-            <div className="flex flex-row xs:flex-row xs:items-center items-start gap-x-4 gap-y-10 xs:gap-y-0 flex-wrap">
-              {" "}
+        <div className="pt-[50px]">
+          <div className="flex items-start justify-between xs:items-center">
+            <div className="flex flex-row flex-wrap items-start xs:flex-row xs:items-center gap-x-4 gap-y-10 xs:gap-y-0">
               <Link to={"/contact"}>
-                {" "}
-                <button className=" previous-btn flex px-[10px] py-[13px] text-lg sm:text-sm text-white mt-8 sm:mt-2 rounded-md w-[150px] gap-3 justify-center">
-                  <ArrowBackIcon />
+                <button className=" previous-btn flex px-[10px] py-[13px] text-base text-white font-medium sm:mt-2 rounded-md w-[150px] gap-3 justify-center">
+                  <ArrowBackIcon fontSize="small" />
                   Previous
                 </button>
               </Link>
               <button
-                className=" tertiary px-[30px] py-[10px] text-lg sm:text-sm text-white mt-8 sm:mt-2 rounded-md w-[150px]"
+                className=" tertiary px-[30px] py-[10px] text-base text-white sm:mt-2 rounded-md w-[150px]"
                 onClick={() => setShowPopup(true)}
               >
-                <div className="flex justify-center items-center gap-x-2">
+                <div className="flex items-center justify-center font-medium gap-x-2">
                   <div>Continue</div>
                 </div>
               </button>

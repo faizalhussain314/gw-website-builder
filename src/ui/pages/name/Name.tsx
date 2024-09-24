@@ -61,13 +61,13 @@ function Name() {
 
   return (
     <MainLayout>
-      <div className="bg-[rgba(249, 252, 255, 1)] flex font-['inter']">
-        <div className="p-8">
-          <div className="mt-8 ml-[50px] flex flex-col">
-            <h1 className="text-txt-black-600 leading-5 font-semibold text-3xl font-[inter] mb-4">
+      <div className="bg-[#F9FCFF] flex font-['inter']">
+        <div className="p-[40px] w-full">
+          <div className="flex flex-col">
+            <h1 className="text-txt-black-600 font-semibold leading-[38px] tracking-[-0.9px] text-3xl mb-2.5">
               What is {category} name? Tell us more about the {category}.
             </h1>
-            <span className="mt-4 text-lg leading-6 text-txt-secondary-400">
+            <span className="text-lg tracking-[-0.54px] font-normal leading-[26px] text-txt-secondary-500">
               Please be as descriptive as you can. Share details such as a brief
               about the {category}, specialty, menu, etc.
             </span>
@@ -76,24 +76,23 @@ function Name() {
                 type="text"
                 value={name}
                 onChange={handleChange}
-                className={`bg-white p-3 border ${
+                className={`bg-white px-[15px] py-[10px] border ${
                   error ? "border-red-500" : "border-[rgba(205, 212, 219, 1)]"
-                } rounded-md w-[720px] mt-4 focus:border-palatinate-blue-500 active:border-palatinate-blue-500 active:outline-palatinate-blue-500 focus:outline-palatinate-blue-500`}
+                } rounded-md w-full mt-[35px]  focus:border-palatinate-blue-500 active:border-palatinate-blue-500 active:outline-palatinate-blue-500 focus:outline-palatinate-blue-500 placeholder:text-[#1e2022] placeholder:font-normal`}
               />
               {error && <div className="mt-2 text-red-600">{error}</div>}
-              <div className="flex gap-4">
+              <div className="flex items-center gap-4 mt-6">
                 <button
                   onClick={handlePrevious}
-                  className="previous-btn flex px-[10px] py-[13px] text-lg sm:text-sm text-white mt-8 sm:mt-2 rounded-md w-[150px] gap-3 justify-center"
+                  className="previous-btn flex px-[30px] font-medium py-[15px] text-base sm:text-sm text-white sm:mt-2  rounded-lg  gap-2.5 justify-center"
                 >
-                  <ArrowBackIcon />
+                  <ArrowBackIcon fontSize="small" />
                   Previous
                 </button>
-
                 <button
                   type="button"
                   onClick={handleClick}
-                  className="tertiary px-[30px] py-[10px] text-lg sm:text-sm text-white mt-8 sm:mt-2 rounded-md w-[150px]"
+                  className="tertiary px-[35px] font-medium py-[15px] text-base sm:text-sm text-white  sm:mt-2 rounded-lg "
                 >
                   Continue
                 </button>
