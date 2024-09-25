@@ -149,6 +149,19 @@ If you wanna remove scrollbar please use this class called "no-scrollbar"
   animation: spin 4s linear infinite;
 }
 
+/** 
+-------------------------
+*/
+.MuiStepLabel-iconContainer {
+  padding-right: 15px !important;
+}
+
+.MuiStepLabel-iconContainer svg {
+  width: 28px;
+  height: 28px;
+}
+
+
 /* .css-1j0qgw8-MuiAutocomplete-root.Mui-focused > */
 
 

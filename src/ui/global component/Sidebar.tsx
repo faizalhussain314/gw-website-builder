@@ -12,12 +12,13 @@ function Sidebar() {
   };
 
   return (
-    <>
-      <div
-        className={`bg-white min-h-screen w-[25vw] mac:w-[20vw] z-10 border-2 ${
-          active ? "hidden" : ""
-        }`}
-      >
+    <div
+      className={`${
+        active ? "hidden" : ""
+      } bg-white w-full h-screen border-r border-[#DFEAF6] flex flex-col`}
+    >
+      <>
+        {/* Header Section */}
         <div className="flex items-center justify-between py-4 border-b cursor-pointer pr-7 ps-3 sidebar-header">
           <img
             src="https://tours.mywpsite.org/wp-content/uploads/2024/08/logo.svg"
@@ -32,11 +33,14 @@ function Sidebar() {
             />
           </div>
         </div>
-
+        {/* Stepper Section */}
         <Stepper />
+      </>
+      {/* Account Section */}
+      <div className="mt-auto">
         <ProfileSection />
       </div>
-    </>
+    </div>
   );
 }
 

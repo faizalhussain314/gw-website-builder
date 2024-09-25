@@ -8,16 +8,17 @@ interface MainLayoutProps {
 
 const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   return (
-    <div className="h-screen flex font-[inter]">
-      <div className=" mac:w-[20%] w-[25%]">
-        <aside className="z-10 fixed">
-          <Sidebar />
-        </aside>
+    <div className="flex">
+      <div className="w-[23%]">
+        <Sidebar />
       </div>
-      <div className="mac:w-[80%] w-[75%]">
+      {/* Main Container */}
+      <div className="flex flex-col flex-1 max-w-full max-h-screen">
         <Header active={false} />
 
-        <main>{children}</main>
+        <main className="flex flex-col flex-1 overflow-y-auto">
+          {children}
+        </main>
       </div>
     </div>
   );
