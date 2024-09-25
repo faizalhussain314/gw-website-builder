@@ -1,23 +1,21 @@
+import React, { useLayoutEffect, useState, useEffect } from "react";
 import MainLayout from "../../Layouts/MainLayout";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { RootState } from "../../../store/store";
-import { useDispatch, useSelector } from "react-redux";
-import {
-  setTemplateId,
-  setTemplatename,
-  setTemplateList,
-} from "../../../Slice/activeStepSlice";
+import { useSelector, useDispatch } from "react-redux";
 import { Link } from "react-router-dom";
 import Popup from "../../component/Popup";
 import useTemplateList from "../../../hooks/useTemplateList";
-import { useState, useEffect, useLayoutEffect } from "react";
-import { templatelist } from "../../../types/Preview.type";
+import axios from "axios";
+import { saveSelectedTemplate } from "../../../infrastructure/api/wordpress-api/desgin/saveSelectedtemplate";
+import useDomainEndpoint from "../../../hooks/useDomainEndpoint";
+
+const API_URL = import.meta.env.VITE_API_BACKEND_URL;
 
 function Design() {
-  const dispatch = useDispatch();
-  const { templateList, activeIndex, selectedTemplateDetails, handleBoxClick } =
-    useTemplateList();
+  const { activeIndex, handleBoxClick } = useTemplateList();
 
+  const [templateList, setTemplateList] = useState([]);
   const businessName = useSelector(
     (state: RootState) => state.userData.businessName
   );
@@ -31,22 +29,13 @@ function Design() {
     useSelector((state: RootState) => state.userData.category) || "";
 
   const [showPopup, setShowPopup] = useState(false);
+  const dispatch = useDispatch();
+  const { getDomainFromEndpoint } = useDomainEndpoint();
+  const [hasFetched, setHasFetched] = useState(false);
 
   const handlePopupClose = () => {
     setShowPopup(false);
   };
-
-  const setDetails = () => {
-    if (selectedTemplateDetails) {
-      const { templateid, templatename } = selectedTemplateDetails;
-      dispatch(setTemplateId(templateid));
-      dispatch(setTemplatename(templatename));
-    }
-  };
-
-  useEffect(() => {
-    setDetails();
-  }, [selectedTemplateDetails]);
 
   useLayoutEffect(() => {
     const handleMouseEnter = (iframe: HTMLIFrameElement) => {
@@ -74,9 +63,6 @@ function Design() {
       const iframe = iframes[i];
       iframe.addEventListener("mouseenter", onMouseEnter);
       iframe.addEventListener("mouseleave", onMouseLeave);
-      iframe.addEventListener("click", () =>
-        dispatch(setTemplateList(templateList))
-      );
     }
 
     return () => {
@@ -86,9 +72,9 @@ function Design() {
         iframe.removeEventListener("mouseleave", onMouseLeave);
       }
     };
-  }, [dispatch, templateList]);
+  }, [templateList]);
 
-  const handleMouseEnter = (event) => {
+  const handleMouseEnter = (event: any) => {
     const iframe = event.currentTarget.querySelector("iframe");
     if (iframe) {
       iframe.contentWindow.postMessage(
@@ -97,7 +83,8 @@ function Design() {
       );
     }
   };
-  const handleMouseLeave = (event) => {
+
+  const handleMouseLeave = (event: any) => {
     const iframe = event.currentTarget.querySelector("iframe");
     if (iframe) {
       iframe.contentWindow.postMessage(
@@ -106,6 +93,47 @@ function Design() {
       );
     }
   };
+
+  // Fetch the template list from API on component mount
+  useEffect(() => {
+    const fetchTemplateList = async () => {
+      try {
+        const response = await axios.get(`${API_URL}getTemplates`);
+        const templates = response.data?.data || []; // Extract data
+        setTemplateList(templates); // Store template list in state
+      } catch (error) {
+        console.error("Error fetching templates:", error);
+      }
+    };
+
+    if (!hasFetched) {
+      fetchTemplateList(); // Fetch only if not already fetched
+      setHasFetched(true); // Prevent multiple fetches
+    }
+  }, [hasFetched]); // Empty dependency array ensures it runs once
+
+  const handleTemplateSelection = async (index: number, template: any) => {
+    setShowPopup(false); // Close any popups
+
+    // Handle template selection logic
+    handleBoxClick(index, template, template.id);
+
+    try {
+      const endpoint = getDomainFromEndpoint(
+        "wp-json/custom/v1/save-selected-template"
+      );
+      await saveSelectedTemplate(template, endpoint);
+      console.log("Template saved successfully to the backend.", template);
+    } catch (error) {
+      console.error("Error saving template to backend:", error);
+    }
+  };
+
+  // Handle template selection
+  // const handleTemplateSelect = (template) => {
+  //   setSelectedTemplate(template); // Store the selected template in state
+  //   console.log("Selected Template:", template); // You can use this state later
+  // };
 
   return (
     <MainLayout>
@@ -159,17 +187,10 @@ function Design() {
               </div>
             </div>
           </form>
-
-          <div className="relative custom-confirmation-modal-scrollbar md:px-10 lg:px-14 xl:px-15 xl:max-w-full overflow-y-auto">
-            <div className="grid items-start justify-center grid-cols-3 gap-6 lg:grid-cols-2 xl:grid-cols-3 auto-rows-auto p-1">
-              {templateList.map((list: templatelist, index: number) => (
-                <div
-                  key={index}
-                  className="flex justify-center w-full cursor-pointer rounded-b-2xl hover-element"
-                  onMouseEnter={handleMouseEnter}
-                  onMouseLeave={handleMouseLeave}
-                >
-                  <div
+            <div className="relative custom-confirmation-modal-scrollbar md:px-10 lg:px-14 xl:px-15 xl:max-w-full overflow-auto">
+              <div className="grid items-start justify-center grid-cols-3 gap-6 lg:grid-cols-2 xl:grid-cols-3 auto-rows-auto">
+                {templateList.map((list, index: number) => (
+                 <div
                     className={` w-full border border-border-tertiary border-solid rounded-t-xl rounded-b-lg ${
                       activeIndex === index
                         ? "ring ring-palatinate-blue-600 rounded-lg "
@@ -177,50 +198,63 @@ function Design() {
                     } `}
                     onClick={() => handleBoxClick(index, templateList[index])}
                   >
-                    <div className="w-full aspect-[164/179] relative overflow-hidden bg-neutral-300 rounded-xl">
-                      <div className="w-full max-h-[calc(19_/_15_*_100%)] pt-[calc(19_/_15_*_100%)] select-none relative shadow-md overflow-hidden origin-top-left bg-neutral-300">
-                        <iframe
-                          id="myIframe"
-                          title="Child iFrame"
-                          className={`scale-[0.33] w-[1200px] h-[1600px] absolute left-0 top-0 origin-top-left select-none `}
-                          src={list.link}
-                        ></iframe>
-                      </div>
-                      <div className="absolute top-3 right-3 text-xs leading-[1em] pt-1 pb-[4px] zw-xs-semibold text-white flex items-center justify-center rounded-3xl bg-[#F90]   px-[12px] pointer-events-none">
-                        <div className="flex items-center justify-center gap-1 font-sm">
-                          Premium
+                    <div
+                      className={` w-full border border-border-tertiary border-solid rounded-t-xl rounded-b-lg ${
+                        activeIndex === index
+                          ? "border-2 border-palatinate-blue-500 rounded-lg "
+                          : "border"
+                      } `}
+                      onClick={() => handleTemplateSelection(index, list)}
+                    >
+                      {/* Iframe Content */}
+                      <div className="w-full aspect-[164/179] relative overflow-hidden bg-neutral-300 rounded-xl">
+                        <div className="w-full max-h-[calc(19_/_15_*_100%)] pt-[calc(19_/_15_*_100%)] select-none relative shadow-md overflow-hidden origin-top-left bg-neutral-300">
+                          <iframe
+                            id="myIframe"
+                            title={`Template ${index + 1}`}
+                            className={`scale-[0.33] w-[1200px] h-[1600px] absolute left-0 top-0 origin-top-left select-none`}
+                            src={list?.pages?.[0]?.iframe_url} // Use the iframe URL from the first page in the template
+                          ></iframe>
                         </div>
-                      </div>
-                      <div
-                        className="absolute inset-0 w-full h-full bg-transparent cursor-pointer"
-                        // style={{ pointerEvents: "none" }}
-                      ></div>
-                    </div>
-                    <div className="relative h-14">
-                      <div className="absolute bottom-0 flex items-center justify-between w-full px-5 bg-white rounded-b-lg h-14 shadow-template-info">
-                        <div className="capitalize zw-base-semibold text-app-heading">
-                          Option {index + 1}
+
+                        {/* Premium Label */}
+                        <div className="absolute top-3 right-3 text-xs leading-[1em] pt-1 pb-[4px] zw-xs-semibold text-white flex items-center justify-center rounded-3xl bg-[#F90] px-[12px] pointer-events-none">
+                          <div className="flex items-center justify-center gap-1 font-sm">
+                            Premium
+                          </div>
                         </div>
-                        <div className="flex gap-4">
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            strokeWidth="1.5"
-                            stroke="currentColor"
-                            aria-hidden="true"
-                            className="w-6 h-6 cursor-pointer text-app-active-icon"
-                            id="headlessui-menu-button-:rc:"
-                            aria-haspopup="menu"
-                            aria-expanded="false"
-                            data-headlessui-state=""
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"
-                            ></path>
-                          </svg>
+
+                        {/* Overlay */}
+                        <div className="absolute inset-0 w-full h-full bg-transparent cursor-pointer"></div>
+                      </div>
+
+                      {/* Bottom Info */}
+                      <div className="relative h-14">
+                        <div className="absolute bottom-0 flex items-center justify-between w-full px-5 bg-white rounded-b-lg h-14 shadow-template-info">
+                          <div className="capitalize zw-base-semibold text-app-heading">
+                            Option {index + 1}
+                          </div>
+                          <div className="flex gap-4">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              strokeWidth="1.5"
+                              stroke="currentColor"
+                              aria-hidden="true"
+                              className="w-6 h-6 cursor-pointer text-app-active-icon"
+                              id="headlessui-menu-button-:rc:"
+                              aria-haspopup="menu"
+                              aria-expanded="false"
+                              data-headlessui-state=""
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"
+                              ></path>
+                            </svg>
+                          </div>
                         </div>
                       </div>
                     </div>

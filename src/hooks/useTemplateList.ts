@@ -1,45 +1,57 @@
 import { useState, useEffect } from "react";
-import { templatelist } from "../types/Preview.type";
 import { fetchtemplateList } from "../infrastructure/api/laraval-api/templatelist.api";
-import { setTemplateList } from "../Slice/activeStepSlice";
-import { useDispatch } from "react-redux";
+import { setTemplateList, setTemplateId } from "../Slice/activeStepSlice";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState } from "../store/store";
 
 const useTemplateList = () => {
-  const [templateList, setTemplateListState] = useState<templatelist[]>([]);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const [selectedTemplateDetails, setSelectedTemplateDetails] =
-    useState<templatelist | null>(null);
+    useState<any>(null); // Use `any` for now
   const dispatch = useDispatch();
 
+  const templateList =
+    useSelector((state: RootState) => state.userData.templateList) || [];
+
+  // Fetch template list from API and set it in Redux
   useEffect(() => {
-    const templateList = async () => {
+    const getTemplateList = async () => {
       try {
-        const templatelist = await fetchtemplateList();
-        setTemplateListState(templatelist || []);
-        if (templatelist && templatelist.length > 0) {
-          setSelectedTemplateDetails(templatelist[0]);
+        const fetchedTemplateList = await fetchtemplateList(); // Assuming this returns templatelist[]
+        console.log("Fetched template list:", fetchedTemplateList);
+
+        if (fetchedTemplateList && Array.isArray(fetchedTemplateList)) {
+          // dispatch(setTemplateList(fetchedTemplateList)); // Dispatch to Redux
+          setSelectedTemplateDetails(fetchedTemplateList[0]);
+        } else {
+          console.error("Fetched templateList is not an array");
         }
       } catch (error) {
         console.error("Error occurred while fetching templates:", error);
       }
     };
 
-    templateList();
-  }, []);
+    getTemplateList();
+  }, [dispatch]);
 
-  const handleBoxClick = (index: number, list: templatelist) => {
+  // Handle template selection and update Redux
+  const handleBoxClick = (
+    index: number,
+    template: any,
+    template_id: number
+  ) => {
     setActiveIndex(index);
-    setSelectedTemplateDetails(list);
-    console.log("template list", list);
-    const listArray = [list];
-    dispatch(setTemplateList(listArray));
+    dispatch(setTemplateId(template_id));
+    dispatch(setTemplateList(template));
+    setSelectedTemplateDetails(template);
+    console.log("individual tempalte list", template);
   };
 
   return {
     templateList,
     activeIndex,
     selectedTemplateDetails,
-    handleBoxClick,
+    handleBoxClick, // Pass the function to handle clicks
   };
 };
 
