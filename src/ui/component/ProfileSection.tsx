@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import ProfileArrowIcon from "../../assets/icons/profile-arrow-icon.svg";
 import CrownIcon from "../../assets/icons/crown.svg";
-import ProfilePicture from "../../assets/profilepic.svg";
+import ProfilePicture from "../../assets/ProfilePic.png";
 import AiGenerate from "../../assets/icons/aigenerate.svg";
 import LogoutIcon from "../../assets/icons/logout.svg";
 
@@ -13,17 +13,47 @@ const ProfileSection: React.FC = () => {
   };
 
   return (
-    <div className="absolute bottom-1 w-[90%] left-3 rounded-lg">
+    <div className="relative w-full rounded-lg">
+      {/* Account Action Button Section */}
+      <div
+        className="w-full flex justify-between gap-x-3 p-5"
+        onClick={toggleMenu}
+      >
+        <div
+          className={`px-3 py-2.5 flex items-center justify-between w-full max-w-[84%] border rounded-lg cursor-pointer ${
+            isOpen ? "border-palatinate-blue-600" : "border-[#E5E7EB]"
+          }`}
+        >
+          <p className="text-base font-medium truncate w-full max-w-[90%]">Adam Zamba</p>
+          <button
+            onClick={toggleMenu}
+            className="flex items-center bg-transparent border-none cursor-pointer p-0 focus:outline-none"
+          >
+            <img
+              src={ProfileArrowIcon}
+              className={`${
+                isOpen ? "rotate-180 " : "-rotate-180"
+              }transition-all duration-200 ease-in`}
+            />
+          </button>
+        </div>
+        <img
+          src={ProfilePicture}
+          alt="Profile"
+          className="w-10 h-10 rounded-full shrink-0"
+        />
+      </div>
+      {/* Account Action Popup Section */}
       {isOpen && (
-        <div className="w-full bg-white rounded-lg border border-[#DAE1E9] shadow-xl z-20 py-4 justify-evenly absolute bottom-20 px-2">
-          <div className="flex items-center justify-center px-4">
+        <div className="absolute bottom-[90%] w-[96%] left-2 bg-white rounded-lg border border-[#DAE1E9] shadow-lg z-20 py-4 px-2 transition-all duration-300 ease-in-out">
+          <div className="w-full flex items-center justify-center gap-3 px-2">
             <img
               src={ProfilePicture}
               alt="Profile"
-              className="w-7 h-7 rounded-full mr-3"
+              className="w-7 h-7 rounded-full shrink-0"
             />
-            <div className="flex gap-2 justify-between items-center w-full">
-              <div className="flex flex-col max-w-[60%]">
+            <div className="w-full flex gap-2 justify-between items-center max-w-[90%]">
+              <div className="flex flex-col max-w-[70%] shrink-0">
                 <p className="text-base font-semibold truncate w-full">
                   Adam Zamba
                 </p>
@@ -69,32 +99,6 @@ const ProfileSection: React.FC = () => {
           </button>
         </div>
       )}
-      <div
-        className="absolute bottom-1 border w-[90%] mac:w-full rounded-lg z-0 shadow flex justify-between px-4 py-2 cursor-pointer"
-        onClick={toggleMenu}
-      >
-        <div className="flex items-center gap-x-3">
-          <img
-            src={ProfilePicture}
-            alt="Profile"
-            className="w-10 h-10 rounded-full"
-          />
-          <div className="flex flex-col w-full">
-            <p className="text-base font-semibold truncate w-full">
-              Adam Zamba
-            </p>
-            <p className="text-sm text-[#6B7280] w-full truncate">
-              adamzamba@gmail.com
-            </p>
-          </div>
-        </div>
-        <button
-          onClick={toggleMenu}
-          className="flex items-center bg-transparent border-none cursor-pointer p-0 focus:outline-none"
-        >
-          <img src={ProfileArrowIcon} />
-        </button>
-      </div>
     </div>
   );
 };

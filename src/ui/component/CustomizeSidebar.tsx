@@ -327,8 +327,9 @@ const CustomizeSidebar: React.FC = () => {
   }, []);
 
   return (
-    <div className="bg-white min-h-screen h-screen z-10 border-2 flex flex-col justify-between">
-      <div className="">
+    <div className="bg-white w-full min-h-screen h-screen z-10 border-2 flex flex-col justify-between">
+      <>
+        {/* Header Section */}
         <div className="flex items-center justify-between p-4">
           <img
             src={GravityWriteLogo}
@@ -336,14 +337,15 @@ const CustomizeSidebar: React.FC = () => {
             className="h-10 cursor-pointer w-44"
           />
         </div>
-
+        {/* Main Section */}
         <div className="mb-auto p-4">
           <h2 className="text-xl font-semibold">Customize</h2>
           <p className="text-sm text-gray-500 mt-2.5">
             Add your own Logo, Change Color and Fonts
           </p>
+          {/* Site Logo Section */}
           <div className="mt-6">
-            <label className="block text-sm font-medium mb-2.5">
+            <label className="block text-base font-semibold mb-2.5">
               Site Logo
             </label>
             <input
@@ -359,9 +361,10 @@ const CustomizeSidebar: React.FC = () => {
               />
             )}
           </div>
+          {/* Font Choosing Section */}
           <div className="mt-6">
             <div className="flex w-full justify-between items-center mb-2.5">
-              <label className="block text-base font-medium">Font Pair</label>
+              <label className="block text-base font-semibold">Font Pair</label>
               <span
                 onClick={resetStyles}
                 className="text-gray-400 text-base font-medium cursor-pointer hover:text-palatinate-blue-600"
@@ -372,7 +375,7 @@ const CustomizeSidebar: React.FC = () => {
             <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="w-full p-2 border rounded-md flex items-center justify-between bg-white text-left focus:border-palatinate-blue-500 active:border-palatinate-blue-500"
+                className="w-full p-2 border rounded-md flex items-center justify-between bg-white text-left focus:border-palatinate-blue-600 active:border-palatinate-blue-600"
               >
                 {selectedFont ? selectedFont.label : "Choose Your Font"}
                 <svg
@@ -395,11 +398,11 @@ const CustomizeSidebar: React.FC = () => {
                 </svg>
               </button>
               {isDropdownOpen && (
-                <div className="absolute z-10 w-full bg-white border rounded-md mt-1 max-h-60 overflow-y-auto">
+                <div className="absolute z-10 w-full bg-white border rounded-md mt-1 max-h-60 overflow-y-auto p-2.5">
                   {fontCombinations.map((fontCombination) => (
                     <div
                       key={fontCombination.label}
-                      className={`p-2 hover:bg-[#F9FAFB] cursor-pointer ${
+                      className={`p-2.5 hover:bg-[#F9FAFB] cursor-pointer ${
                         selectedFont?.label === fontCombination.label
                           ? "bg-[#F9FAFB]"
                           : ""
@@ -413,9 +416,10 @@ const CustomizeSidebar: React.FC = () => {
               )}
             </div>
           </div>
+          {/* Color Selection Section */}
           <div className="mt-4">
             <div className="flex w-full justify-between items-center mb-2.5">
-              <label className="block text-base font-medium">Color</label>
+              <label className="block text-base font-semibold">Color</label>
               <span
                 onClick={resetStyles}
                 className="text-gray-400 text-base font-medium cursor-pointer hover:text-palatinate-blue-600"
@@ -423,31 +427,29 @@ const CustomizeSidebar: React.FC = () => {
                 Reset
               </span>
             </div>
-            <div className="border border-[#DFEAF6] p-2.5 rounded-md">
-              <div className="grid grid-cols-5 gap-x-5 gap-y-4">
-                {colorCombination.map((color) => (
-                  <div
-                    key={color.primary}
-                    className={`${
-                      selectedColor.primary === color.primary &&
-                      selectedColor.secondary === color.secondary
-                        ? "border-2 border-palatinate-blue-500 rounded-md"
-                        : ""
-                    } flex items-center justify-center p-1 shrink-0`}
-                  >
-                    <button
-                      className="size-5 rounded-full shrink-0"
-                      style={{ backgroundColor: color.primary }}
-                      onClick={() => handleColorChange(color, true)}
-                    />
-                  </div>
-                ))}
-              </div>
+            <div className="grid grid-cols-5 gap-x-5 gap-y-4 border border-[#DFEAF6] p-2.5 rounded-md">
+              {colorCombination.map((color) => (
+                <div
+                  key={color.primary}
+                  className={`${
+                    selectedColor.primary === color.primary &&
+                    selectedColor.secondary === color.secondary
+                      ? "ring-[1.2px] ring-palatinate-blue-600 rounded-md bg-[#F9FAFB]"
+                      : ""
+                  } flex items-center justify-center p-1 shrink-0`}
+                >
+                  <button
+                    className="size-5 rounded-full shrink-0"
+                    style={{ backgroundColor: color.primary }}
+                    onClick={() => handleColorChange(color, true)}
+                  />
+                </div>
+              ))}
             </div>
           </div>
         </div>
-      </div>
-
+      </>
+      {/* CTA Button Section */}
       <div className="w-full flex items-center gap-4 p-4">
         <Link to={"/design"} className="w-full">
           <button className="border previous-btn flex px-4 py-3 text-base text-white sm:mt-2 rounded-md gap-2.5 justify-center w-full">
@@ -456,7 +458,7 @@ const CustomizeSidebar: React.FC = () => {
         </Link>
         <button
           onClick={nextPage}
-          className="px-4 py-3 bg-blue-500 text-white rounded-md tertiary text-base sm:mt-2 w-full"
+          className="px-4 py-3 text-white rounded-md tertiary text-base sm:mt-2 w-full"
         >
           Continue
         </button>
