@@ -13,7 +13,15 @@ export const savePagesToDB = async (
   pages: Page[]
 ): Promise<void> => {
   try {
-    const response = await axios.post(endpoint, { pages });
+    const pagename = pages[0]?.name;
+    const pagestatus = pages[0]?.status;
+    const pageslug = pages[0]?.slug;
+    const selectedvalue = pages[0]?.selected;
+    const response = await axios.post(endpoint, {
+      page_name: pagename,
+      page_status: pageslug,
+      selected: selectedvalue,
+    });
     console.log("Pages stored successfully:", response.data);
   } catch (error) {
     console.error("Error storing pages:", error);

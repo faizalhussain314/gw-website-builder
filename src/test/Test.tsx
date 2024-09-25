@@ -72,3 +72,36 @@ function Test() {
 }
 
 export default Test;
+
+// const fetchInitialData = async () => {
+//   const url = getDomainFromEndpoint("/wp-json/custom/v1/get-form-details");
+//   const iframe = document.getElementById("myIframe") as HTMLIFrameElement;
+//   // const url =
+//   //   "https://solitaire-sojourner-02c.zipwp.link/wp-json/custom/v1/get-form-details";
+//   try {
+//     const response = await fetch(url, {
+//       method: "POST",
+//       headers: { "Content-Type": "application/json" },
+//       body: JSON.stringify({ fields: ["color", "font", "logo"] }),
+//     });
+//     const result = await response.json();
+
+//     if (result) {
+//       if (result.color) {
+//         const colors = JSON.parse(result.color);
+//         sendMessageToIframes("changeGlobalColors", colors);
+//       }
+//       if (result.font) {
+//         iframe.contentWindow?.postMessage(
+//           {
+//             type: "changeFont",
+//             font: result.font,
+//           },
+//           "*"
+//         );
+//       }
+//     }
+//   } catch (error) {
+//     console.error("Error fetching initial data:", error);
+//   }
+// };

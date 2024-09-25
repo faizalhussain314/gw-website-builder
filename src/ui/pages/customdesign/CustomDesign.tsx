@@ -1,18 +1,16 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import CustomizeLayout from "../../Layouts/CustomizeLayout";
 import { RootState } from "../../../store/store";
 import { useDispatch, useSelector } from "react-redux";
 import useDomainEndpoint from "../../../hooks/useDomainEndpoint";
+import { setTemplateList } from "../../../Slice/activeStepSlice";
 
 function CustomDesign() {
-  const templateList = useSelector(
-    (state: RootState) => state.userData.templateList
+  const [parsedTemplateList, setParsedTemplateList] = useState(null); // Local state to store parsed data
+  const templateListFromRedux = useSelector(
+    (state: RootState) => state.userData.templateList // Using Redux as is
   );
   const dispatch = useDispatch();
-  console.log("template list type:", templateList);
-  const currentUrl =
-    templateList?.[0]?.pages?.[0]?.iframe_url ||
-    "https://creative.mywpsite.org/";
   const { getDomainFromEndpoint } = useDomainEndpoint();
 
   const initialStyles = useSelector((state: RootState) => ({
@@ -20,6 +18,10 @@ function CustomDesign() {
     secondaryColor: state.userData.color.secondary,
     fontFamily: state.userData.font,
   }));
+
+  // Local variable for the iframe URL
+  const currentUrl =
+    parsedTemplateList?.[0]?.iframe_url || "https://creative.mywpsite.org/";
 
   const sendMessageToIframes = (type: string, payload) => {
     const iframes = document.getElementsByTagName("iframe");
@@ -90,16 +92,39 @@ function CustomDesign() {
     }
   };
 
-  console.log("currenturl", currentUrl);
+  const fetchTemplateData = async () => {
+    const url = getDomainFromEndpoint(
+      "/wp-json/custom/v1/get-selected-template"
+    );
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}), // Empty body as per your instructions
+      });
+      const result = await response.json();
+
+      if (result && result.length > 0) {
+        // Parse the template_json_data from the response
+        const parsedData = JSON.parse(result[0].template_json_data);
+        setParsedTemplateList(parsedData); // Save locally in component state
+      }
+    } catch (error) {
+      console.error("Error fetching template data:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchTemplateData();
+  }, []);
 
   const onLoadmsg = () => {
     fetchInitialData();
   };
-
   return (
     <CustomizeLayout>
       <iframe
-        src={templateList?.[0]?.pages?.[0]?.iframe_url}
+        src={currentUrl}
         title="website"
         id="myIframe"
         className="h-full w-full transition-fade shadow-lg rounded-lg"

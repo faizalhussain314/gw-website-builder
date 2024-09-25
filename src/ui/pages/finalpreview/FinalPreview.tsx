@@ -277,6 +277,50 @@ const FinalPreview: React.FC = () => {
     [storeOldNewContent]
   );
 
+  const fetchGeneratedPageStatus = useCallback(async () => {
+    try {
+      const endpoint = getDomainFromEndpoint(
+        "/wp-json/custom/v1/get-generated-page-status"
+      );
+      if (!endpoint) {
+        console.error("Endpoint is not available.");
+        return;
+      }
+
+      const response = await axios.post(endpoint);
+
+      if (response.status === 200) {
+        const { data } = response;
+
+        if (data && Array.isArray(data.pages)) {
+          const updatedPages = pages.map((page) => {
+            const matchingPage = data.pages.find(
+              (p: any) => p.page_name === page.name
+            );
+            if (matchingPage) {
+              return {
+                ...page,
+                status: matchingPage.status, // Update status
+                selected: matchingPage.status === "Generated",
+              };
+            }
+            return page;
+          });
+
+          setPages(updatedPages); // Update the pages state with the new statuses
+        }
+      } else {
+        console.error("Failed to fetch generated page status:", response);
+      }
+    } catch (error) {
+      console.error("Error fetching generated page status:", error);
+    }
+  }, [getDomainFromEndpoint, pages]);
+
+  useEffect(() => {
+    fetchGeneratedPageStatus();
+  }, [fetchGeneratedPageStatus]);
+
   const onLoadMsg = async () => {
     const iframe = iframeRef.current;
     const currentPage = pages.find((page) => page.name === selectedPage);
@@ -645,7 +689,7 @@ const FinalPreview: React.FC = () => {
   };
 
   const savePageEndPoint = getDomainFromEndpoint(
-    "/wp-json/custom/v1/save-selected-template"
+    "/wp-json/custom/v1/save-generated-page-status"
   );
   useEffect(() => {
     const storePagesInDB = async () => {

@@ -206,9 +206,10 @@ const PageSelector: React.FC<Props> = ({
                     >
                       Keep & Next
                     </button>
+
                     <Tooltip title="Home page can't skip" placement="top">
                       <button
-                        className={`bg-white text-black rounded px-3 py-1 ${
+                        className={`bg-white rounded px-3 py-1.5 w-full text-palatinate-blue-600 hover:bg-palatinate-blue-600 hover:text-white ${
                           isContentGenerating || page.name == "Home"
                             ? "opacity-50 cursor-not-allowed "
                             : ""
@@ -219,14 +220,14 @@ const PageSelector: React.FC<Props> = ({
                         Skip Page
                       </button>
                     </Tooltip>
-                  </>
+                  </div>
                 ) : (
                   <div className="w-full flex items-center gap-4">
                     <button
                       className="bg-white text-palatinate-blue-600 hover:bg-palatinate-blue-600 hover:text-white rounded px-3 py-1.5 w-full text-sm font-medium"
                       onClick={handleGeneratePageClick}
                     >
-                      Keep & Next
+                      Generate page
                     </button>
                     <button
                       className="bg-white text-palatinate-blue-600 hover:bg-palatinate-blue-600 hover:text-white rounded px-3 py-1.5 w-full text-sm font-medium"

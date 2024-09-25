@@ -2,16 +2,19 @@ import React, { useLayoutEffect, useState, useEffect } from "react";
 import MainLayout from "../../Layouts/MainLayout";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { RootState } from "../../../store/store";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { Link } from "react-router-dom";
 import Popup from "../../component/Popup";
 import useTemplateList from "../../../hooks/useTemplateList";
 import axios from "axios";
+import { saveSelectedTemplate } from "../../../infrastructure/api/wordpress-api/desgin/saveSelectedtemplate";
+import useDomainEndpoint from "../../../hooks/useDomainEndpoint";
+
 const API_URL = import.meta.env.VITE_API_BACKEND_URL;
 
 function Design() {
-  const { activeIndex, selectedTemplateDetails, handleBoxClick } =
-    useTemplateList();
+  const { activeIndex, handleBoxClick } = useTemplateList();
+
   const [templateList, setTemplateList] = useState([]);
   const businessName = useSelector(
     (state: RootState) => state.userData.businessName
@@ -26,6 +29,9 @@ function Design() {
     useSelector((state: RootState) => state.userData.category) || "";
 
   const [showPopup, setShowPopup] = useState(false);
+  const dispatch = useDispatch();
+  const { getDomainFromEndpoint } = useDomainEndpoint();
+  const [hasFetched, setHasFetched] = useState(false);
 
   const handlePopupClose = () => {
     setShowPopup(false);
@@ -93,15 +99,35 @@ function Design() {
     const fetchTemplateList = async () => {
       try {
         const response = await axios.get(`${API_URL}getTemplates`);
-        const templates = response.data?.data || []; // Extract data from the API response
-        setTemplateList(templates); // Set the template list in state
+        const templates = response.data?.data || []; // Extract data
+        setTemplateList(templates); // Store template list in state
       } catch (error) {
         console.error("Error fetching templates:", error);
       }
     };
 
-    fetchTemplateList();
-  }, []);
+    if (!hasFetched) {
+      fetchTemplateList(); // Fetch only if not already fetched
+      setHasFetched(true); // Prevent multiple fetches
+    }
+  }, [hasFetched]); // Empty dependency array ensures it runs once
+
+  const handleTemplateSelection = async (index: number, template: any) => {
+    setShowPopup(false); // Close any popups
+
+    // Handle template selection logic
+    handleBoxClick(index, template, template.id);
+
+    try {
+      const endpoint = getDomainFromEndpoint(
+        "wp-json/custom/v1/save-selected-template"
+      );
+      await saveSelectedTemplate(template, endpoint);
+      console.log("Template saved successfully to the backend.", template);
+    } catch (error) {
+      console.error("Error saving template to backend:", error);
+    }
+  };
 
   // Handle template selection
   // const handleTemplateSelect = (template) => {
@@ -168,7 +194,7 @@ function Design() {
 
             <div className="relative custom-confirmation-modal-scrollbar md:px-10 lg:px-14 xl:px-15 xl:max-w-full overflow-auto">
               <div className="grid items-start justify-center grid-cols-3 gap-6 lg:grid-cols-2 xl:grid-cols-3 auto-rows-auto">
-                {templateList.map((list: templatelist, index: number) => (
+                {templateList.map((list, index: number) => (
                   <div
                     key={index}
                     className="flex justify-center w-full cursor-pointer rounded-b-2xl hover-element"
@@ -181,7 +207,7 @@ function Design() {
                           ? "border-2 border-palatinate-blue-500 rounded-lg "
                           : "border"
                       } `}
-                      onClick={() => handleBoxClick(index, list)}
+                      onClick={() => handleTemplateSelection(index, list)}
                     >
                       {/* Iframe Content */}
                       <div className="w-full aspect-[164/179] relative overflow-hidden bg-neutral-300 rounded-xl">

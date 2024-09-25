@@ -10,6 +10,7 @@ import {
   setColor,
   setFont,
   setTemplateList,
+  setLogo,
 } from "../Slice/activeStepSlice";
 import useDomainEndpoint from "./useDomainEndpoint";
 import { useCallback, useEffect } from "react";
@@ -54,7 +55,9 @@ const useFetchContentData = () => {
         dispatch(setCategory(data.category || null));
         dispatch(setTemplateId(data.templateid || 0));
         dispatch(setTemplatename(data.templatename || ""));
+        dispatch(setLogo(data.logo || ""));
         dispatch(setContent(data.content || []));
+
         if (data.color) {
           dispatch(
             setColor(

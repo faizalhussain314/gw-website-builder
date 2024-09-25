@@ -295,6 +295,12 @@ add_action('rest_api_init', function () {
 		'callback' => 'get_selected_template_data',
 		'permission_callback' => '__return_true'
 	) );
+	register_rest_route( 'custom/v1', '/update-style-changes', array(
+		'methods'  => WP_REST_Server::CREATABLE,
+		'callback' => 'update_style_changes',
+		'permission_callback' => '__return_true'
+	) );
+
     /*
     register_rest_route('custom/v1', '/update-content', array(
         'methods' => WP_REST_Server::CREATABLE,
@@ -309,12 +315,61 @@ add_action('rest_api_init', function () {
     //     'permission_callback' => '__return_true',
     // ));
 });
+    function update_style_changes(WP_REST_Request $request) {
+    
+        $primary_color = $request->get_param('primary_color');
+        $secondary_color = $request->get_param('secondary_color');
+    
+        // Check if colors are valid
+        if (empty($primary_color) || empty($secondary_color)) {
+            return new WP_Error('invalid_data', 'Both primary and secondary colors are required', array('status' => 400));
+        }
+    
+        if (!did_action('elementor/loaded')) {
+            return new WP_Error('elementor_not_loaded', 'Elementor is not loaded', array('status' => 500));
+        }
+    
+        // Get the active kit ID
+        $active_kit_id = (int) get_option('elementor_active_kit');
+    
+        if ($active_kit_id) {
+            $kit_settings = get_post_meta($active_kit_id, '_elementor_page_settings', true);
+    
+            if ($kit_settings && isset($kit_settings['system_colors'])) {
+                // Update the colors
+                foreach ($kit_settings['system_colors'] as &$color) {
+                    if ($color['_id'] === 'primary') {
+                        $color['color'] = sanitize_hex_color($primary_color); 
+                    } elseif ($color['_id'] === 'secondary') {
+                        $color['color'] = sanitize_hex_color($secondary_color); 
+                    }
+                }
+    
+                // Update the kit settings
+                update_post_meta($active_kit_id, '_elementor_page_settings', $kit_settings);
+                \Elementor\Plugin::$instance->files_manager->clear_cache();
+    
+                return rest_ensure_response(array(
+                    'success' => true,
+                    'primary_color' => $primary_color,
+                    'secondary_color' => $secondary_color,
+                ));
+            } else {
+                return new WP_Error('kit_not_found', 'Kit settings not found', array('status' => 404));
+            }
+        } else {
+            return new WP_Error('no_active_kit', 'No active Elementor Kit ID found', array('status' => 404));
+        }
+    }
+    
+
+
 function save_selected_template_data(WP_REST_Request $request) {
     global $wpdb; // Access to the WordPress database
     $table_name = $wpdb->prefix . 'selected_template_data'; // Define the table name
     $template_id = $request->get_param('template_id');
     $template_name = $request->get_param('template_name');
-    $template_json_data = $request->get_param('template_json_data');
+    $template_json_data = json_encode($request->get_param('template_json_data'));
 
     // Check the count of rows in the table
     $count = $wpdb->get_var("SELECT COUNT(*) FROM $table_name");
@@ -355,15 +410,18 @@ function get_selected_template_data( WP_REST_Request $request ) {
     global $wpdb;
     $table_name = $wpdb->prefix . 'selected_template_data'; 
 
-    $template_data = $wpdb->get_var($wpdb->prepare(
-        "SELECT * FROM $table_name"
-    ));
 
-    if (null === $template_data) {
-        return new WP_Error('no_template_found', 'No template found with that name', array('status' => 404));
+    // Query to select distinct combinations of version_name, page_name, and template_name
+    $query = "SELECT * FROM $table_name";
+
+    $results = $wpdb->get_results($query, ARRAY_A);
+
+    if (!empty($results)) {
+        // Optionally, you could manipulate the structure of the returned JSON here
+        return new WP_REST_Response($results, 200);
+    } else {
+        return new WP_Error('no_data', 'No HTML metadata found', ['status' => 404]);
     }
-
-    return new WP_REST_Response(json_decode($template_data, true), 200);
 }
 
 function save_generated_page_status( WP_REST_Request $request ) {

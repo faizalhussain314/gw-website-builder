@@ -1,8 +1,15 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { Template } from "../types/Preview.type"; // Using the updated type
+
+interface Page {
+  name: string;
+  status: string;
+  slug: string;
+  selected: boolean;
+}
 
 interface ImageState {
-  images: { url: string; description: string }[];
+  url: string;
+  description: string;
 }
 
 interface Design {
@@ -28,7 +35,8 @@ interface UserDataState {
   logo: string;
   color: Color;
   font: string;
-  templateList: any;
+  templateList: any[];
+  pages: Page[]; // Added 'pages' to state
 }
 
 const initialState: UserDataState = {
@@ -44,7 +52,14 @@ const initialState: UserDataState = {
   content: [],
   color: { primary: "", secondary: "" },
   font: "",
-  templateList: [], // Initialize as an empty array of Template
+  templateList: [],
+  pages: [
+    { name: "Home", status: "", slug: "homepage", selected: false },
+    { name: "About Us", status: "", slug: "about", selected: false },
+    { name: "Services", status: "", slug: "service", selected: false },
+    { name: "Blog", status: "", slug: "blog", selected: false },
+    { name: "Contact", status: "", slug: "contact", selected: false },
+  ], // Default page structure
 };
 
 export const activeStepSlice = createSlice({
@@ -102,8 +117,27 @@ export const activeStepSlice = createSlice({
       state.font = "";
     },
     setTemplateList: (state, action: PayloadAction<any>) => {
-      // Assigning the correct template list structure
       state.templateList = action.payload;
+    },
+    setPages: (state, action: PayloadAction<Page[]>) => {
+      state.pages = action.payload; // Updating pages in Redux
+    },
+    updatePageStatus: (
+      state,
+      action: PayloadAction<{ name: string; status: string }>
+    ) => {
+      const page = state.pages.find(
+        (page) => page.name === action.payload.name
+      );
+      if (page) {
+        page.status = action.payload.status; // Updating status of specific page
+      }
+    },
+    togglePageSelection: (state, action: PayloadAction<string>) => {
+      const page = state.pages.find((page) => page.name === action.payload);
+      if (page) {
+        page.selected = !page.selected; // Toggling the selection of a page
+      }
     },
   },
 });
@@ -123,6 +157,9 @@ export const {
   setFont,
   setColor,
   setTemplateList,
+  setPages,
+  updatePageStatus,
+  togglePageSelection,
 } = activeStepSlice.actions;
 
 export default activeStepSlice.reducer;

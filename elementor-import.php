@@ -69,6 +69,7 @@ function install_elementor_kits($file_url) {
                 $val = get_post_meta($active_kit_id, '_elementor_page_settings', true);
             }
         }
+        return true;
     }
     return true; // Indicate successful completion
 }
