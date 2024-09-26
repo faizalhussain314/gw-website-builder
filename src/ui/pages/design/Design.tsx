@@ -192,6 +192,7 @@ function Design() {
             <div className="grid items-start justify-center grid-cols-3 gap-6 lg:grid-cols-2 xl:grid-cols-3 auto-rows-auto p-1">
               {templateList.map((list, index: number) => (
                 <div
+                  key={index}
                   className={` w-full rounded-t-xl rounded-b-lg ${
                     activeIndex === index
                       ? "ring ring-palatinate-blue-600 rounded-lg "
