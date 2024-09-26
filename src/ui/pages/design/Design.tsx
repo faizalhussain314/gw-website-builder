@@ -197,14 +197,9 @@ function Design() {
                       ? "ring ring-palatinate-blue-600 rounded-lg "
                       : ""
                   } `}
-                  onClick={() =>
-                    handleBoxClick(index, templateList[index], templateList.id)
-                  }
+                  onClick={() => handleTemplateSelection(index, list)}
                 >
-                  <div
-                    className={` w-full rounded-t-xl rounded-b-lg  `}
-                    onClick={() => handleTemplateSelection(index, list)}
-                  >
+                  <div className={` w-full rounded-t-xl rounded-b-lg  `}>
                     {/* Iframe Content */}
                     <div className="w-full aspect-[164/179] relative overflow-hidden bg-neutral-300 rounded-xl">
                       <div className="w-full max-h-[calc(19_/_15_*_100%)] pt-[calc(19_/_15_*_100%)] select-none relative shadow-md overflow-hidden origin-top-left bg-neutral-300">

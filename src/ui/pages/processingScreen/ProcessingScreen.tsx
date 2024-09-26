@@ -23,13 +23,14 @@ const ProcessingScreen: React.FC = () => {
   const logo = useSelector((state: RootState) => state.userData.logo);
 
   const template_id = useSelector(
-    (state: RootState) => state.userData.templateList[0]?.id
+    (state: RootState) => state.userData.templateid
   );
   const selectedPages = useSelector((state: RootState) => state.userData.pages);
 
   const VITE_API_BACKEND_URL = process.env.VITE_API_BACKEND_URL;
 
   const fetchTemplates = async () => {
+    console.log("templateid:", template_id);
     try {
       const response = await fetch(
         `https://dev.gravitywrite.com/api/getTemplates?template_id=${template_id}`
