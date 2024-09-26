@@ -6,7 +6,6 @@ import { fetchCategoryList } from "../../../infrastructure/api/laraval-api/categ
 import { RootState } from "../../../store/store";
 import MainLayout from "../../Layouts/MainLayout";
 import { CategoryList } from "../../../types/Category.type";
-import SearchIcon from "@mui/icons-material/Search";
 import useDomainEndpoint from "../../../hooks/useDomainEndpoint";
 import { getCategoryDetails } from "../../../infrastructure/api/wordpress-api/category/getCategoryDetails.api";
 import { updateCategoryDetails } from "../../../infrastructure/api/wordpress-api/category/updateCategoryDetails.api.ts";

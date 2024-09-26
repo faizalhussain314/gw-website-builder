@@ -13,12 +13,6 @@ function CustomDesign() {
   const dispatch = useDispatch();
   const { getDomainFromEndpoint } = useDomainEndpoint();
 
-  const initialStyles = useSelector((state: RootState) => ({
-    primaryColor: state.userData.color.primary,
-    secondaryColor: state.userData.color.secondary,
-    fontFamily: state.userData.font,
-  }));
-
   // Local variable for the iframe URL
   const currentUrl =
     parsedTemplateList?.[0]?.iframe_url || "https://creative.mywpsite.org/";
