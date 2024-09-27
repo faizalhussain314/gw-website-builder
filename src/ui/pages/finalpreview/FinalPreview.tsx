@@ -726,7 +726,7 @@ const FinalPreview: React.FC = () => {
             </div>
             <div className="px-5 py-4 w-full flex flex-col justify-center">
               <div className="flex items-center justify-between pb-2.5">
-                <h1 className="text-xl font-bold">Website Preview</h1>
+                <h1 className="text-xl font-semibold">Website Preview</h1>
                 <Link to={"/custom-design"}>
                   <button className="bg-button-bg-secondary hover:bg-palatinate-blue-600 hover:text-white px-4 font-medium py-2 rounded-md text-sm cursor-pointer">
                     Back

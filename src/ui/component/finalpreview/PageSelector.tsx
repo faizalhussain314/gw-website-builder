@@ -1,7 +1,5 @@
 import React from "react";
 import CachedIcon from "@mui/icons-material/Cached";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import { Page } from "../../../types/page.type";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -91,7 +89,7 @@ const PageSelector: React.FC<Props> = ({
 
   return (
     <div className="p-5">
-      <h2 className="text-lg font-semibold">
+      <h2 className="text-xl font-semibold">
         Select Pages to Import (
         {pages.findIndex((page) => page.name === selectedPage) + 1}/
         {pages.length})
@@ -100,9 +98,9 @@ const PageSelector: React.FC<Props> = ({
         {pages.map((page) => (
           <div
             key={page.name}
-            className={`rounded-lg p-3 mb-2 cursor-pointer ${
+            className={`rounded-lg p-3 mb-2 cursor-pointer transition-all duration-200 ease-in ${
               selectedPage === page.name
-                ? "border-palatinate-blue-600 border bg-palatinate-blue-50"
+                ? "ring-palatinate-blue-600 ring-1 bg-[#F8FBFE]"
                 : ""
             }`}
             onClick={() => {
@@ -119,7 +117,7 @@ const PageSelector: React.FC<Props> = ({
                   <input
                     id={`checkbox-${page.slug}`}
                     type="checkbox"
-                    className="mr-4 flex items-center w-5 h-5"
+                    className="mr-4 flex items-center w-4 h-4"
                     checked={page.selected}
                     onChange={() => handlePageChange(page.slug, !page.selected)}
                     // disabled={page.status === "Skipped"}
@@ -130,9 +128,9 @@ const PageSelector: React.FC<Props> = ({
               <div className="flex items-center">
                 {page.status && (
                   <span
-                    className={`ml-2 text-xs rounded-full px-2 py-.5 ${
+                    className={`ml-2 text-xs font-medium rounded-full px-2.5 py-1 ${
                       page.status === "Generated"
-                        ? "text-[#1E2022] bg-green-200"
+                        ? "text-[#1E2022] bg-[#CDF9CD]"
                         : page.status === "Skipped"
                         ? "text-[#1E2002] bg-[#FFDCD5]"
                         : "text-black bg-[#FFDCD5]"
@@ -158,29 +156,34 @@ const PageSelector: React.FC<Props> = ({
                     />
                   )} */}
 
-                {selectedPage === page.name ? (
-                  <ExpandLessIcon
-                    className="ml-2.5 text-[#1E2022] cursor-pointer"
-                    onClick={() => {
-                      if (isContentGenerating) {
-                        showWarningToast();
-                      } else {
-                        handlePageClick(page.name);
-                      }
-                    }}
-                  />
-                ) : (
-                  <ExpandMoreIcon
-                    className="ml-2.5 text-[#1E2022] cursor-pointer"
-                    onClick={() => {
-                      if (isContentGenerating) {
-                        showWarningToast();
-                      } else {
-                        handlePageClick(page.name);
-                      }
-                    }}
-                  />
-                )}
+                <div
+                  onClick={() => {
+                    if (isContentGenerating) {
+                      showWarningToast();
+                    } else {
+                      handlePageClick(page.name);
+                    }
+                  }}
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="12"
+                    height="12"
+                    viewBox="0 0 12 12"
+                    fill="none"
+                    className={`${
+                      selectedPage === page.name ? "rotate-180 " : "-rotate-0"
+                    } transition-all duration-200 ease-in ml-2.5`}
+                  >
+                    <path
+                      d="M11 3L6 8L1 3"
+                      stroke="#4D586B"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                </div>
               </div>
             </div>
             {selectedPage === page.name && (
