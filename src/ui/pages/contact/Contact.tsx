@@ -78,7 +78,7 @@ function Contact() {
             </form>
             <div className="bottom-0 flex items-center justify-between w-full">
               <div className="flex gap-4 items-center">
-                <Link to={"/image"}>
+                <Link to={"/description"}>
                   <button className="previous-btn flex px-[10px] py-[13px] text-base text-white sm:mt-2 rounded-md w-[150px] gap-3 justify-center font-medium">
                     <ArrowBackIcon fontSize="small" />
                     Previous

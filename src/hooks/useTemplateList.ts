@@ -40,7 +40,7 @@ const useTemplateList = () => {
     template: any,
     template_id: number
   ) => {
-    setActiveIndex(index);
+    setActiveIndex(template_id);
     dispatch(setTemplateId(template_id));
     dispatch(setTemplateList(template));
     setSelectedTemplateDetails(template);

@@ -11,7 +11,7 @@ const useDomainEndpoint = () => {
     } else {
       // console.error("Could not find wp-admin in the current URL.");
       // const tempurl = `https://uncomfortable-umar-ygho.zipwp.link/${endpoint}`;
-      const tempurl = `https://easy-emilien-efz.zipwp.link/${endpoint}`;
+      const tempurl = `https://accessible-abbe-9ndy.zipwp.link/${endpoint}`;
       return tempurl;
     }
   }, []);

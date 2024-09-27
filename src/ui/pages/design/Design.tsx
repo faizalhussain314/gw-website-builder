@@ -9,6 +9,8 @@ import useTemplateList from "../../../hooks/useTemplateList";
 import axios from "axios";
 import { saveSelectedTemplate } from "../../../infrastructure/api/wordpress-api/desgin/saveSelectedtemplate";
 import useDomainEndpoint from "../../../hooks/useDomainEndpoint";
+import { useDebounce } from "use-debounce";
+import { setCategory } from "../../../Slice/activeStepSlice";
 
 const API_URL = import.meta.env.VITE_API_BACKEND_URL;
 
@@ -25,16 +27,128 @@ function Design() {
   const description2 = useSelector(
     (state: RootState) => state.userData.description2
   );
+  const [fetchedTemplateId, setFetchedTemplateId] = useState<number | null>(
+    null
+  );
+
+  const [selectedTemplateId, setSelectedTemplateId] = useState<number | null>(
+    null
+  ); // Store the selected template's ID for highlighting
   const category =
     useSelector((state: RootState) => state.userData.category) || "";
+  const [text, setText] = useState(category);
+  const [debouncedValue] = useDebounce(text, 300);
+
+  const templateIdFromRedux = useSelector(
+    (state: RootState) => state.userData.templateid
+  );
 
   const [showPopup, setShowPopup] = useState(false);
+  const [showError, setshowError] = useState(false);
   const dispatch = useDispatch();
   const { getDomainFromEndpoint } = useDomainEndpoint();
   const [hasFetched, setHasFetched] = useState(false);
 
   const handlePopupClose = () => {
     setShowPopup(false);
+  };
+
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    setText(e.target.value); // Set the input text for debounce
+  };
+
+  const fetchTemplateList = async () => {
+    try {
+      const response = await axios.get(`${API_URL}getTemplates`);
+      const templates = response.data?.data || []; // Extract data
+      setshowError(false);
+      setTemplateList(templates); // Store template list in state
+    } catch (error) {
+      console.error("Error fetching templates:", error);
+    }
+  };
+  // API call to fetch templates based on category (debounced)
+  useLayoutEffect(() => {
+    if (debouncedValue.length <= 0) {
+      fetchTemplateList();
+      return;
+    }
+    const fetchTemplates = async () => {
+      let url: string = "";
+      try {
+        if (category.length == 0) {
+          url = await axios.get(
+            `https://dev.gravitywrite.com/api/getTemplates`
+          );
+        } else {
+          url = `https://dev.gravitywrite.com/api/getTemplates?site_category=${debouncedValue}`;
+        }
+        const response = await axios.get(url);
+        // dispatch(setTemplateList(response?.data)); // Store templates in Redux
+
+        if (response.data.data.length === 0) {
+          setshowError(true);
+          setTemplateList(response.data.data);
+
+          return;
+        }
+        if (response.data.data.length >= 0) {
+          setshowError(false);
+          setTemplateList(response.data.data);
+        }
+
+        setTemplateList(response.data.data);
+
+        console.log("response data", response.data.data);
+        dispatch(setCategory(debouncedValue)); // Update category in Redux
+      } catch (error) {
+        console.error("Error fetching templates:", error);
+        // setError(true);
+      }
+    };
+    fetchTemplates();
+    // }
+  }, [debouncedValue, dispatch]);
+
+  const fetchSelectedTemplate = async () => {
+    if (!hasFetched) {
+      try {
+        const endpoint = getDomainFromEndpoint(
+          "wp-json/custom/v1/get-selected-template"
+        );
+        const response = await axios.post(endpoint, {});
+        const savedTemplate = response.data; // Assuming API returns template_id
+        // if (savedTemplate) {
+
+        // setError(false);
+        setFetchedTemplateId(savedTemplate[0]?.template_id); // Store the fetched template ID
+        // handleTemplateSelection(
+        //   savedTemplate[0]?.template_id,
+        //   savedTemplate[0]
+        // );
+        handleBoxClick(
+          savedTemplate[0]?.id,
+          savedTemplate[0],
+          parseInt(savedTemplate[0]?.template_id)
+        );
+
+        // const templateIndex = templateList.findIndex(
+        //   (template) => template.id === savedTemplate
+        // );
+        // if (templateIndex !== -1) {
+        //   handleBoxClick(
+        //     templateIndex,
+        //     templateList[templateIndex],
+        //     savedTemplate
+        //   );
+        // }
+        // }
+      } catch (error) {
+        console.error("Error fetching selected template:", error);
+      }
+      setHasFetched(true);
+    }
   };
 
   useLayoutEffect(() => {
@@ -96,21 +210,11 @@ function Design() {
 
   // Fetch the template list from API on component mount
   useEffect(() => {
-    const fetchTemplateList = async () => {
-      try {
-        const response = await axios.get(`${API_URL}getTemplates`);
-        const templates = response.data?.data || []; // Extract data
-        setTemplateList(templates); // Store template list in state
-      } catch (error) {
-        console.error("Error fetching templates:", error);
-      }
-    };
-
     if (!hasFetched) {
       fetchTemplateList(); // Fetch only if not already fetched
       setHasFetched(true); // Prevent multiple fetches
     }
-  }, [hasFetched]); // Empty dependency array ensures it runs once
+  }, [hasFetched]);
 
   const handleTemplateSelection = async (index: number, template: any) => {
     setShowPopup(false); // Close any popups
@@ -128,6 +232,11 @@ function Design() {
       console.error("Error saving template to backend:", error);
     }
   };
+
+  // Fetch selected template from the API if not found in Redux state
+  useEffect(() => {
+    fetchSelectedTemplate();
+  }, [hasFetched, getDomainFromEndpoint, templateList, handleBoxClick]);
 
   // Handle template selection
   // const handleTemplateSelect = (template) => {
@@ -181,24 +290,30 @@ function Design() {
               </div>
               <div className="w-full">
                 <input
-                  className="w-full h-12 px-3 border rounded-md shadow-sm outline-none placeholder:zw-placeholder zw-input focus:border-2 border-app-border focus:border-app-secondary focus:ring-transparent pl-11 false"
-                  value={category}
-                  readOnly
+                  className="w-full h-12 px-3 border rounded-md shadow-sm outline-none placeholder:zw-placeholder zw-input  border-app-border focus:border-app-secondary focus:border-palatinate-blue-500 active:border-palatinate-blue-500 focus:border-2 pl-11 false"
+                  value={text} // Show current search text
+                  onChange={handleSearch}
+                  placeholder="Search categories..."
                 />
               </div>
             </div>
           </form>
           <div className="relative custom-confirmation-modal-scrollbar md:px-10 lg:px-14 xl:px-15 xl:max-w-full overflow-auto">
+            {showError && (
+              <div className=" text-center">No templates found</div>
+            )}
             <div className="grid items-start justify-center grid-cols-3 gap-6 lg:grid-cols-2 xl:grid-cols-3 auto-rows-auto p-1">
               {templateList.map((list, index: number) => (
                 <div
                   key={index}
                   className={` w-full rounded-t-xl rounded-b-lg ${
-                    activeIndex === index
+                    activeIndex === list?.id
                       ? "ring ring-palatinate-blue-600 rounded-lg "
                       : ""
                   } `}
-                  onClick={() => handleTemplateSelection(index, list)}
+                  onClick={() => handleTemplateSelection(list?.id, list)}
+                  onMouseEnter={handleMouseEnter}
+                  onMouseLeave={handleMouseLeave}
                 >
                   <div className={` w-full rounded-t-xl rounded-b-lg  `}>
                     {/* Iframe Content */}

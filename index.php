@@ -93,6 +93,7 @@ function create_required_tables() {
         color longtext, 
         font text,
         templateList longtext, 
+        contactform longtext,
         PRIMARY KEY (id)
     ) $charset_collate;";
 
@@ -300,6 +301,11 @@ add_action('rest_api_init', function () {
 		'callback' => 'update_style_changes',
 		'permission_callback' => '__return_true'
 	) );
+	register_rest_route( 'custom/v1', '/empty-tables', array(
+		'methods'  => WP_REST_Server::DELETABLE,
+		'callback' => 'myplugin_empty_tables',
+		'permission_callback' => '__return_true'
+	) );
 
     /*
     register_rest_route('custom/v1', '/update-content', array(
@@ -315,6 +321,31 @@ add_action('rest_api_init', function () {
     //     'permission_callback' => '__return_true',
     // ));
 });
+function myplugin_empty_tables() {
+    global $wpdb;
+   $tables_to_empty = array(
+        $wpdb->prefix . 'gw_user_form_details',
+        $wpdb->prefix . 'imported_posts',
+        $wpdb->prefix . 'menu_details',
+        $wpdb->prefix . 'menu_item_details',
+        $wpdb->prefix . 'generated_content',
+         $wpdb->prefix .'generated_html_content',
+        $wpdb->prefix . 'page_generation_status',
+        $wpdb->prefix . 'selected_template_data',
+    );
+    foreach ($tables_to_empty as $table) {
+        if($wpdb->get_var("SHOW TABLES LIKE '$table'") == $table) {
+            $wpdb->query("TRUNCATE TABLE $table");
+        } else {
+            return new WP_Error('table_not_found', 'Table not found: ' . $table, array('status' => 404));
+        }
+    }
+    // Return a success response after truncating all tables
+    return rest_ensure_response(array(
+        'status' => 'success',
+        'message' => 'Tables emptied successfully',
+    ));
+}
     function update_style_changes(WP_REST_Request $request) {
     
         $primary_color = $request->get_param('primary_color');

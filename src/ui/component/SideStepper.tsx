@@ -29,12 +29,7 @@ const steps = [
     description: "Some details please",
     link: "/description",
   },
-  {
-    step: 4,
-    label: "Select Images",
-    description: "Select relevant images as needed",
-    link: "/image",
-  },
+
   {
     step: 5,
     label: "Contact",
@@ -120,7 +115,7 @@ const SideStepper: React.FC = () => {
               <Typography className="!font-light !text-sm !pl-6 text-[#88898A] tracking-[-0.28px] leading-[22px] -mt-1">
                 {step.description}
               </Typography> */}
-              {/* <Box sx={{ mb: 2 }}></Box> */}
+            {/* <Box sx={{ mb: 2 }}></Box> */}
             {/* </StepContent> */}
           </Step>
         ))}

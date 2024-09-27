@@ -164,7 +164,7 @@ function Description() {
     } else {
       dispatch(setDescriptionOne(description1));
       dispatch(setDescriptionTwo(description2));
-      navigate("/image");
+      navigate("/contact");
     }
   };
 
