@@ -21,61 +21,70 @@ const ViewModeSwitcher: React.FC<Props> = ({
       <div>
         <button
           type="button"
-          className="inline-flex justify-center w-full rounded-md border border-gray-300 shadow-sm px-2 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none"
+          className={`inline-flex items-center justify-between rounded-md ring-1 shadow-sm px-4 py-3 bg-white text-base font-medium text-black focus:outline-none w-[180px] ${
+            isOpen ? "ring-palatinate-blue-600" : "ring-[#F0F0F1]"
+          }`}
           id="menu-button"
           aria-expanded={isOpen}
           aria-haspopup="true"
           onClick={toggleDropdown}
         >
-          {viewMode === "desktop" && <PersonalVideoIcon className="mr-2" />}
-          {viewMode === "tablet" && <TabletMacIcon className="mr-2" />}
-          {viewMode === "mobile" && <PhoneIphoneIcon className="mr-2" />}
-          {viewMode.charAt(0).toUpperCase() + viewMode.slice(1)}
+          <div className="flex items-center gap-x-2.5">
+            {viewMode === "desktop" && <PersonalVideoIcon />}
+            {viewMode === "tablet" && <TabletMacIcon />}
+            {viewMode === "mobile" && <PhoneIphoneIcon />}
+            {viewMode.charAt(0).toUpperCase() + viewMode.slice(1)}
+          </div>
           <svg
-            className="-mr-1 ml-2 h-5 w-5"
             xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 20 20"
-            fill="currentColor"
-            aria-hidden="true"
+            width="12"
+            height="12"
+            viewBox="0 0 12 12"
+            fill="none"
+            className={`${
+              isOpen ? "rotate-180 " : "-rotate-180"
+            }transition-all duration-200 ease-in`}
           >
             <path
-              fillRule="evenodd"
-              d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 011.414 1.414l-4 4a1 1 01-1.414 0l-4-4a1 1 010-1.414z"
-              clipRule="evenodd"
+              d="M11 3L6 8L1 3"
+              stroke="#000"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
             />
           </svg>
         </button>
       </div>
       {isOpen && (
         <div
-          className="origin-top-left absolute left-0 mt-2 cursor-pointer rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-20"
+          className="origin-top-left absolute left-0 mt-2 cursor-pointer rounded-md shadow-lg bg-white ring-1 ring-[#F0F0F1] focus:outline-none z-20 w-[180px]"
           role="menu"
           aria-orientation="vertical"
           aria-labelledby="menu-button"
         >
           <div className="py-1" role="none">
             <a
-              className="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100 flex items-center"
+              className="text-black px-4 py-2 text-base font-medium hover:bg-palatinate-blue-50 flex items-center gap-2.5 rounded-md"
               role="menuitem"
               onClick={() => handleViewChange("desktop")}
             >
-              <PersonalVideoIcon className="mr-2" />
+              <PersonalVideoIcon />
               Desktop
             </a>
             <a
-              className="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100 flex items-center"
+              className="text-black px-4 py-2 text-base font-medium hover:bg-palatinate-blue-50 flex items-center gap-2.5 rounded-md"
               role="menuitem"
               onClick={() => handleViewChange("tablet")}
             >
-              <TabletMacIcon className="mr-2" />
+              <TabletMacIcon />
               Tablet
             </a>
             <a
-              className="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100 flex items-center"
+              className="text-black px-4 py-2 text-base font-medium hover:bg-palatinate-blue-50 flex items-center gap-2.5 rounded-md"
               role="menuitem"
               onClick={() => handleViewChange("mobile")}
             >
-              <PhoneIphoneIcon className="mr-2" />
+              <PhoneIphoneIcon />
               Mobile
             </a>
           </div>
