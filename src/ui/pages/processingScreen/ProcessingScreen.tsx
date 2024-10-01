@@ -295,46 +295,44 @@ const ProcessingScreen: React.FC = () => {
   return (
     <MainLayout>
       <div className="flex flex-col items-center justify-center h-[90vh]">
-        <div className="relative flex flex-col justify-center ">
-          <div
-            className="w-[340px] h-[340px] flex items-center justify-center"
-            style={{
-              backgroundImage: `url(${websitebg})`,
-              backgroundSize: "contain",
-              backgroundPosition: "center center",
-              backgroundRepeat: "no-repeat",
-            }}
-          >
-            <img
-              src="https://tours.mywpsite.org/wp-content/uploads/2024/08/loader-gif-final.gif"
-              alt="Processing"
-              className="w-[40%] max-w-full"
-            />
-          </div>
+        <div
+          className="w-[340px] h-[340px] flex items-center justify-center"
+          style={{
+            backgroundImage: `url(${websitebg})`,
+            backgroundSize: "contain",
+            backgroundPosition: "center center",
+            backgroundRepeat: "no-repeat",
+          }}
+        >
+          <img
+            src="https://tours.mywpsite.org/wp-content/uploads/2024/08/loader-gif-final.gif"
+            alt="Processing"
+            className="w-[40%] max-w-full"
+          />
+        </div>
 
-          <div className="flex items-center justify-center gap-4 mt-10">
-            <div className="relative inline-flex h-20">
-              <CircularProgressbar
-                value={progress}
-                text={`${Math.round(progress)}%`}
-                styles={buildStyles({
-                  textColor: "#000",
-                  pathColor: "#2E42FF",
-                  trailColor: "#C9CEFF",
-                })}
-                strokeWidth={10}
-              />
-            </div>
-            <div>
-              <h3 className="text-xl leading-7 mt-4">
-                We are building your website...
-              </h3>
-              <p className="text-lg leading-6 text-txt-secondary-400 ">
-                {progress === 100
-                  ? "Your website is ready!"
-                  : `Please wait while we set up your site. We are installing ${status}`}
-              </p>
-            </div>
+        <div className="flex items-center gap-4 mt-10">
+          <CircularProgressbar
+            value={progress}
+            text={`${Math.round(progress)}%`}
+            styles={buildStyles({
+              textColor: "#000",
+              pathColor: "#2E42FF",
+              trailColor: "#C9CEFF",
+            })}
+            className="w-[70px] h-[70px] text-base font-bold"
+            strokeWidth={10}
+          />
+
+          <div className="max-w-[400px]">
+            <h3 className="text-lg tracking-tight font-semibold">
+              We are building your website...
+            </h3>
+            <p className="text-base text-[#88898A] mt-2">
+              {progress === 100
+                ? "Your website is ready!"
+                : `Please wait while we set up your site. We are installing ${status}`}
+            </p>
           </div>
         </div>
       </div>

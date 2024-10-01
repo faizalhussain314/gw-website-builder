@@ -355,14 +355,14 @@ function Description() {
 
         <div className="flex gap-4 px-10 pt-10 mt-auto pb-6 ml-11">
           <Link to="/name">
-            <button className="previous-btn flex px-[10px] py-[13px] text-base text-white sm:mt-2 rounded-lg w-[150px] gap-3 justify-center font-medium">
+            <button className="previous-btn flex px-[30px] py-[15px] text-base text-white sm:mt-2 rounded-lg w-[150px] gap-3 justify-center font-medium">
               <ArrowBackIcon fontSize="small" />
               Previous
             </button>
           </Link>
           <button
             onClick={setReduxValue}
-            className="tertiary px-[30px] py-[10px] text-base text-white sm:mt-2 font-medium rounded-md w-[150px]"
+            className="tertiary px-[30px] py-[15px] text-base text-white sm:mt-2 font-medium rounded-md w-[150px]"
           >
             Continue
           </button>

@@ -118,33 +118,29 @@ function Category() {
 
   return (
     <MainLayout>
-      <div className="bg-[#F9FCFF] min-h-screen p-[40px]">
-        <div className="flex font-['inter']">
-          <div className="mb-[35px]">
-            <h1 className="text-txt-black-600 font-semibold leading-[38px] tracking-[-0.9px] text-3xl mb-2.5">
-              I am creating a website for
-            </h1>
-            <span className="text-lg tracking-[-0.54px] font-normal leading-[26px] text-txt-secondary-400">
-              Let's get started by choosing the type of website you'd like to
-              create
-            </span>
-          </div>
-        </div>
-        <div ref={dropdownRef}>
+      <div className="bg-[#F9FCFF] min-h-screen p-10">
+        <h1 className="text-txt-black-600 font-semibold leading-[38px] tracking-[-0.9px] text-3xl mb-2.5">
+          I am creating a website for
+        </h1>
+        <span className="text-lg tracking-[-0.54px] font-normal leading-[26px] text-txt-secondary-400 ">
+          Let's get started by choosing the type of website you'd like to create
+        </span>
+
+        <div ref={dropdownRef} className="mt-9">
           <div className="relative w-full">
             <input
               type="text"
               value={inputValue}
               onChange={handleInputChange}
               placeholder="Enter a keyword to search your business"
-              className={`bg-white rounded-lg w-full pl-[40px] pr-[15px] py-3 border placeholder:text-[#A9B0B7] placeholder:!font-normal focus:border-palatinate-blue-500 active:border-palatinate-blue-500 focus:border-2 ${
+              className={`bg-white rounded-lg w-full pl-11 pr-4 py-3 border placeholder:text-[#A9B0B7] placeholder:!font-normal focus:border-palatinate-blue-500 active:border-palatinate-blue-500 focus:border-2 ${
                 error ? "border-red-500" : "border-[#CDD4DB]"
               } focus:outline-none`}
               aria-required="true"
               onFocus={() => setShowDropdown(true)}
             />
             {/* <SearchIcon className="absolute text-gray-400 transform top-[10px] left-[10px]" />  */}
-            <div className="absolute transform top-[14px] left-[10px]">
+            <div className="absolute transform top-4 left-4">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="17"

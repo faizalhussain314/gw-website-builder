@@ -18,33 +18,30 @@ const Popup: React.FC<PopupProps> = ({
 }) => {
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-gray-500 backdrop-blur-xl bg-opacity-50 z-50">
-      <div className="bg-white shadow-lg p-8 sm:p-8 w-full max-w-xl sm:max-w-lg md:max-w-xl pb-6 z-10 rounded-[10px]">
-        <div className="flex justify-between items-start mb-4">
-          <h2 className="text-3xl sm:text-2xl font-bold  inline-flex justify-center items-center">
-            Congratulations,
-            <br /> you’re almost there!
-            <div className="flex justify-center items-center mt-8 ml-3">
-              <img src={partyImoji} />
-            </div>
-          </h2>
-          <button
-            onClick={onClose}
-            className="text-gray-600 hover:text-gray-900"
-          >
-            <CloseIcon fontSize="small" />
-          </button>
-        </div>
+      <div className="relative bg-white shadow-lg p-8 sm:p-8 w-full max-w-[600px] pb-6 z-10 rounded-[10px] max-h-[710px] overflow-y-auto">
+        <h2 className="text-2xl font-semibold inline-flex items-center w-full gap-2.5 mb-3">
+          Congratulations, you’re almost there!
+          <img src={partyImoji} />
+        </h2>
+
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 text-gray-600 hover:text-gray-900"
+        >
+          <CloseIcon fontSize="small" />
+        </button>
         <p className="text-gray-600 mb-6">
           Before we hit the final button, let’s quickly double-check everything.
         </p>
-        <div className="shadow-xl rounded-lg border border-[#F0F0F1] p-5 mt-6 overflow-y-auto max-h-[300px]">
-          <div className="">
-            <p className="font-semibold text-base mb-1">Business Name:</p>
-            <p className="text-base">{businessName}</p>
-          </div>
-          <div className="w-full my-4 bg-[#F0F0F1] h-[1px]"></div>
-          <p className="font-semibold text-base mb-4">Business Description:</p>
-          <div className="flex items-start gap-3">
+
+        <div className="">
+          <p className="font-semibold text-base">Business Name:</p>
+          <p className="text-base text-[#4D586B]">{businessName}</p>
+        </div>
+
+        <p className="font-semibold text-base my-4">Business Description:</p>
+        <div className="flex flex-col items-start gap-3">
+          <div className="flex items-start gap-x-3">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="26"
@@ -65,16 +62,16 @@ const Popup: React.FC<PopupProps> = ({
                 fill="#2E42FF"
               />
             </svg>
-            <div className="bg-white border border-gray-300 rounded-lg p-4">
-              <p className="font-semibold">
-                What do you offer/sell? or what services do you provide?
-              </p>
-              <p className="text-gray-500 mt-2  overflow-y-auto">
-                {description}
-              </p>
-            </div>
+            <p className="font-semibold">
+              What do you offer/sell? or what services do you provide?
+            </p>
           </div>
-          <div className="flex items-start gap-3 mt-4">
+          <div className="bg-white border border-gray-300 rounded-lg px-4 py-2.5 ms-10 h-[80px] w-full max-w-[486px] overflow-y-auto">
+            <p className="text-gray-500 overflow-y-auto">{description}</p>
+          </div>
+        </div>
+        <div className="flex flex-col items-start gap-3 mt-4">
+          <div className="flex items-start gap-x-3">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="26"
@@ -95,31 +92,29 @@ const Popup: React.FC<PopupProps> = ({
                 fill="#2E42FF"
               />
             </svg>
-            <div className="bg-white border border-gray-300 rounded-lg p-4">
-              <p className="font-semibold">
-                What steps do customers need to take to start working with the
-                business? what action visitor needs to take work with you?
-              </p>
-              <p className="text-gray-500 mt-2  overflow-y-auto">
-                {secondDescription}
-              </p>
-            </div>
+            <p className="font-semibold">
+              What steps do customers need to take to start working with the
+              business? what action visitor needs to take work with you?
+            </p>
           </div>
-          {/* <div className="">
-            <p className="font-semibold">Business Name:</p>
-            <p>{businessName}</p>
-          </div> */}
+          <div className="bg-white border border-gray-300 rounded-lg px-4 py-2.5 ms-10 h-[80px] overflow-y-auto w-full max-w-[486px]">
+            <p className="text-gray-500 overflow-y-auto">{secondDescription}</p>
+          </div>
         </div>
-        <div className="flex w-full flex-col sm:flex-row mt-6">
+        <div className="mt-6">
+          <p className="font-semibold text-base">Contact Details:</p>
+          <p className="text-base text-[#4D586B]">{businessName}</p>
+        </div>
+        <div className="flex w-full items-center flex-row-reverse gap-x-4 mt-6">
           <Link
             to={"/custom-design"}
-            className="tertiary w-full text-white py-3 px-4 rounded-lg  font-semibold text-base mb-4 sm:mb-0 flex justify-center items-center"
+            className="tertiary w-full text-white py-[15px] px-[30px] rounded-lg font-medium text-base flex justify-center items-center"
           >
             <button className="">Start Building the website</button>
           </Link>
           <button
             onClick={onClose}
-            className="text-[#88898A] hover:text-gray-900 text-base font-semibold"
+            className="text-[#88898A] hover:text-gray-900 text-base font-medium w-full py-[15px] px-[30px] rounded-lg previous-btn"
           >
             Back
           </button>
