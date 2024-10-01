@@ -99,7 +99,7 @@ function create_required_tables() {
 
     // SQL to create the imported posts table
     $sql2 = "CREATE TABLE $table_name2 (
-        post_id INT NOT NULL AUTO_INCREMENT,
+        post_id INT NOT NULL,
         post_type VARCHAR(255),
         template_name VARCHAR(255),
         page_name VARCHAR(255),
@@ -306,13 +306,18 @@ add_action('rest_api_init', function () {
 		'callback' => 'myplugin_empty_tables',
 		'permission_callback' => '__return_true'
 	) );
+    register_rest_route('custom/v1', '/delete-all-posts', array(
+        'methods' => WP_REST_Server::DELETABLE,
+        'callback' => 'delete_all_custom_posts',
+        'permission_callback' => '__return_true'
+    ));
 
-    /*
+    
     register_rest_route('custom/v1', '/update-content', array(
         'methods' => WP_REST_Server::CREATABLE,
         'callback' => 'update_elementor_page_content_directly',
         'permission_callback' => '__return_true'  // Always secure your endpoints!
-    ));*/
+    ));
 
     // Register the attempt endpoint
     // register_rest_route('custom/v1', '/attempt', array(
@@ -321,6 +326,66 @@ add_action('rest_api_init', function () {
     //     'permission_callback' => '__return_true',
     // ));
 });
+function delete_attachments_by_title_or_filename($title, $filename) {
+    global $wpdb;
+
+    // First query to find attachment IDs by title
+    $query_title = $wpdb->prepare("
+        SELECT ID 
+        FROM $wpdb->posts 
+        WHERE post_type = 'attachment' 
+        AND post_title = %s", 
+        $title
+    );
+    $attachment_ids_title = $wpdb->get_col($query_title);
+
+    // Second query to find attachment IDs by filename
+    $query_filename = $wpdb->prepare("
+        SELECT post_id 
+        FROM $wpdb->postmeta 
+        WHERE meta_key = '_wp_attached_file' 
+        AND meta_value LIKE %s", 
+        '%' . $wpdb->esc_like($filename) . '%'
+    );
+    $attachment_ids_filename = $wpdb->get_col($query_filename);
+
+    // Combine the results of both queries, ensuring no duplicates
+    $attachment_ids = array_unique(array_merge($attachment_ids_title, $attachment_ids_filename));
+
+    if (empty($attachment_ids)) {
+        return 'No attachments found with title: ' . $title . ' or filename: ' . $filename;
+    }
+
+    // Delete all found attachments
+    foreach ($attachment_ids as $id) {
+        wp_delete_attachment($id, true); // True to ensure the file is also deleted from the server
+    }
+
+    return 'Deleted attachments with title: ' . $title . ' and/or filename: ' . $filename;
+}
+
+function delete_all_custom_posts(WP_REST_Request $request) {
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'imported_posts';
+
+    // Selecting all post IDs, their types, and filenames from your custom table
+    $posts = $wpdb->get_results("SELECT post_id, post_type, page_name FROM $table_name");
+
+    if (empty($posts)) {
+        return new WP_REST_Response('No posts found to delete.', 404);
+    }
+$result=array();
+    foreach ($posts as $post) {
+        if ($post->post_type === 'attachment') {
+            $result[$post->post_id]=delete_attachments_by_title_or_filename($post->page_name,$post->page_name); // Delete all matching attachments by filename
+        } else {
+            
+            wp_delete_post($post->post_id, true); // True to force deletion of post and all associated data
+        }
+    }
+    $val=json_encode( $result);
+    return new WP_REST_Response($val, 200);
+}
 function myplugin_empty_tables() {
     global $wpdb;
    $tables_to_empty = array(

@@ -42,6 +42,7 @@ const useFetchContentData = () => {
             "color",
             "font",
             "templateList",
+            "contactform",
           ],
         }),
       });

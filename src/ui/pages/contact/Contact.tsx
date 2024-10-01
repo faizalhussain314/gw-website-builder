@@ -1,8 +1,84 @@
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import MainLayout from "../../Layouts/MainLayout";
+import useStoreContent from "../../../hooks/useStoreContent ";
+import { useState, useEffect } from "react";
+import useDomainEndpoint from "../../../hooks/useDomainEndpoint";
+import { useDispatch, useSelector } from "react-redux";
+import { updateContactForm } from "../../../Slice/activeStepSlice";
+import { RootState } from "../../../store/store";
+import useFetchCustomContentData from "../../../hooks/useFetchCustomContentData";
 
 function Contact() {
+  const ContactFormRedux = useSelector(
+    (state: RootState) => state.userData.contactform
+  );
+  const fetchCustomContent = useFetchCustomContentData();
+
+  const [formData, setFormData] = useState({
+    email: "",
+    phoneNumber: "",
+    address: "",
+  });
+
+  const { getDomainFromEndpoint } = useDomainEndpoint();
+
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prevData) => ({
+      ...prevData,
+      [name]: value,
+    }));
+    console.log("value was changed");
+  };
+
+  useEffect(() => {
+    fetchCustomContent(["contactform"]);
+  }, [fetchCustomContent]);
+
+  useEffect(() => {
+    if (ContactFormRedux) {
+      setFormData({
+        email: ContactFormRedux.email || "",
+        phoneNumber: ContactFormRedux.phoneNumber || "",
+        address: ContactFormRedux.address || "",
+      });
+    }
+  }, [ContactFormRedux]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    dispatch(
+      updateContactForm({
+        email: formData.email,
+        address: formData.address,
+        phoneNumber: formData.phoneNumber,
+      })
+    );
+
+    const url = getDomainFromEndpoint("wp-json/custom/v1/update-form-details");
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ contactform: formData }),
+      });
+
+      const result = await response.json();
+      navigate("/design");
+      return result;
+    } catch (error) {
+      console.error("Error making API call:", error);
+      navigate("/design");
+      return null;
+    }
+  };
+
   return (
     <MainLayout>
       <div className="bg-[#F9FCFF]">
@@ -16,7 +92,7 @@ function Contact() {
               be used on the website.
             </span>
 
-            <form className="w-full mt-9">
+            <form className="w-full mt-9" onSubmit={handleSubmit}>
               <div className="grid grid-cols-2 gap-x-8 gap-y-6 sm:grid-cols-2 ">
                 <div className="sm:col-span-2">
                   <label
@@ -32,6 +108,8 @@ function Contact() {
                       id="email"
                       autoComplete="email"
                       placeholder="Enter your email"
+                      value={formData.email}
+                      onChange={handleChange}
                       className="block w-full rounded-lg bg-white px-4 py-2.5 border border-[rgba(205, 212, 219, 1)] w-[720px]  focus:border-palatinate-blue-500 active:border-palatinate-blue-500 active:outline-palatinate-blue-500 focus:outline-palatinate-blue-500"
                     />
                   </div>
@@ -47,10 +125,12 @@ function Contact() {
                     <div className="absolute inset-y-0 left-0 flex items-center"></div>
                     <input
                       type="tel"
-                      name="phone-number"
-                      id="phone-number"
+                      name="phoneNumber"
+                      id="phoneNumber"
                       autoComplete="tel"
                       placeholder="Enter your Phone number"
+                      value={formData.phoneNumber}
+                      onChange={handleChange}
                       className="block w-full rounded-lg bg-white px-4 py-2.5 border border-[rgba(205, 212, 219, 1)] w-[720px]  focus:border-palatinate-blue-500 active:border-palatinate-blue-500 active:outline-palatinate-blue-500 focus:outline-palatinate-blue-500"
                     />
                   </div>
@@ -65,39 +145,41 @@ function Contact() {
                 </label>
                 <div className="mt-2.5">
                   <textarea
-                    name="message"
-                    id="message"
+                    name="address"
+                    id="address"
                     rows={4}
                     placeholder="Enter your address"
+                    value={formData.address}
+                    onChange={handleChange}
                     className="block w-full rounded-lg bg-white px-4 py-2.5 border border-[rgba(205, 212, 219, 1)] w-[720px] focus:border-palatinate-blue-500 active:border-palatinate-blue-500 active:outline-palatinate-blue-500 focus:outline-palatinate-blue-500"
-                    defaultValue={""}
                   />
                 </div>
               </div>
               <div className="mt-10"></div>
-            </form>
-            <div className="bottom-0 flex items-center justify-between w-full">
-              <div className="flex gap-4 items-center">
-                <Link to={"/description"}>
-                  <button className="previous-btn flex px-[10px] py-[13px] text-base text-white sm:mt-2 rounded-md w-[150px] gap-3 justify-center font-medium">
-                    <ArrowBackIcon fontSize="small" />
-                    Previous
-                  </button>
-                </Link>
-                <Link to={"/design"}>
+
+              <div className="bottom-0 flex items-center justify-between w-full">
+                <div className="flex gap-4 items-center">
+                  <Link to={"/description"}>
+                    <button className="previous-btn flex px-[10px] py-[13px] text-base text-white sm:mt-2 rounded-md w-[150px] gap-3 justify-center font-medium">
+                      <ArrowBackIcon fontSize="small" />
+                      Previous
+                    </button>
+                  </Link>
+                  {/* <Link to={"/design"}> */}
                   <button className="tertiary px-[30px] py-[10px] text-base text-white sm:mt-2 font-medium rounded-md w-[150px] ">
                     Continue
                   </button>
+                  {/* </Link> */}
+                </div>
+                <Link to={"/design"}>
+                  <div className="cursor-pointer">
+                    <span className="text-base text-[#6C777D] leading-5 hover:text-palatinate-blue-600">
+                      Skip Step
+                    </span>
+                  </div>
                 </Link>
               </div>
-              <Link to={"/design"}>
-                <div className="cursor-pointer">
-                  <span className="text-base text-[#6C777D] leading-5 hover:text-palatinate-blue-600">
-                    Skip Step
-                  </span>
-                </div>
-              </Link>
-            </div>
+            </form>
           </div>
         </div>
       </div>

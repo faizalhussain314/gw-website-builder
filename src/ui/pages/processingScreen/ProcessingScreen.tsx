@@ -10,9 +10,17 @@ import websitebg from "../../../assets/websiteloader-bg.svg";
 import useDomainEndpoint from "../../../hooks/useDomainEndpoint";
 import { RootState } from "../../../store/store"; // Import your RootState
 
+interface Page {
+  name: string;
+  status: string;
+  slug: string;
+  selected: boolean;
+  xml_url?: string; // Add this to avoid errors when accessing xml_url
+}
+
 const ProcessingScreen: React.FC = () => {
   const [progress, setProgress] = useState(0);
-  const totalSteps = 12;
+  const [totalSteps, setTotalSteps] = useState(0); // Dynamically calculated
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState("");
   const [isProcessing, setIsProcessing] = useState(false); // Flag to prevent duplicate calls
@@ -27,10 +35,7 @@ const ProcessingScreen: React.FC = () => {
   );
   const selectedPages = useSelector((state: RootState) => state.userData.pages);
 
-  const VITE_API_BACKEND_URL = process.env.VITE_API_BACKEND_URL;
-
   const fetchTemplates = async () => {
-    console.log("templateid:", template_id);
     try {
       const response = await fetch(
         `https://dev.gravitywrite.com/api/getTemplates?template_id=${template_id}`
@@ -60,6 +65,45 @@ const ProcessingScreen: React.FC = () => {
     }
   };
 
+  // Development only: Fallback pages data
+  const pagesapi = [
+    {
+      id: 11,
+      title: "Home",
+      template_id: 2,
+      xml_url:
+        "https://plugin.mywpsite.org/tourstemplate1/tours-template-home-page.xml",
+    },
+    {
+      id: 12,
+      title: "About",
+      template_id: 2,
+      xml_url:
+        "https://plugin.mywpsite.org/tourstemplate1/tours-template-about-page.xml",
+    },
+    {
+      id: 13,
+      title: "Service",
+      template_id: 2,
+      xml_url:
+        "https://plugin.mywpsite.org/tourstemplate1/tours-template-services-page.xml",
+    },
+    {
+      id: 14,
+      title: "Blog",
+      template_id: 2,
+      xml_url:
+        "https://plugin.mywpsite.org/tourstemplate1/tours-template-blog-page.xml",
+    },
+    {
+      id: 15,
+      title: "Contact Us",
+      template_id: 2,
+      xml_url:
+        "https://plugin.mywpsite.org/tourstemplate1/tours-template-contactus-page.xml",
+    },
+  ];
+
   const processAPIs = async () => {
     // Prevent duplicate processing
     if (isProcessing) return;
@@ -68,11 +112,12 @@ const ProcessingScreen: React.FC = () => {
     const templateData = await fetchTemplates();
     if (!templateData) return;
 
-    const { pages, plugins, template_import_urls } = templateData.data;
+    const { plugins, template_import_urls } = templateData.data;
 
     // Save the pages to Redux state
-    dispatch(setPages(pages));
+    dispatch(setPages(selectedPages));
 
+    // Create the list of all the API steps
     const apiSteps = [
       {
         name: "Plugins",
@@ -108,13 +153,6 @@ const ProcessingScreen: React.FC = () => {
         },
       },
       {
-        name: "Pages",
-        endpoint: "/wp-json/custom/v1/install-pages",
-        body: selectedPages
-          .filter((page: any) => page.selected)
-          .map((page: any) => ({ fileurl: page.xml_url })),
-      },
-      {
         name: "Elementor Kit",
         endpoint: "/wp-json/custom/v1/install-elementor-kit",
         body: {
@@ -141,37 +179,109 @@ const ProcessingScreen: React.FC = () => {
           ).url,
         },
       },
-      {
-        name: "Import Site Logo",
-        endpoint: "/wp-json/custom/v1/import-sitelogo",
-        body: { fileurl: logo },
-      },
-      ...selectedPages
-        .filter((page: any) => page.selected)
-        .map((page: any) => ({
-          name: `Update ${page.name} Content`,
-          endpoint: "/wp-json/custom/v1/update-content",
-          body: { page_name: page.name },
-        })),
+      // Only call the "Import Site Logo" API if the logo is not empty
+      ...(logo
+        ? [
+            {
+              name: "Import Site Logo",
+              endpoint: "/wp-json/custom/v1/import-sitelogo",
+              body: { fileurl: logo },
+            },
+          ]
+        : []),
     ];
 
+    // Calculate total steps dynamically
+    const selectedPagesToInstall = selectedPages.filter(
+      (page: any) => page.selected
+    );
+    const stepsCount = apiSteps.length + selectedPagesToInstall.length * 2 + 1; // +1 for CSS regeneration
+    setTotalSteps(stepsCount); // Set the total steps dynamically
+
+    // Execute other steps first
     for (let i = 0; i < apiSteps.length; i++) {
       setStatus(apiSteps[i].name);
-      await postData(apiSteps[i].endpoint, apiSteps[i].body);
-      setProgress(((i + 1) / totalSteps) * 100);
+      try {
+        await postData(apiSteps[i].endpoint, apiSteps[i].body);
+      } catch (error) {
+        // Log the error but continue to the next API
+        console.error(`Error on step: ${apiSteps[i].name}`, error);
+        continue;
+      }
+      setProgress(((i + 1) / stepsCount) * 100); // Update progress
     }
+
+    // Install all selected pages
+    for (let i = 0; i < selectedPagesToInstall.length; i++) {
+      const page = selectedPagesToInstall[i];
+
+      setStatus(`Installing page: ${page.name}`);
+
+      // Find the XML URL, fallback to `pagesapi` if not found in `selectedPages`
+      const fileurl =
+        page[0]?.xml_url ||
+        pagesapi.find((p) => p.title === page.name)?.xml_url ||
+        "";
+
+      if (!fileurl) {
+        console.error(`XML URL not found for page: ${page.name}`);
+        console.log("url file was not found");
+        continue; // Skip this page if no valid XML URL
+      }
+
+      try {
+        // Call the install-pages API for each page
+        await postData("/wp-json/custom/v1/install-pages", { fileurl });
+      } catch (error) {
+        console.error(`Error installing page: ${page.name}`, error);
+        continue; // Continue with the next page if one fails
+      }
+
+      setProgress(((apiSteps.length + i + 1) / stepsCount) * 100); // Update progress
+    }
+
+    // Update content for each page after all pages are installed
+    for (let i = 0; i < selectedPagesToInstall.length; i++) {
+      const page = selectedPagesToInstall[i];
+
+      setStatus(`Updating content for page: ${page.name}`);
+
+      try {
+        // Call the update-content API
+        await postData("/wp-json/custom/v1/update-content", {
+          page_name: page.name, // Send the page name as page_title
+        });
+      } catch (error) {
+        console.error(`Error updating content for page: ${page.name}`, error);
+        continue; // Continue with the next page if one fails
+      }
+
+      setProgress(
+        ((apiSteps.length + selectedPagesToInstall.length + i + 1) /
+          stepsCount) *
+          100
+      ); // Update progress
+    }
+
+    // Call the regenerate-global-css API after all pages and content are done
+    setStatus("Regenerating Global CSS");
+    try {
+      await postData("/wp-json/custom/v1/regenerate-global-css", {}); // Hit the API with an empty body
+    } catch (error) {
+      console.error("Error regenerating global CSS", error);
+    }
+
+    setProgress(100); // Set progress to 100% after all steps
 
     setLoading(false);
     setIsProcessing(false); // Reset flag after processing is done
   };
 
   useEffect(() => {
-    // Process the APIs only on the initial render
     if (!isProcessing) {
-      processAPIs();
+      processAPIs(); // Process the APIs only on the initial render
     }
-    // Empty dependency array ensures the effect runs only once
-  }, []); // <-- Only run on mount
+  }, []);
 
   useEffect(() => {
     if (progress === 100) {

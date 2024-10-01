@@ -14,8 +14,7 @@ function CustomDesign() {
   const { getDomainFromEndpoint } = useDomainEndpoint();
 
   // Local variable for the iframe URL
-  const currentUrl =
-    parsedTemplateList?.[0]?.iframe_url || "https://creative.mywpsite.org/";
+  const currentUrl = parsedTemplateList?.[0]?.iframe_url;
 
   const sendMessageToIframes = (type: string, payload) => {
     const iframes = document.getElementsByTagName("iframe");
@@ -80,11 +79,35 @@ function CustomDesign() {
             "*"
           );
         }
+        if (result.logo) {
+          const logoUrl = result?.logo;
+          const iframes = document.getElementsByTagName("iframe");
+          for (let i = 0; i < iframes.length; i++) {
+            const iframe = iframes[i];
+            iframe?.contentWindow?.postMessage(
+              { type: "changeLogo", logoUrl },
+              "*"
+            );
+          }
+        }
       }
     } catch (error) {
       console.error("Error fetching initial data:", error);
     }
   };
+
+  const sendNonClickable = () => {
+    const iframe = document.getElementById("myIframe") as HTMLIFrameElement;
+    console.log("event triggered");
+    iframe.contentWindow?.postMessage(
+      {
+        type: "nonClickable",
+        transdiv: `<div id="overlay" style="position:fixed;width: 100vw;height: 100vh;z-index: 1000000;top: 0;left: 0;"></div>`,
+      },
+      "*"
+    );
+  };
+  // <div id="overlay" style="position:fixed;width: 100vw;height: 100vh;z-index: 1000000;top: 0;left: 0;"></div>
 
   const fetchTemplateData = async () => {
     const url = getDomainFromEndpoint(
@@ -113,6 +136,7 @@ function CustomDesign() {
   }, []);
 
   const onLoadmsg = () => {
+    sendNonClickable();
     fetchInitialData();
   };
   return (

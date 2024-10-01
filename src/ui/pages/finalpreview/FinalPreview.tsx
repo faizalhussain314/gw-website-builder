@@ -1,8 +1,14 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
 import axios from "axios";
 import GravityWriteLogo from "../../../assets/logo.svg";
 import MenuIcon from "../../../assets/menu.svg";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../../../store/store";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -18,10 +24,39 @@ import { Page } from "../../../types/page.type";
 import PlumberPageSkeleton from "../../component/PlumberPageSkeleton ";
 import GwLoader from "../../component/loader/gwLoader";
 import useDomainEndpoint from "../../../hooks/useDomainEndpoint";
-import usePageData from "../../../hooks/usePageData";
+// import usePageData from "../../../hooks/usePageData";
 import { savePagesToDB } from "../../../infrastructure/api/wordpress-api/final-preview/savePagesApi.api";
+import { updateReduxPage } from "../../../Slice/activeStepSlice";
 
 const FinalPreview: React.FC = () => {
+  const reduxPages =
+    useSelector((state: RootState) => state.userData?.templateList.pages) || [];
+
+  const validReduxPages: Page[] = useMemo(() => {
+    if (!reduxPages.length) return [];
+    return reduxPages.map((page) => ({
+      name: page.title,
+      status: "", // Set a default status for each page
+      slug: page.slug,
+      selected: false, // Default selected state
+    }));
+  }, [reduxPages]);
+
+  // Default pages if reduxPages is empty
+  const defaultPages: Page[] = [
+    { name: "Home", status: "", slug: "homepage", selected: false },
+    { name: "About Us", status: "", slug: "about", selected: false },
+    { name: "Services", status: "", slug: "service", selected: false },
+    { name: "Blog", status: "", slug: "blog", selected: false },
+    { name: "Contact", status: "", slug: "contact", selected: false },
+  ];
+
+  const dispatch = useDispatch();
+
+  // Use reduxPages if it's not empty; otherwise, fallback to defaultPages
+  const [pages, setPages] = useState<Page[]>(
+    validReduxPages.length ? validReduxPages : defaultPages
+  );
   const [isOpen, setIsOpen] = useState(false);
   const [viewMode, setViewMode] = useState("desktop");
   const [isLoading, setIsLoading] = useState(true);
@@ -41,6 +76,11 @@ const FinalPreview: React.FC = () => {
   const [showIframe, setShowIframe] = useState(true);
   const [Loaded, setLoaded] = useState(false);
   const [contentForBackend, setContentForBackend] = useState<any[]>([]);
+  const [findIndex, setfindIndex] = useState<number>();
+  const currentUrl =
+    useSelector(
+      (state: RootState) => state.userData?.templateList?.pages[0]?.iframe_url
+    ) || "";
 
   const businessName = useSelector(
     (state: RootState) => state.userData.businessName
@@ -54,14 +94,17 @@ const FinalPreview: React.FC = () => {
   const fontFamily = useSelector((state: RootState) => state.userData.font);
   const Color = useSelector((state: RootState) => state.userData.color);
   const logoUrl = useSelector((state: RootState) => state.userData.logo);
+  const templateList = useSelector(
+    (state: RootState) => state.userData.templateList
+  );
 
-  const [pages, setPages] = useState<Page[]>([
-    { name: "Home", status: "", slug: "homepage", selected: false },
-    { name: "About Us", status: "", slug: "about", selected: false },
-    { name: "Services", status: "", slug: "service", selected: false },
-    { name: "Blog", status: "", slug: "blog", selected: false },
-    { name: "Contact", status: "", slug: "contact", selected: false },
-  ]);
+  // const [pages, setPages] = useState<Page[]>([
+  //   { name: "Home", status: "", slug: "homepage", selected: false },
+  //   { name: "About Us", status: "", slug: "about", selected: false },
+  //   { name: "Services", status: "", slug: "service", selected: false },
+  //   { name: "Blog", status: "", slug: "blog", selected: false },
+  //   { name: "Contact", status: "", slug: "contact", selected: false },
+  // ]);
 
   const navigate = useNavigate();
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -91,41 +134,87 @@ const FinalPreview: React.FC = () => {
     updatePageStatus(selectedPage!, "Generated", false);
   };
 
+  // useEffect(() => {
+  //   // const fetchGeneratedPageStatus = async () => {
+  //   //   try {
+  //   //     const endpoint = getDomainFromEndpoint(
+  //   //       "/wp-json/custom/v1/get-generated-page-status"
+  //   //     );
+  //   //     if (!endpoint) {
+  //   //       console.error("Endpoint is not available.");
+  //   //       return;
+  //   //     }
+
+  //   //     const response = await axios.post(endpoint);
+  //   //     if (response.status === 200) {
+  //   //       const { data } = response;
+
+  //   //       if (data && Array.isArray(data)) {
+  //   //         const updatedPages = data.map((page) => ({
+  //   //           name: page.page_name,
+  //   //           slug: page.page_slug,
+  //   //           status: page.page_status,
+  //   //           selected: page.selected === "1",
+  //   //         }));
+
+  //   //         // Update pages state with status from the API
+  //   //         setPages(updatedPages);
+
+  //   //         // Automatically select the first non-generated/skipped page
+  //   //         const nextPage = updatedPages.find(
+  //   //           (page) => page.status !== "Generated" && page.status !== "Skipped"
+  //   //         );
+  //   //         if (nextPage) {
+  //   //           setSelectedPage(nextPage.name);
+  //   //         }
+  //   //       }
+  //   //     }
+  //   //   } catch (error) {
+  //   //     console.error("Error fetching generated page status:", error);
+  //   //   }
+  //   // };
+
+  //   // Call the function to fetch status when the component loads for the first time
+  //   fetchGeneratedPageStatus();
+  // }, [getDomainFromEndpoint]);
+
+  // Ensure the effect runs when fetchGeneratedPageStatus is updated
+
   // Fetch the list of already generated pages
-  const fetchGeneratedPages = useCallback(async () => {
-    try {
-      const endpoint = getDomainFromEndpoint(
-        "/wp-json/custom/v1/get-html-data-details"
-      );
-      if (!endpoint) {
-        console.error("Endpoint is not available.");
-        return;
-      }
+  // const fetchGeneratedPages = useCallback(async () => {
+  //   try {
+  //     const endpoint = getDomainFromEndpoint(
+  //       "/wp-json/custom/v1/get-html-data-details"
+  //     );
+  //     if (!endpoint) {
+  //       console.error("Endpoint is not available.");
+  //       return;
+  //     }
 
-      const response = await axios.post(endpoint);
+  //     const response = await axios.post(endpoint);
 
-      if (response.status === 200) {
-        setGeneratedPagesList(response.data);
-        response.data.forEach(
-          (page: {
-            page_name: string;
-            template_name: string;
-            version_name: string;
-          }) => {
-            fetchAndStorePageData(
-              page.page_name,
-              page.template_name,
-              page.version_name
-            );
-          }
-        );
-      } else {
-        console.error("Failed to fetch generated pages:", response);
-      }
-    } catch (error) {
-      console.error("Error fetching generated pages:", error);
-    }
-  }, [getDomainFromEndpoint]);
+  //     if (response.status === 200) {
+  //       setGeneratedPagesList(response.data);
+  //       response.data.forEach(
+  //         (page: {
+  //           page_name: string;
+  //           template_name: string;
+  //           version_name: string;
+  //         }) => {
+  //           fetchAndStorePageData(
+  //             page.page_name,
+  //             page.template_name,
+  //             page.version_name
+  //           );
+  //         }
+  //       );
+  //     } else {
+  //       console.error("Failed to fetch generated pages:", response);
+  //     }
+  //   } catch (error) {
+  //     console.error("Error fetching generated pages:", error);
+  //   }
+  // }, [getDomainFromEndpoint]);
 
   const storeHtmlContent = useCallback(
     async (pageName: string, htmlContent: string) => {
@@ -225,9 +314,9 @@ const FinalPreview: React.FC = () => {
     [getDomainFromEndpoint, selectedPage, storeHtmlContent]
   );
 
-  useEffect(() => {
-    fetchGeneratedPages();
-  }, [fetchGeneratedPages]);
+  // useEffect(() => {
+  //   fetchGeneratedPages();
+  // }, [fetchGeneratedPages]);
 
   const storeOldNewContent = useCallback(
     async (pageName: string, jsonContent: Record<string, any>) => {
@@ -242,11 +331,16 @@ const FinalPreview: React.FC = () => {
 
         const response = await axios.post(endpoint, {
           version_name: "5.5",
-          page_name: selectedPage,
+          page_name: pageName, // Use the current pageName instead of selectedPage
           template_name: templateName,
           json_content: jsonContent,
         });
-        console.log("page name", pageName);
+        console.log(
+          "page name",
+          pageName,
+          "this is current page from state",
+          selectedPage // This is fine for logging the current selectedPage
+        );
 
         if (response.status === 200) {
           console.log(
@@ -270,12 +364,67 @@ const FinalPreview: React.FC = () => {
         ...prevContent,
         [pageName]: content,
       }));
+      console.log("page name", pageName);
 
       // Store the old and new content in the backend
       storeOldNewContent(pageName, content);
     },
     [storeOldNewContent]
   );
+
+  const handlePageStatusUpdate = async (
+    pageName: string,
+    newStatus: string,
+    isSelected: boolean
+  ) => {
+    try {
+      const endpoint = getDomainFromEndpoint(
+        "/wp-json/custom/v1/save-generated-page-status"
+      );
+      if (!endpoint) {
+        console.error("Endpoint is not available.");
+        return;
+      }
+
+      const updatedPages = pages.map((page) =>
+        page.name === pageName
+          ? { ...page, status: newStatus, selected: isSelected }
+          : page
+      );
+
+      setPages(updatedPages);
+
+      // Dispatch to update Redux
+      dispatch(
+        updateReduxPage({
+          name: pageName,
+          status: newStatus,
+          selected: isSelected,
+        })
+      );
+
+      // Save status to DB
+      await axios.post(endpoint, {
+        page_name: pageName,
+        page_status: newStatus,
+        selected: isSelected ? "1" : "0",
+      });
+    } catch (error) {
+      console.error("Error updating page status:", error);
+    }
+  };
+
+  const selectNextPage = () => {
+    const nextPage = pages.find(
+      (page) => page.status !== "Generated" && page.status !== "Skipped"
+    );
+    if (nextPage) {
+      setSelectedPage(nextPage.name);
+    }
+  };
+
+  // Example usage
+  // handlePageStatusUpdate("Home", "Generated", true); // Correct usage
 
   const fetchGeneratedPageStatus = useCallback(async () => {
     try {
@@ -292,22 +441,27 @@ const FinalPreview: React.FC = () => {
       if (response.status === 200) {
         const { data } = response;
 
-        if (data && Array.isArray(data.pages)) {
-          const updatedPages = pages.map((page) => {
-            const matchingPage = data.pages.find(
-              (p: any) => p.page_name === page.name
-            );
-            if (matchingPage) {
-              return {
-                ...page,
-                status: matchingPage.status, // Update status
-                selected: matchingPage.status === "Generated",
-              };
-            }
-            return page;
-          });
+        if (data && Array.isArray(data)) {
+          setPages((prevPages) => {
+            // Merge existing pages with API response data
+            const updatedPages = prevPages.map((page) => {
+              const matchingPage = data.find(
+                (apiPage: any) => apiPage.page_name === page.name
+              );
 
-          setPages(updatedPages); // Update the pages state with the new statuses
+              if (matchingPage) {
+                return {
+                  ...page,
+                  status: matchingPage.page_status,
+                  selected: matchingPage.selected === "1",
+                };
+              }
+
+              return page; // If no match, return the original page
+            });
+
+            return updatedPages;
+          });
         }
       } else {
         console.error("Failed to fetch generated page status:", response);
@@ -315,15 +469,25 @@ const FinalPreview: React.FC = () => {
     } catch (error) {
       console.error("Error fetching generated page status:", error);
     }
-  }, [getDomainFromEndpoint, pages]);
+  }, [getDomainFromEndpoint]);
 
   useEffect(() => {
     fetchGeneratedPageStatus();
   }, [fetchGeneratedPageStatus]);
 
+  // useEffect(() => {
+  //   fetchGeneratedPageStatus(); // Fetch the status when the component mounts
+  // }, [fetchGeneratedPageStatus]);
+
   const onLoadMsg = async () => {
     const iframe = iframeRef.current;
     const currentPage = pages.find((page) => page.name === selectedPage);
+    const currentPageIndex = pages.findIndex(
+      (page) => page.name === selectedPage
+    );
+
+    setfindIndex(currentPageIndex);
+    sendNonClickable();
 
     if (!iframe) return;
 
@@ -388,19 +552,19 @@ const FinalPreview: React.FC = () => {
             "*"
           );
         }
-        if (
-          selectedPage !== "Home" &&
-          currentPage &&
-          currentPage.status !== "Generated" &&
-          currentPage.status !== "Skipped"
-        ) {
-          setTimeout(() => {
-            setShowPopup(true);
-          }, 100);
-        } else if (fetchresult) {
-          console.log("fetchresult is true");
-          // updatePageStatus(selectedPage, "Generated");
-        }
+        // if (
+        //   selectedPage !== "Home" &&
+        //   currentPage &&
+        //   currentPage.status !== "Generated" &&
+        //   currentPage.status !== "Skipped"
+        // ) {
+        //   setTimeout(() => {
+        //     setShowPopup(true);
+        //   }, 100);
+        // } else if (fetchresult) {
+        //   console.log("fetchresult is true");
+        //   // updatePageStatus(selectedPage, "Generated");
+        // }
       }
       console.log("second block executed", generatedPage[selectedPage]);
     } else {
@@ -422,16 +586,16 @@ const FinalPreview: React.FC = () => {
         );
       }
 
-      if (
-        selectedPage !== "Home" &&
-        currentPage &&
-        currentPage.status !== "Generated" &&
-        currentPage.status !== "Skipped"
-      ) {
-        setTimeout(() => {
-          setShowPopup(true);
-        }, 100);
-      }
+      // if (
+      //   selectedPage !== "Home" &&
+      //   currentPage &&
+      //   currentPage.status !== "Generated" &&
+      //   currentPage.status !== "Skipped"
+      // ) {
+      //   setTimeout(() => {
+      //     setShowPopup(true);
+      //   }, 100);
+      // }
     }
 
     // Additional handling based on the page type and generation status
@@ -458,6 +622,14 @@ const FinalPreview: React.FC = () => {
   };
 
   const updateIframeSrc = (content: string) => {
+    // const selectedTemplatePage = templateList?.pages?.find(
+    //   (page: any) => page.slug === pageSlug
+    // );
+
+    // if (selectedTemplatePage) {
+    //   setIframeSrc(selectedTemplatePage.iframe_url);
+    // }
+
     if (content !== currentContent) {
       setCurrentContent(content);
       const newBlob = new Blob([content], { type: "text/html" });
@@ -473,19 +645,31 @@ const FinalPreview: React.FC = () => {
   };
 
   const togglePage = (page: string) => {
-    if (page === selectedPage) return;
+    if (page === selectedPage) return; // Prevent reselecting the same page
 
     setSelectedPage(page);
+
     const existingContent = generatedPage[page];
 
     if (existingContent) {
-      updateIframeSrc(existingContent[0]);
+      // If the content for the page is already generated
+      updateIframeSrc(existingContent[0]); // Update the iframe source with the generated content
       setShowIframe(false);
       setIsPageGenerated(true);
     } else {
+      // If the page content is not yet generated
       setShowIframe(true);
       setIsPageGenerated(false);
       setIsLoading(true);
+
+      // Dynamically update the iframe source based on the page slug from template
+      // const selectedTemplatePage = templateList?.pages?.find(
+      //   (templatePage) => templatePage.slug === page
+      // );
+
+      // if (selectedTemplatePage) {
+      //   setIframeSrc(selectedTemplatePage.iframe_url); // Use iframe URL from the selected template page
+      // }
     }
   };
 
@@ -502,10 +686,20 @@ const FinalPreview: React.FC = () => {
       const updatedPages = [...pages];
       if (action === "next") {
         updatedPages[currentPageIndex].status = "Generated";
+        updatedPages[currentPageIndex].selected = true;
+
+        dispatch(
+          updateReduxPage({
+            name: updatedPages[currentPageIndex].name, // Page name
+            status: "Generated", // Mark as generated
+            selected: true, // Set as selected
+          })
+        );
       } else if (action === "skip") {
         updatedPages[currentPageIndex].status = "Skipped";
+        updatedPages[currentPageIndex].selected = false;
       }
-      updatedPages[currentPageIndex].selected = true;
+      // updatedPages[currentPageIndex].selected = true;
 
       setPages(updatedPages);
 
@@ -524,7 +718,7 @@ const FinalPreview: React.FC = () => {
           const iframe: null | HTMLIFrameElement = iframeRef.current;
           const nextPageSlug = updatedPages[nextPageIndex].slug;
           if (iframe) {
-            iframe.src = `https://tours.mywpsite.org/${nextPageSlug}`;
+            iframe.src = `${iframeSrc}/${nextPageSlug}`;
           }
         }
 
@@ -541,18 +735,38 @@ const FinalPreview: React.FC = () => {
     selected: boolean
   ) => {
     setPages((prevPages) =>
-      prevPages.map((page) =>
-        page.name === pageName ? { ...page, status, selected } : page
-      )
+      prevPages.map((page) => {
+        if (page.name === pageName) {
+          // Debugging log to check if the condition matches
+          console.log(
+            `Updating ${pageName}: status=${status}, selected=${selected}`
+          );
+          return { ...page, status, selected };
+        }
+        return page;
+      })
     );
-    console.log("pages", status, selected);
   };
 
   const handleClosePopup = () => {
     setShowPopup(false);
   };
-
+  const sendNonClickable = () => {
+    const iframe = document.getElementById("myIframe") as HTMLIFrameElement;
+    console.log("event triggered");
+    iframe.contentWindow?.postMessage(
+      {
+        type: "nonClickable",
+        transdiv: `<div id="overlay" style="position:fixed;width: 100vw;height: 100vh;z-index: 1000000;top: 0;left: 0;"></div>`,
+      },
+      "*"
+    );
+  };
   const handleGeneratePage = () => {
+    if (isContentGenerating) {
+      // showWarningToast();
+      return;
+    }
     setShowPopup(false);
     setIsLoading(true);
     setShowGwLoader(true);
@@ -591,7 +805,7 @@ const FinalPreview: React.FC = () => {
       const iframe = iframeRef.current;
       const prevPageSlug = pages[prevPageIndex].slug;
       if (iframe) {
-        iframe.src = `https://tours.mywpsite.org/${prevPageSlug}`;
+        iframe.src = `${currentUrl}${prevPageSlug}`;
       }
       setShowIframe(true);
       setIsLoading(true);
@@ -601,6 +815,8 @@ const FinalPreview: React.FC = () => {
 
   const handleNext = () => {
     handlePageNavigation("next");
+
+    selectNextPage();
   };
 
   const handleSkipPage = () => {
@@ -660,7 +876,9 @@ const FinalPreview: React.FC = () => {
           showSuccessToast();
         }
       } else if (event.data.type === "oldNewContent") {
-        handleOldNewContent(event.data.pageName, event.data.content);
+        const pageName = event.data.pageName || selectedPage || "";
+        handleOldNewContent(pageName, event.data.content);
+        console.log("log from event handler", pageName);
       }
     };
 
@@ -695,7 +913,7 @@ const FinalPreview: React.FC = () => {
     const storePagesInDB = async () => {
       if (savePageEndPoint) {
         try {
-          await savePagesToDB(savePageEndPoint, pages); // Pass the endpoint and pages to savePagesToDB
+          await savePagesToDB(savePageEndPoint, pages, findIndex); // Pass the endpoint and pages to savePagesToDB
         } catch (error) {
           console.error("Failed to store pages:", error);
         }
@@ -753,6 +971,7 @@ const FinalPreview: React.FC = () => {
               updatePageStatus={updatePageStatus}
               handlePageUpdate={handlePageUpdate}
               setPages={setPages}
+              handleGeneratePage={handleGeneratePage}
             />
           </div>
         </aside>
@@ -836,7 +1055,7 @@ const FinalPreview: React.FC = () => {
             {(!generatedPage[selectedPage!] || !isPageGenerated) && (
               <iframe
                 ref={iframeRef}
-                src={`https://tours.mywpsite.org/${
+                src={`${currentUrl}/${
                   pages.find((page) => page.name === selectedPage)?.slug
                 }`}
                 title="website"

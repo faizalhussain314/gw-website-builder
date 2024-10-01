@@ -20,8 +20,8 @@ const usePageData = (initialPages: Page[]) => {
       const endpoint = getDomainFromEndpoint("/wp-json/custom/v1/save-pages");
       if (endpoint) {
         try {
-          await savePagesToDB(endpoint, pagesToSave);
-          console.log("Updated pages saved successfully!");
+          await savePagesToDB(endpoint, pagesToSave, 0);
+          console.log("Updated pages saved successfully!", pagesToSave);
         } catch (error) {
           console.error("Failed to store updated pages:", error);
         }

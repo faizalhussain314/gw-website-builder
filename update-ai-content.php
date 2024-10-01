@@ -8,6 +8,16 @@ function update_elementor_page_content_directly(WP_REST_Request $request) {
     if (!$page) {
         return new WP_REST_Response(['success' => false, 'message' => 'Page not found'], 404);
     }
+    $json_content = $wpdb->get_var($wpdb->prepare(
+        "SELECT json_content FROM {$wpdb->prefix}generated_content WHERE page_name = %s",
+        $page_title
+    ));
+
+    if (!$json_content) {
+        return new WP_REST_Response(['success' => false, 'message' => 'No parameters found for this page'], 404);
+    }
+
+    $params = json_decode($json_content);
 
     $elementor_data = $wpdb->get_var($wpdb->prepare(
         "SELECT meta_value FROM {$wpdb->postmeta} WHERE post_id = %d AND meta_key = '_elementor_data'",
@@ -45,6 +55,7 @@ function traverse_and_update_content($elementor_data, $replacements) {
         if (is_string($item)) {
             foreach ($replacements as $search => $replace) {
                 if (strpos($item, $search) !== false) {
+                    $search = str_replace("\u2019", "'", $search);
                     $item = str_replace($search, $replace, $item);
                 }
             }

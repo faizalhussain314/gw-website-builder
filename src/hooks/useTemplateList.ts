@@ -1,6 +1,10 @@
 import { useState, useEffect } from "react";
 import { fetchtemplateList } from "../infrastructure/api/laraval-api/templatelist.api";
-import { setTemplateList, setTemplateId } from "../Slice/activeStepSlice";
+import {
+  setTemplateList,
+  setTemplateId,
+  setPagesFromTemplate,
+} from "../Slice/activeStepSlice";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../store/store";
 
@@ -44,6 +48,9 @@ const useTemplateList = () => {
     dispatch(setTemplateId(template_id));
     dispatch(setTemplateList(template));
     setSelectedTemplateDetails(template);
+    console.log("pages of the template", template?.pages);
+    dispatch(setPagesFromTemplate(template?.pages));
+
     console.log("individual tempalte list", template);
   };
 

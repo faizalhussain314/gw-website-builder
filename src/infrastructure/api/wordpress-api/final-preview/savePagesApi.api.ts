@@ -10,16 +10,18 @@ interface Page {
 // Accept the endpoint as a parameter
 export const savePagesToDB = async (
   endpoint: string,
-  pages: Page[]
+  pages: Page[],
+  currentIndex: number
 ): Promise<void> => {
   try {
-    const pagename = pages[0]?.name;
-    const pagestatus = pages[0]?.status;
-    const pageslug = pages[0]?.slug;
-    const selectedvalue = pages[0]?.selected;
+    const pagename = pages[currentIndex]?.name;
+    const pagestatus = pages[currentIndex]?.status;
+    const pageslug = pages[currentIndex]?.slug;
+    const selectedvalue = pages[currentIndex]?.selected;
     const response = await axios.post(endpoint, {
       page_name: pagename,
-      page_status: pageslug,
+      page_status: pagestatus,
+      page_slug: pageslug,
       selected: selectedvalue,
     });
     console.log("Pages stored successfully:", response.data);
