@@ -19,27 +19,26 @@ const UpgradePopup: React.FC<UpgradePopupProps> = ({ onClose, alertType }) => {
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-      <div className="bg-white rounded-lg shadow-lg text-center relative p-6 max-w-md mx-auto">
+      <div className="bg-white rounded-lg shadow-lg text-center relative max-w-[400px] mx-auto px-7 py-9">
         <button
-          className="absolute right-2 top-2"
+          className="absolute right-4 top-4"
           onClick={onClose}
           aria-label="Close"
         >
           <CloseIcon className="text-gray-600" />
         </button>
-        <div className="flex flex-col items-center py-4 px-6">
-          <div className="flex gap-1">
-            <img src={Caution} alt="Caution" />
-            <h2 className="text-xl font-semibold">Limit Reached</h2>
-          </div>
-          <p
-            className="mt-4 text-black text-lg"
-            dangerouslySetInnerHTML={{ __html: message }}
-          ></p>
-          <button className="mt-6 text-lg tertiary text-white flex items-center justify-center gap-2 px-6 py-3 rounded-md">
-            <img src={Crown} alt="Crown" /> Upgrade Plan
-          </button>
+
+        <div className="w-full flex items-center justify-center gap-x-2.5">
+          <img src={Caution} alt="Caution" />
+          <h2 className="text-xl font-semibold">Limit Reached</h2>
         </div>
+        <p
+          className="mt-6 text-black text-lg"
+          dangerouslySetInnerHTML={{ __html: message }}
+        ></p>
+        <button className="mt-8 text-base tertiary text-white flex items-center justify-center gap-2 px-6 py-3 rounded-lg mx-auto">
+          <img src={Crown} alt="Crown" /> Upgrade Plan
+        </button>
       </div>
     </div>
   );
