@@ -19,6 +19,7 @@ import useFetchContentData from "./hooks/useFetchContentData";
 import useStoreContent from "./hooks/useStoreContent .ts";
 import { useDispatch } from "react-redux";
 import { clearUserData } from "./Slice/activeStepSlice.ts";
+import CloseIcon from "./ui/global component/CloseIcon.tsx";
 
 const App = () => {
   const navigate = useNavigate();
@@ -90,7 +91,7 @@ const App = () => {
   };
 
   return (
-    <>
+    <div className="relative">
       {showPopup && (
         <ContinuePopup
           onClose={() => setShowPopup(false)}
@@ -99,6 +100,10 @@ const App = () => {
           onCreateFromScratch={handleCreateFromScratch}
         />
       )}
+      <div className="absolute right-4 top-4 z-50">
+        <CloseIcon />
+      </div>
+
       <Routes>
         <Route path="/welcome" element={<Welcome />} />
         <Route path="/connect-account" element={<ConnectAccount />} />
@@ -117,7 +122,7 @@ const App = () => {
         <Route path="/proccessing" element={<ProcessingScreen />} />
         <Route path="/success" element={<Success />} />
       </Routes>
-    </>
+    </div>
   );
 };
 
