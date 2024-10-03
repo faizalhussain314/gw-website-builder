@@ -2,6 +2,8 @@ import React from "react";
 import CloseIcon from "@mui/icons-material/Close";
 import { Link } from "react-router-dom";
 import partyImoji from "../../assets/partyemoji.svg";
+import { useSelector } from "react-redux";
+import { RootState } from "../../store/store";
 
 interface PopupProps {
   businessName: string;
@@ -16,20 +18,26 @@ const Popup: React.FC<PopupProps> = ({
   onClose,
   secondDescription,
 }) => {
+  const contactform = useSelector(
+    (state: RootState) => state.userData.contactform
+  );
+
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-gray-500 backdrop-blur-xl bg-opacity-50 z-50">
-      <div className="relative bg-white shadow-lg p-8 sm:p-8 w-full max-w-[600px] pb-6 z-10 rounded-[10px] max-h-[710px] overflow-y-auto">
-        <h2 className="text-2xl font-semibold inline-flex items-center w-full gap-2.5 mb-3">
-          Congratulations, you’re almost there!
-          <img src={partyImoji} />
-        </h2>
+      <div className="relative bg-white shadow-lg p-8 sm:p-8 w-full max-w-[600px] pb-6 z-10 rounded-[10px] max-h-[740px] overflow-y-auto">
+        <div className=" flex items-start justify-between">
+          <h2 className="text-2xl font-semibold inline-flex items-center w-full gap-2.5 mb-3">
+            Congratulations, you’re almost there!
+            <img src={partyImoji} />
+          </h2>
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 text-gray-600 hover:text-gray-900"
+          >
+            <CloseIcon fontSize="small" />
+          </button>
+        </div>
 
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 text-gray-600 hover:text-gray-900"
-        >
-          <CloseIcon fontSize="small" />
-        </button>
         <p className="text-gray-600 mb-6">
           Before we hit the final button, let’s quickly double-check everything.
         </p>
@@ -66,8 +74,10 @@ const Popup: React.FC<PopupProps> = ({
               What do you offer/sell? or what services do you provide?
             </p>
           </div>
-          <div className="bg-white border border-gray-300 rounded-lg px-4 py-2.5 ms-10 h-[80px] w-full max-w-[486px] overflow-y-auto">
-            <p className="text-gray-500 overflow-y-auto">{description}</p>
+          <div className="pb-2.5 w-full max-w-full overflow-y-auto">
+            <p className="text-gray-500 w-full ps-10 line-clamp-3">
+              {description}
+            </p>
           </div>
         </div>
         <div className="flex flex-col items-start gap-3 mt-4">
@@ -97,13 +107,22 @@ const Popup: React.FC<PopupProps> = ({
               business? what action visitor needs to take work with you?
             </p>
           </div>
-          <div className="bg-white border border-gray-300 rounded-lg px-4 py-2.5 ms-10 h-[80px] overflow-y-auto w-full max-w-[486px]">
-            <p className="text-gray-500 overflow-y-auto">{secondDescription}</p>
+
+          <div className="pb-2.5 w-full max-w-full overflow-y-auto">
+            <p className="text-gray-500 w-full ps-10 line-clamp-3">
+              {secondDescription}
+            </p>
           </div>
         </div>
         <div className="mt-6">
-          <p className="font-semibold text-base">Contact Details:</p>
-          <p className="text-base text-[#4D586B]">{businessName}</p>
+          <p className="font-semibold text-base mb-2">Contact Details:</p>
+          <ul className="text-base text-[#4D586B] list-none">
+            <li className="text-[#4D586B]">Email : {contactform.email}</li>
+            <li className="text-[#4D586B]">Address : {contactform.address}</li>
+            <li className="text-[#4D586B]">
+              Phone Number : {contactform.phoneNumber}
+            </li>
+          </ul>
         </div>
         <div className="flex w-full items-center flex-row-reverse gap-x-4 mt-6">
           <Link

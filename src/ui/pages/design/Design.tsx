@@ -302,11 +302,11 @@ function Design() {
             {showError && (
               <div className=" text-center">No templates found</div>
             )}
-            <div className="grid items-start justify-center grid-cols-3 gap-6 lg:grid-cols-2 xl:grid-cols-3 auto-rows-auto p-1">
+            <div className="flex flex-wrap items-start justify-start gap-x-6 gap-y-8 p-1">
               {templateList.map((list, index: number) => (
                 <div
                   key={index}
-                  className={` w-full rounded-t-xl rounded-b-lg ${
+                  className={`w-[310px] h-auto rounded-t-xl rounded-b-lg ${
                     activeIndex === list?.id
                       ? "ring ring-palatinate-blue-600 rounded-lg "
                       : ""
@@ -315,24 +315,22 @@ function Design() {
                   onMouseEnter={handleMouseEnter}
                   onMouseLeave={handleMouseLeave}
                 >
-                  <div className={` w-full rounded-t-xl rounded-b-lg  `}>
+                  <div className={`w-full rounded-t-xl`}>
                     {/* Iframe Content */}
-                    <div className="w-full aspect-[164/179] relative overflow-hidden bg-neutral-300 rounded-xl">
+                    <div className="w-full aspect-[164/179] relative overflow-hidden bg-neutral-300 rounded-t-xl">
                       <div className="w-full max-h-[calc(19_/_15_*_100%)] pt-[calc(19_/_15_*_100%)] select-none relative shadow-md overflow-hidden origin-top-left bg-neutral-300">
                         <iframe
                           id="myIframe"
                           title={`Template ${index + 1}`}
-                          className={`scale-[0.33] w-[1200px] h-[1600px] absolute left-0 top-0 origin-top-left select-none`}
+                          className={`scale-[0.23] w-[1360px] h-[1480px] absolute left-0 top-0 origin-top-left select-none`}
                           src={list?.pages?.[0]?.iframe_url} // Use the iframe URL from the first page in the template
                         ></iframe>
                       </div>
 
                       {/* Premium Label */}
-                      <div className="absolute top-3 right-3 text-xs leading-[1em] pt-1 pb-[4px] zw-xs-semibold text-white flex items-center justify-center rounded-3xl bg-[#F90] px-[12px] pointer-events-none">
-                        <div className="flex items-center justify-center gap-1 font-sm">
-                          Premium
-                        </div>
-                      </div>
+                      {/* <div className="absolute top-3 right-3 text-[10px] font-medium py-0.5 text-white flex items-center justify-center rounded-3xl bg-[#FE8E01] px-2.5 pointer-events-none">
+                        Premium
+                      </div> */}
 
                       {/* Overlay */}
                       <div className="absolute inset-0 w-full h-full bg-transparent cursor-pointer"></div>
@@ -344,27 +342,25 @@ function Design() {
                         <div className="capitalize zw-base-semibold text-app-heading">
                           Option {index + 1}
                         </div>
-                        <div className="flex gap-4">
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            strokeWidth="1.5"
-                            stroke="currentColor"
-                            aria-hidden="true"
-                            className="w-6 h-6 cursor-pointer text-app-active-icon"
-                            id="headlessui-menu-button-:rc:"
-                            aria-haspopup="menu"
-                            aria-expanded="false"
-                            data-headlessui-state=""
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"
-                            ></path>
-                          </svg>
-                        </div>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          strokeWidth="1.5"
+                          stroke="currentColor"
+                          aria-hidden="true"
+                          className="w-6 h-6 cursor-pointer text-app-active-icon"
+                          id="headlessui-menu-button-:rc:"
+                          aria-haspopup="menu"
+                          aria-expanded="false"
+                          data-headlessui-state=""
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"
+                          ></path>
+                        </svg>
                       </div>
                     </div>
                   </div>

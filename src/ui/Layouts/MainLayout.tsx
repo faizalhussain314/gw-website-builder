@@ -14,7 +14,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       </div>
       {/* Main Container */}
       <div className="flex flex-col flex-1 max-w-full max-h-screen">
-        <Header active={false} />
+        {/* <Header active={false} /> */}
 
         <main className="flex flex-col flex-1 overflow-y-auto">
           {children}
