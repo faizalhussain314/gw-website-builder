@@ -174,11 +174,12 @@ function Description() {
         <div className="h-full overflow-x-hidden overflow-y-auto px-10 pt-10">
           <div className="flex flex-col">
             <h1 className="text-txt-black-600 font-semibold text-3xl font-[inter]">
-              What is {businessName}? Tell us more about the {businessName}.
+              What is {businessName} {category}? Tell us more about the{" "}
+              {category}.
             </h1>
             <span className="mt-2.5 text-lg leading-6 text-txt-secondary-400 max-w-[617px]">
               Please be as descriptive as you can. Share details such as a brief
-              about the {businessName}, specialty, menu, etc.
+              about the {category}, specialty, menu, etc.
             </span>
           </div>
 
