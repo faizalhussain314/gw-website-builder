@@ -4,7 +4,7 @@ import path from "path";
 
 export default defineConfig({
   plugins: [react()],
-  base: "/wp-content/plugins/gw-website-builder-main/dist/",
+  base: "/wp-content/plugins/gw-website-builder-main/API/dist/",
   define: {
     "process.env": {},
   },

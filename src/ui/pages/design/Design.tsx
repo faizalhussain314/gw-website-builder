@@ -10,14 +10,19 @@ import axios from "axios";
 import { saveSelectedTemplate } from "../../../infrastructure/api/wordpress-api/desgin/saveSelectedtemplate";
 import useDomainEndpoint from "../../../hooks/useDomainEndpoint";
 import { useDebounce } from "use-debounce";
-import { setCategory } from "../../../Slice/activeStepSlice";
+import {
+  setCategory,
+  setTemplateId,
+  setTemplatename,
+  setTemplateList,
+} from "../../../Slice/activeStepSlice";
 
 const API_URL = import.meta.env.VITE_API_BACKEND_URL;
 
 function Design() {
   const { activeIndex, handleBoxClick } = useTemplateList();
 
-  const [templateList, setTemplateList] = useState([]);
+  const [templateList, settemplateList] = useState([]);
   const businessName = useSelector(
     (state: RootState) => state.userData.businessName
   );
@@ -29,6 +34,9 @@ function Design() {
   );
   const [fetchedTemplateId, setFetchedTemplateId] = useState<number | null>(
     null
+  );
+  const activeTemplate = useSelector(
+    (state: RootState) => state.userData.templateList
   );
 
   const [selectedTemplateId, setSelectedTemplateId] = useState<number | null>(
@@ -42,7 +50,7 @@ function Design() {
   const templateIdFromRedux = useSelector(
     (state: RootState) => state.userData.templateid
   );
-
+  const [showValidationError, setshowValidationError] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
   const [showError, setshowError] = useState(false);
   const dispatch = useDispatch();
@@ -63,87 +71,81 @@ function Design() {
       const response = await axios.get(`${API_URL}getTemplates`);
       const templates = response.data?.data || []; // Extract data
       setshowError(false);
-      setTemplateList(templates); // Store template list in state
+      settemplateList(templates); // Store template list in state
     } catch (error) {
       console.error("Error fetching templates:", error);
     }
   };
   // API call to fetch templates based on category (debounced)
-  useLayoutEffect(() => {
-    if (debouncedValue.length <= 0) {
-      fetchTemplateList();
-      return;
-    }
-    const fetchTemplates = async () => {
-      let url: string = "";
-      try {
-        if (category.length == 0) {
-          url = await axios.get(
-            `https://dev.gravitywrite.com/api/getTemplates`
-          );
-        } else {
-          url = `https://dev.gravitywrite.com/api/getTemplates?site_category=${debouncedValue}`;
-        }
-        const response = await axios.get(url);
-        // dispatch(setTemplateList(response?.data)); // Store templates in Redux
+  // useLayoutEffect(() => {
+  //   if (debouncedValue.length <= 0) {
+  //     fetchTemplateList();
+  //     return;
+  //   }
+  //   const fetchTemplates = async () => {
+  //     let url: string = "";
+  //     try {
+  //       if (category.length == 0) {
+  //         url = await axios.get(
+  //           `https://dev.gravitywrite.com/api/getTemplates`
+  //         );
+  //       } else {
+  //         url = `https://dev.gravitywrite.com/api/getTemplates?site_category=${debouncedValue}`;
+  //       }
+  //       const response = await axios.get(url);
+  //       // dispatch(setTemplateList(response?.data)); // Store templates in Redux
 
-        if (response.data.data.length === 0) {
-          setshowError(true);
-          setTemplateList(response.data.data);
+  //       if (response.data.data.length === 0) {
+  //         setshowError(true);
+  //         settemplateList(response.data.data);
 
-          return;
-        }
-        if (response.data.data.length >= 0) {
-          setshowError(false);
-          setTemplateList(response.data.data);
-        }
+  //         return;
+  //       }
+  //       if (response.data.data.length >= 0) {
+  //         setshowError(false);
+  //         settemplateList(response.data.data);
+  //       }
 
-        setTemplateList(response.data.data);
+  //       settemplateList(response.data.data);
 
-        console.log("response data", response.data.data);
-        dispatch(setCategory(debouncedValue)); // Update category in Redux
-      } catch (error) {
-        console.error("Error fetching templates:", error);
-        // setError(true);
-      }
-    };
-    fetchTemplates();
-    // }
-  }, [debouncedValue, dispatch]);
+  //       console.log("response data", response.data.data);
+  //       dispatch(setCategory(debouncedValue)); // Update category in Redux
+  //     } catch (error) {
+  //       console.error("Error fetching templates:", error);
+  //       // setError(true);
+  //     }
+  //   };
+  //   fetchTemplates();
+  //   // }
+  // }, [debouncedValue, dispatch]);
 
   const fetchSelectedTemplate = async () => {
     if (!hasFetched) {
       try {
         const endpoint = getDomainFromEndpoint(
-          "wp-json/custom/v1/get-selected-template"
+          "wp-json/custom/v1/get-form-details"
         );
-        const response = await axios.post(endpoint, {});
-        const savedTemplate = response.data; // Assuming API returns template_id
-        // if (savedTemplate) {
+        const response = await axios.post(endpoint, {
+          fields: ["templateList"],
+        });
 
-        // setError(false);
-        setFetchedTemplateId(savedTemplate[0]?.template_id); // Store the fetched template ID
-        // handleTemplateSelection(
-        //   savedTemplate[0]?.template_id,
-        //   savedTemplate[0]
-        // );
-        handleBoxClick(
-          savedTemplate[0]?.id,
-          savedTemplate[0],
-          parseInt(savedTemplate[0]?.template_id)
-        );
+        const data = response.data;
 
-        // const templateIndex = templateList.findIndex(
-        //   (template) => template.id === savedTemplate
-        // );
-        // if (templateIndex !== -1) {
-        //   handleBoxClick(
-        //     templateIndex,
-        //     templateList[templateIndex],
-        //     savedTemplate
-        //   );
-        // }
-        // }
+        console.log("API response data:", data);
+
+        // Parse the templateList and set the selected template ID
+        const parsedTemplate = JSON.parse(data.templateList);
+        if (parsedTemplate.name) {
+          setshowValidationError(true);
+        }
+        setSelectedTemplateId(parsedTemplate.id); // Save the ID for highlighting
+
+        dispatch(setTemplateId(parsedTemplate.id)); // Update Redux state
+        dispatch(setTemplatename(parsedTemplate.name)); // Update Redux state
+        dispatch(setTemplateList(parsedTemplate)); // Update Redux state
+
+        // Highlight selected template
+        handleBoxClick(parsedTemplate.id, parsedTemplate, parsedTemplate.id);
       } catch (error) {
         console.error("Error fetching selected template:", error);
       }
@@ -218,13 +220,14 @@ function Design() {
 
   const handleTemplateSelection = async (index: number, template: any) => {
     setShowPopup(false); // Close any popups
+    setshowValidationError(true);
 
     // Handle template selection logic
     handleBoxClick(index, template, template.id);
 
     try {
       const endpoint = getDomainFromEndpoint(
-        "wp-json/custom/v1/save-selected-template"
+        "wp-json/custom/v1/update-form-details"
       );
       await saveSelectedTemplate(template, endpoint);
       console.log("Template saved successfully to the backend.", template);
@@ -243,7 +246,14 @@ function Design() {
   //   setSelectedTemplate(template); // Store the selected template in state
   //   console.log("Selected Template:", template); // You can use this state later
   // };
-
+  const handleContinue = () => {
+    if (!activeTemplate?.name) {
+      setshowValidationError(true);
+    } else {
+      setshowValidationError(false);
+      setShowPopup(true);
+    }
+  };
   return (
     <MainLayout>
       {showPopup && (
@@ -379,8 +389,12 @@ function Design() {
               </button>
             </Link>
             <button
-              className=" tertiary px-[30px] py-[10px] text-base text-white sm:mt-2 rounded-md w-[150px]"
-              onClick={() => setShowPopup(true)}
+              className={` tertiary px-[30px] py-[10px] text-base text-white sm:mt-2 rounded-md w-[150px] ${
+                !showValidationError && "opacity-50"
+              }`}
+              // onClick={() => setShowPopup(true)}
+              onClick={handleContinue}
+              disabled={!showValidationError}
             >
               <div className="flex items-center justify-center font-medium gap-x-2">
                 <div>Continue</div>

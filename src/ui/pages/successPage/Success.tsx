@@ -1,7 +1,7 @@
 import React from "react";
 import MainLayout from "../../Layouts/MainLayout";
 import useWindowSize from "react-use/lib/useWindowSize";
-import ConfettiExplosion from "react-confetti-explosion";
+// import ConfettiExplosion from "react-confetti-explosion";
 import { useState, useEffect } from "react";
 
 function Success() {
@@ -28,7 +28,7 @@ function Success() {
   return (
     <MainLayout>
       <div className="bg-[#F9FAFB] bg-opacity-90 flex items-center justify-center h-[90vh] relative">
-        {isConfettiActive && (
+        {/* {isConfettiActive && (
           <ConfettiExplosion
             force={0.8}
             duration={3000}
@@ -36,7 +36,7 @@ function Success() {
             width={1200}
             className="absolute translate-x-1/2 translate-y-1/2 top-0 left-1/2"
           ></ConfettiExplosion>
-        )}
+        )} */}
         <div className="bg-white rounded-[10px] shadow-lg text-center p-10 max-w-[560px] mx-auto z-50">
           <div className="flex justify-center items-center mb-5">
             <span className="text-3xl">🎉</span>

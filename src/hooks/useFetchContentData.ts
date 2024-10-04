@@ -21,6 +21,7 @@ const useFetchContentData = () => {
 
   const fetchContent = useCallback(async () => {
     const url = getDomainFromEndpoint("wp-json/custom/v1/get-form-details");
+
     try {
       const response = await fetch(url, {
         method: "POST",
@@ -47,9 +48,21 @@ const useFetchContentData = () => {
         }),
       });
 
+      // Log full response for debugging
+      console.log("Full API Response:", response);
+
+      // Check if response is ok (status 200)
+      if (!response.ok) {
+        throw new Error(`API returned status: ${response.status}`);
+      }
+
       const data = await response.json();
+
+      // Log parsed data
+      console.log("Parsed API Data:", data);
+
+      // Handle the data properly
       if (data) {
-        const colors = JSON.parse(data.color);
         dispatch(setBusinessName(data.businessName || ""));
         dispatch(setDescriptionOne(data.description1 || ""));
         dispatch(setDescriptionTwo(data.description2 || ""));
@@ -59,20 +72,31 @@ const useFetchContentData = () => {
         dispatch(setLogo(data.logo || ""));
         dispatch(setContent(data.content || []));
 
-        if (data.color) {
-          dispatch(
-            setColor(
-              colors || { primary: JSON.parse(colors.primary), secondary: "" }
-            )
-          );
+        if (data.templateList) {
+          try {
+            const parsedTemplateList = JSON.parse(data.templateList);
+            dispatch(setTemplateList(parsedTemplateList || []));
+          } catch (error) {
+            console.error("Error parsing templateList:", error);
+          }
         }
+
+        if (data.color) {
+          try {
+            const parsedColor = JSON.parse(data.color);
+            dispatch(setColor(parsedColor || { primary: "", secondary: "" }));
+          } catch (error) {
+            console.error("Error parsing color:", error);
+          }
+        }
+
         dispatch(setFont(data.font || ""));
-        dispatch(setTemplateList(data.templateList || []));
       }
-      console.log("colors: ", JSON.parse(data.color));
-      return data;
+
+      return data; // Return the data for further use
     } catch (error) {
       console.error("Error fetching content:", error);
+      return null; // Return null on error
     }
   }, [dispatch, getDomainFromEndpoint]);
 

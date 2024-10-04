@@ -8,20 +8,20 @@ export const saveSelectedTemplate = async (
   //   getDomainFromEndpoint: GetDomainFromEndpointType
   endpoint: string
 ) => {
-  //   const endpoint = getDomainFromEndpoint(
-  //     "/wp-json/custom/v1/update-form-details"
-  //   );
+  // const endpoint = getDomainFromEndpoint(
+  //   "/wp-json/custom/v1/update-form-details"
+  // );
 
-  const data = {
-    template_id: template.id,
-    template_name: template.name,
-    template_json_data: template.pages,
+  const formData = {
+    templateList: template,
+    templateid: template.id,
+    templatename: template.name,
   };
   try {
     const response = await fetch(endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
+      body: JSON.stringify(formData),
     });
 
     if (!response.ok) {

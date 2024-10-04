@@ -505,6 +505,8 @@ const FinalPreview: React.FC = () => {
       );
     }
 
+    console.log("color", Color.primary, Color.secondary);
+
     if (Color.primary || Color.secondary) {
       iframe.contentWindow.postMessage(
         {

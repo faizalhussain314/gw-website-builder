@@ -34,6 +34,7 @@ const ProcessingScreen: React.FC = () => {
     (state: RootState) => state.userData.templateid
   );
   const selectedPages = useSelector((state: RootState) => state.userData.pages);
+  const [allPageDetails, setallPageDetails] = useState();
 
   const fetchTemplates = async () => {
     try {
@@ -76,7 +77,7 @@ const ProcessingScreen: React.FC = () => {
     },
     {
       id: 12,
-      title: "About",
+      title: "About Us",
       template_id: 2,
       xml_url:
         "https://plugin.mywpsite.org/tourstemplate1/tours-template-about-page.xml",
@@ -105,19 +106,22 @@ const ProcessingScreen: React.FC = () => {
   ];
 
   const processAPIs = async () => {
-    // Prevent duplicate processing
     if (isProcessing) return;
-    setIsProcessing(true); // Set flag before starting API calls
+    setIsProcessing(true);
 
     const templateData = await fetchTemplates();
-    if (!templateData) return;
+    if (!templateData) {
+      console.error("Template has no data");
+      return;
+    } else {
+      setallPageDetails(templateData.data); // Store page details
+      console.log("Template data", templateData.data.pages);
+    }
 
-    const { plugins, template_import_urls } = templateData.data;
+    const { plugins, template_import_urls, pages } = templateData.data;
 
-    // Save the pages to Redux state
     dispatch(setPages(selectedPages));
 
-    // Create the list of all the API steps
     const apiSteps = [
       {
         name: "Plugins",
@@ -131,7 +135,7 @@ const ProcessingScreen: React.FC = () => {
         body: {
           fileurl: template_import_urls.find(
             (url: any) => url.name === "Forms Data"
-          ).url,
+          )?.url,
         },
       },
       {
@@ -140,7 +144,7 @@ const ProcessingScreen: React.FC = () => {
         body: {
           fileurl: template_import_urls.find(
             (url: any) => url.name === "Elementor Header Footer Data"
-          ).url,
+          )?.url,
         },
       },
       {
@@ -149,133 +153,161 @@ const ProcessingScreen: React.FC = () => {
         body: {
           fileurl: template_import_urls.find(
             (url: any) => url.name === "Posts Data"
-          ).url,
+          )?.url,
         },
       },
-      {
-        name: "Elementor Kit",
-        endpoint: "/wp-json/custom/v1/install-elementor-kit",
-        body: {
-          fileurl: template_import_urls.find(
-            (url: any) => url.name === "Templates Data"
-          ).url,
-        },
-      },
-      {
-        name: "Elementor Settings",
-        endpoint: "/wp-json/custom/v1/install-elementor-settings",
-        body: {
-          fileurl: template_import_urls.find(
-            (url: any) => url.name === "Site Settings Data"
-          ).url,
-        },
-      },
-      {
-        name: "Menu And Css",
-        endpoint: "/wp-json/custom/v1/import-menus-css",
-        body: {
-          fileurl: template_import_urls.find(
-            (url: any) => url.name === "Menu Css Data"
-          ).url,
-        },
-      },
-      // Only call the "Import Site Logo" API if the logo is not empty
-      ...(logo
-        ? [
-            {
-              name: "Import Site Logo",
-              endpoint: "/wp-json/custom/v1/import-sitelogo",
-              body: { fileurl: logo },
-            },
-          ]
-        : []),
     ];
 
-    // Calculate total steps dynamically
     const selectedPagesToInstall = selectedPages.filter(
       (page: any) => page.selected
     );
-    const stepsCount = apiSteps.length + selectedPagesToInstall.length * 2 + 1; // +1 for CSS regeneration
-    setTotalSteps(stepsCount); // Set the total steps dynamically
 
-    // Execute other steps first
+    const stepsCount = apiSteps.length + selectedPagesToInstall.length * 2 + 4; // Including additional steps
+    setTotalSteps(stepsCount);
+
+    // Execute API steps for plugins, theme, and forms
     for (let i = 0; i < apiSteps.length; i++) {
       setStatus(apiSteps[i].name);
       try {
         await postData(apiSteps[i].endpoint, apiSteps[i].body);
       } catch (error) {
-        // Log the error but continue to the next API
         console.error(`Error on step: ${apiSteps[i].name}`, error);
         continue;
       }
-      setProgress(((i + 1) / stepsCount) * 100); // Update progress
+      setProgress(((i + 1) / stepsCount) * 100);
     }
 
-    // Install all selected pages
+    // Install pages
     for (let i = 0; i < selectedPagesToInstall.length; i++) {
       const page = selectedPagesToInstall[i];
+      setStatus(`${page.name} page`);
 
-      setStatus(`Installing page: ${page.name}`);
-
-      // Find the XML URL, fallback to `pagesapi` if not found in `selectedPages`
-      const fileurl =
-        page[0]?.xml_url ||
-        pagesapi.find((p) => p.title === page.name)?.xml_url ||
-        "";
+      let fileurl = "";
+      if (pages) {
+        // Get the corresponding xml_url for the page
+        fileurl = pages.find((p: any) => p.title === page.name)?.xml_url || "";
+        console.log(fileurl, "this is file url");
+      }
 
       if (!fileurl) {
         console.error(`XML URL not found for page: ${page.name}`);
-        console.log("url file was not found");
-        continue; // Skip this page if no valid XML URL
+        continue;
       }
 
       try {
-        // Call the install-pages API for each page
         await postData("/wp-json/custom/v1/install-pages", { fileurl });
       } catch (error) {
         console.error(`Error installing page: ${page.name}`, error);
-        continue; // Continue with the next page if one fails
+        continue;
       }
 
-      setProgress(((apiSteps.length + i + 1) / stepsCount) * 100); // Update progress
+      setProgress(((apiSteps.length + i + 1) / stepsCount) * 100);
+    }
+    setStatus("Importing Site Logo");
+    try {
+      await postData("/wp-json/custom/v1/import-sitelogo", { fileurl: logo });
+    } catch (error) {
+      console.error("Error importing site logo", error);
+    }
+    // Install additional components such as Elementor kits and settings
+    try {
+      await postData("/wp-json/custom/v1/install-elementor-kit", {
+        fileurl: template_import_urls.find(
+          (url: any) => url.name === "Templates Data"
+        )?.url,
+      });
+    } catch (error) {
+      console.error("Error while importing Elementor kit", error);
     }
 
-    // Update content for each page after all pages are installed
+    try {
+      await postData("/wp-json/custom/v1/install-elementor-settings", {
+        fileurl: template_import_urls.find(
+          (url: any) => url.name === "Site Settings Data"
+        )?.url,
+      });
+    } catch (error) {
+      console.error("Error while importing Elementor settings", error);
+    }
+
+    // Importing menus and CSS
+    setStatus("Importing Menus and CSS");
+    try {
+      await postData("/wp-json/custom/v1/import-menus-css", {
+        fileurl: template_import_urls.find(
+          (url: any) => url.name === "Menu Css Data"
+        )?.url,
+      });
+    } catch (error) {
+      console.error("Error importing menus and CSS", error);
+    }
+
+    // Import site logo
+
+    // Update content for each selected page
     for (let i = 0; i < selectedPagesToInstall.length; i++) {
       const page = selectedPagesToInstall[i];
-
       setStatus(`Updating content for page: ${page.name}`);
 
       try {
-        // Call the update-content API
         await postData("/wp-json/custom/v1/update-content", {
-          page_name: page.name, // Send the page name as page_title
+          page_name: page.name,
         });
       } catch (error) {
         console.error(`Error updating content for page: ${page.name}`, error);
-        continue; // Continue with the next page if one fails
+        continue;
       }
 
       setProgress(
         ((apiSteps.length + selectedPagesToInstall.length + i + 1) /
           stepsCount) *
           100
-      ); // Update progress
+      );
     }
 
-    // Call the regenerate-global-css API after all pages and content are done
+    // Applying color, font, and logo changes
+    setStatus("Applying color, font, and logo changes");
+    try {
+      await postData("/wp-json/custom/v1/update-style-changes", {});
+    } catch (error) {
+      console.error("Error applying style changes", error);
+    }
+
+    // Regenerating Global CSS
     setStatus("Regenerating Global CSS");
     try {
-      await postData("/wp-json/custom/v1/regenerate-global-css", {}); // Hit the API with an empty body
+      await postData("/wp-json/custom/v1/regenerate-global-css", {});
     } catch (error) {
       console.error("Error regenerating global CSS", error);
     }
 
-    setProgress(100); // Set progress to 100% after all steps
+    // Emptying tables
+    setStatus("Emptying tables");
+    try {
+      await postData("/wp-json/custom/v1/empty-tables", {});
+    } catch (error) {
+      console.error("Error emptying tables", error);
+    }
 
+    setProgress(100);
     setLoading(false);
-    setIsProcessing(false); // Reset flag after processing is done
+    setIsProcessing(false);
   };
+
+  // useEffect(() => {
+  //   if (!isProcessing) {
+  //     processAPIs(); // Execute the API process on initial render
+  //   }
+  // }, []);
+
+  // useEffect(() => {
+  //   if (progress === 100) {
+  //     const timeout = setTimeout(() => {
+  //       navigate("/success");
+  //     }, 3000);
+  //     return () => clearTimeout(timeout);
+  //   }
+  // }, [progress, navigate]);
 
   useEffect(() => {
     if (!isProcessing) {
@@ -328,7 +360,7 @@ const ProcessingScreen: React.FC = () => {
             <h3 className="text-lg tracking-tight font-semibold">
               We are building your website...
             </h3>
-            <p className="text-base text-[#88898A] mt-2">
+            <p className="!text-base text-[#88898A] mt-2">
               {progress === 100
                 ? "Your website is ready!"
                 : `Please wait while we set up your site. We are installing ${status}`}
