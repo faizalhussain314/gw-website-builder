@@ -13,6 +13,10 @@ function Contact() {
   const ContactFormRedux = useSelector(
     (state: RootState) => state.userData.contactform
   );
+   const businessName = useSelector(
+    (state: RootState) => state.userData.businessName
+  );
+  const category = useSelector((state: RootState) => state.userData.category);
   const fetchCustomContent = useFetchCustomContentData();
 
   const [formData, setFormData] = useState({
@@ -83,7 +87,7 @@ function Contact() {
     <MainLayout>
       <div className="bg-[#F9FCFF] w-full p-10">
         <h1 className="text-txt-black-600 font-semibold text-3xl font-[inter] mb-2.5">
-          How can people get in touch with abc restaurant
+          How can people get in touch with {businessName} {category}
         </h1>
         <span className="text-lg text-txt-secondary-500 max-w-[720px]">
           People provide the contact information details below. These will be

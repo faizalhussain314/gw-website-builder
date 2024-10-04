@@ -61,41 +61,45 @@ function Name() {
 
   return (
     <MainLayout>
-      <div className="p-10 w-full h-full bg-[#F9FCFF]">
-        <h1 className="text-txt-black-600 font-semibold tracking-[-0.9px] text-3xl mb-2.5">
-          What is {category} name? Tell us more about the {category}.
-        </h1>
-        <span className="text-lg tracking-[-0.54px] font-normal text-txt-secondary-500">
-          Please be as descriptive as you can. Share details such as a brief
-          about the {category}, specialty, menu, etc.
-        </span>
-        <form onSubmit={(e) => e.preventDefault()}>
-          <input
-            type="text"
-            value={name}
-            onChange={handleChange}
-            className={`bg-white px-4 py-2.5 border ${
-              error ? "border-red-500" : "border-[rgba(205, 212, 219, 1)]"
-            } rounded-md w-full mt-9 focus:border-palatinate-blue-500 active:border-palatinate-blue-500 active:outline-palatinate-blue-500 focus:outline-palatinate-blue-500 placeholder:text-[#1e2022] placeholder:font-normal`}
-          />
-          {error && <div className="mt-2 text-red-600">{error}</div>}
-          <div className="flex items-center gap-4 mt-6">
-            <button
-              onClick={handlePrevious}
-              className="previous-btn flex px-[30px] font-medium py-[15px] text-base sm:text-sm text-white rounded-lg gap-2.5 justify-center"
-            >
-              <ArrowBackIcon fontSize="small" />
-              Previous
-            </button>
-            <button
-              type="button"
-              onClick={handleClick}
-              className="tertiary px-[35px] font-medium py-[15px] text-base sm:text-sm text-white rounded-lg "
-            >
-              Continue
-            </button>
+      <div className="bg-[#F9FCFF] flex font-['inter']">
+        <div className="p-[40px] w-full">
+          <div className="flex flex-col">
+            <h1 className="text-txt-black-600 font-semibold leading-[38px] tracking-[-0.9px] text-3xl mb-2.5">
+              What is name of your {category} website?
+            </h1>
+            <span className="text-lg tracking-[-0.54px] font-normal leading-[26px] text-txt-secondary-500">
+              Please be as descriptive as you can. Share details such as a brief
+              about the {category}, specialty, menu, etc.
+            </span>
+            <form onSubmit={(e) => e.preventDefault()}>
+              <input
+                type="text"
+                value={name}
+                onChange={handleChange}
+                className={`bg-white px-[15px] py-[10px] border ${
+                  error ? "border-red-500" : "border-[rgba(205, 212, 219, 1)]"
+                } rounded-md w-full mt-[35px]  focus:border-palatinate-blue-500 active:border-palatinate-blue-500 active:outline-palatinate-blue-500 focus:outline-palatinate-blue-500 placeholder:text-[#1e2022] placeholder:font-normal`}
+              />
+              {error && <div className="mt-2 text-red-600">{error}</div>}
+              <div className="flex items-center gap-4 mt-6">
+                <button
+                  onClick={handlePrevious}
+                  className="previous-btn flex px-[30px] font-medium py-[15px] text-base sm:text-sm text-white sm:mt-2  rounded-lg  gap-2.5 justify-center"
+                >
+                  <ArrowBackIcon fontSize="small" />
+                  Previous
+                </button>
+                <button
+                  type="button"
+                  onClick={handleClick}
+                  className="tertiary px-[35px] font-medium py-[15px] text-base sm:text-sm text-white  sm:mt-2 rounded-lg "
+                >
+                  Continue
+                </button>
+              </div>
+            </form>
           </div>
-        </form>
+        </div>
       </div>
     </MainLayout>
   );
