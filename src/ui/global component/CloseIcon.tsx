@@ -3,7 +3,7 @@ function CloseIcon() {
   return (
     <div
       onClick={handleClose}
-      className="p-2 cursor-pointer text-black hover:text-palatinate-blue-600"
+      className="p-2 cursor-pointer text-black hover:text-palatinate-blue-600 bg-gray-100 rounded-md"
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"
