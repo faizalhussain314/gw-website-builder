@@ -120,18 +120,23 @@ If you wanna remove scrollbar please use this class called "no-scrollbar"
 }
 
 .MuiStepLabel-iconContainer>.MuiSvgIcon-root {
-  color: white !important;
   border: rgba(136, 137, 138, 1) 1px solid;
   border-radius: 50%;
 }
 
-.Mui-disabled .css-vnkopk-MuiStepLabel-iconContainer>.MuiSvgIcon-root>text {
+.css-1u4zpwo-MuiSvgIcon-root-MuiStepIcon-root {
+  color: white !important;
+}
+
+.Mui-disabled .MuiSvgIcon-root>.MuiStepIcon-text {
   fill: rgba(136, 137, 138, 1) !important;
 }
 
 .Mui-active.MuiStepIcon-root>.MuiStepIcon-text {
   fill: rgba(46, 66, 255, 1) !important;
 }
+
+/* css-10psl7k */
 
 .MuiStepConnector-line {
   min-height: 24px !important;
