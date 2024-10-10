@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Routes, Route, useNavigate } from "react-router-dom";
+import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import Welcome from "./ui/pages/welcome/Welcome.tsx";
 import ConnectAccount from "./ui/pages/connectAccount/ConnectAccount.tsx";
 import Test from "./test/Test.tsx";
@@ -18,79 +18,70 @@ import ContinuePopup from "./ui/component/ContinuePopup.tsx";
 import useFetchContentData from "./hooks/useFetchContentData";
 import useStoreContent from "./hooks/useStoreContent .ts";
 import { useDispatch } from "react-redux";
-import { clearUserData } from "./Slice/activeStepSlice.ts";
+import {
+  clearUserData,
+  setFormDetailsLoaded,
+} from "./Slice/activeStepSlice.ts";
 import CloseIcon from "./ui/global component/CloseIcon.tsx";
 import useDomainEndpoint from "./hooks/useDomainEndpoint.ts";
 
 const App = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const fetchContentData = useFetchContentData();
   const [showPopup, setShowPopup] = useState(false);
   const [fetchedData, setFetchedData] = useState<any>(null);
-  const [hasRedirected, setHasRedirected] = useState(false); // To prevent repeated redirects
+  const [firstLoad, setFirstLoad] = useState(false); // To handle first load scenario
   const updateContent = useStoreContent();
   const dispatch = useDispatch();
+
+  useEffect(() => {
+    console.log("path name ", location.pathname);
+    if (location.pathname == "/" && firstLoad) {
+      // Show the popup only on the /welcome route and after the first load
+      setShowPopup(true);
+      console.log("path name ", location.pathname);
+    }
+  }, [location.pathname, firstLoad]);
 
   useEffect(() => {
     const getData = async () => {
       try {
         const data = await fetchContentData();
+        dispatch(setFormDetailsLoaded(true));
         setFetchedData(data);
         console.log("data from initial API:", data);
-
-        if (data && !hasRedirected) {
-          // Redirection logic based on the response values
-          if (!data.category) {
-            navigate("/category");
-          } else if (!data.businessName) {
-            navigate("/name");
-          } else if (!data.description1 && !data.description2) {
-            navigate("/description");
-          } else if (data.description1 || data.description2) {
-            if (!data.templatename) {
-              navigate("/design");
-            } else if (data.templateList) {
-              navigate("/custom-design");
-            } else if (data.color || data.font || data.logo) {
-              navigate("/final-preview");
-            }
-          }
-          setShowPopup(true);
-          setHasRedirected(true); // Mark as redirected to prevent further redirects
-        }
+        setFirstLoad(false); // Mark as not the first load after fetching the data
       } catch (error) {
         console.error("Failed to fetch data:", error);
       }
     };
 
     getData();
-  }, [fetchContentData, navigate, hasRedirected]);
+  }, [fetchContentData]);
 
   const { getDomainFromEndpoint } = useDomainEndpoint();
 
   const handleContinue = () => {
     if (!fetchedData) return;
 
-    // if (fetchedData.category && !fetchedData.businessName) {
-    //   navigate("/name");
-    // } else if (fetchedData.description1 || fetchedData.description2) {
-    //   navigate("/description");
-    // } else if (fetchedData.templateid || fetchedData.templatename) {
-    //   navigate("/custom-design");
-    // } else if (
-    //   fetchedData.category &&
-    //   fetchedData.businessName &&
-    //   fetchedData.description1 &&
-    //   fetchedData.description2 &&
-    //   !fetchedData.templatename
-    // ) {
-    //   navigate("/design");
-    // } else if (fetchedData.content) {
-    //   navigate("/final-preview");
-    // } else {
-    //   navigate("/category");
-    // }
-    setShowPopup(false);
+    // Handle navigation based on the fetched data
+    if (!fetchedData.category) {
+      navigate("/category");
+    } else if (!fetchedData.businessName) {
+      navigate("/name");
+    } else if (!fetchedData.description1 && !fetchedData.description2) {
+      navigate("/description");
+    } else if (fetchedData.description1 || fetchedData.description2) {
+      if (!fetchedData.templatename) {
+        navigate("/design");
+      } else if (fetchedData.templateList) {
+        navigate("/custom-design");
+      } else if (fetchedData.color || fetchedData.font || fetchedData.logo) {
+        navigate("/final-preview");
+      }
+    }
+    setShowPopup(false); // Hide the popup after user clicks Continue
   };
 
   const emptyTable = async (endpoint: string, data: object) => {
@@ -111,20 +102,7 @@ const App = () => {
   };
 
   const handleCreateFromScratch = async () => {
-    // await updateContent({
-    //   businessName: "",
-    //   description1: "",
-    //   description2: "",
-    //   images: [],
-    //   templateid: 0,
-    //   templatename: "",
-    //   logo: "",
-    //   category: "",
-    //   content: [],
-    //   color: { header: "", footer: "" },
-    //   font: "",
-    //   templateList: [],
-    // });
+    // Empty user data and redirect to category page
     emptyTable("/wp-json/custom/v1/empty-tables", {});
     dispatch(clearUserData());
     navigate("/category");
@@ -133,7 +111,7 @@ const App = () => {
 
   return (
     <div className="relative">
-      {showPopup && (
+      {showPopup && location.pathname === "/welcome" && !firstLoad && (
         <ContinuePopup
           onClose={() => setShowPopup(false)}
           alertType="websiteCreation"

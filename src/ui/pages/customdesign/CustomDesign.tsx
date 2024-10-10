@@ -4,6 +4,7 @@ import { RootState } from "../../../store/store";
 import { useDispatch, useSelector } from "react-redux";
 import useDomainEndpoint from "../../../hooks/useDomainEndpoint";
 import { setTemplateList } from "../../../Slice/activeStepSlice";
+import PlumberPageSkeleton from "../../component/PlumberPageSkeleton ";
 
 function CustomDesign() {
   const [parsedTemplateList, setParsedTemplateList] = useState(null); // Local state to store parsed data
@@ -144,13 +145,17 @@ function CustomDesign() {
   };
   return (
     <CustomizeLayout>
-      <iframe
-        src={currentUrl}
-        title="website"
-        id="myIframe"
-        className="h-full w-full transition-fade shadow-lg rounded-lg"
-        onLoad={onLoadmsg}
-      />
+      {currentUrl ? (
+        <iframe
+          src={currentUrl}
+          title="website"
+          id="myIframe"
+          className="h-full w-full transition-fade shadow-lg rounded-lg"
+          onLoad={onLoadmsg}
+        />
+      ) : (
+        <PlumberPageSkeleton /> // Show loader if currentUrl is empty
+      )}
     </CustomizeLayout>
   );
 }

@@ -11,6 +11,7 @@ import {
   setFont,
   setTemplateList,
   setLogo,
+  updateContactForm,
 } from "../Slice/activeStepSlice";
 import useDomainEndpoint from "./useDomainEndpoint";
 import { useCallback, useEffect } from "react";
@@ -71,6 +72,7 @@ const useFetchContentData = () => {
         dispatch(setTemplatename(data.templatename || ""));
         dispatch(setLogo(data.logo || ""));
         dispatch(setContent(data.content || []));
+        dispatch(updateContactForm(JSON.parse(data.contactform)));
 
         if (data.templateList) {
           try {

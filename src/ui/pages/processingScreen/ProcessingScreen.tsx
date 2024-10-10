@@ -51,6 +51,7 @@ const ProcessingScreen: React.FC = () => {
 
   const postData = async (endpoint: string, data: object) => {
     const url = getDomainFromEndpoint(endpoint);
+
     if (!url) return null;
 
     try {

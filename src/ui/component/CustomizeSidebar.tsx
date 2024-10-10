@@ -11,6 +11,7 @@ import useStoreContent from "../../hooks/useStoreContent ";
 type FontCombination = {
   label: string;
   primaryFont: string;
+  secondaryFont: string;
 };
 
 type SelectedColor = {
@@ -24,20 +25,36 @@ interface ColorCombination {
 }
 
 const fontCombinations: FontCombination[] = [
-  { label: "Lora/Lato", primaryFont: "Lora" },
-  { label: "Lato/Inter", primaryFont: "Lato" },
-  { label: "Manrope/Inter", primaryFont: "Manrope" },
-  { label: "Red Hat Display/Inter", primaryFont: "Red Hat Display" },
-  { label: "Merriweather/Inter", primaryFont: "Merriweather" },
-  { label: "PT Serif/Inter", primaryFont: "PT Serif" },
-  { label: "Montserrat/Inter", primaryFont: "Montserrat" },
-  { label: "Plus Jakarta Sans/Inter", primaryFont: "Plus Jakarta Sans" },
-  { label: "Open Sans/Inter", primaryFont: "Open Sans" },
-  { label: "Work Sans/Inter", primaryFont: "Work Sans" },
-  { label: "Rubik/Inter", primaryFont: "Rubik" },
-  { label: "Mulish/Inter", primaryFont: "Mulish" },
-  { label: "Kaushan Script/Inter", primaryFont: "Kaushan Script" },
-  { label: "Figtree/Inter", primaryFont: "Figtree" },
+  { label: "Lora/Lato", primaryFont: "Lora", secondaryFont: "" },
+  { label: "Lato/Inter", primaryFont: "Lato", secondaryFont: "" },
+  { label: "Manrope/Inter", primaryFont: "Manrope", secondaryFont: "" },
+  {
+    label: "Red Hat Display/Inter",
+    primaryFont: "Red Hat Display",
+    secondaryFont: "",
+  },
+  {
+    label: "Merriweather/Inter",
+    primaryFont: "Merriweather",
+    secondaryFont: "",
+  },
+  { label: "PT Serif/Inter", primaryFont: "PT Serif", secondaryFont: "" },
+  { label: "Montserrat/Inter", primaryFont: "Montserrat", secondaryFont: "" },
+  {
+    label: "Plus Jakarta Sans/Inter",
+    primaryFont: "Plus Jakarta Sans",
+    secondaryFont: "",
+  },
+  { label: "Open Sans/Inter", primaryFont: "Open Sans", secondaryFont: "" },
+  { label: "Work Sans/Inter", primaryFont: "Work Sans", secondaryFont: "" },
+  { label: "Rubik/Inter", primaryFont: "Rubik", secondaryFont: "" },
+  { label: "Mulish/Inter", primaryFont: "Mulish", secondaryFont: "" },
+  {
+    label: "Kaushan Script/Inter",
+    primaryFont: "Kaushan Script",
+    secondaryFont: "",
+  },
+  { label: "Figtree/Inter", primaryFont: "Figtree", secondaryFont: "" },
 ];
 
 const colorCombination: ColorCombination[] = [

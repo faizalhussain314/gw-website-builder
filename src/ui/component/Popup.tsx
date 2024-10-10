@@ -21,7 +21,7 @@ const Popup: React.FC<PopupProps> = ({
   const contactform = useSelector(
     (state: RootState) => state.userData.contactform
   );
-
+  console.log("contact form data", contactform);
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-gray-500 backdrop-blur-xl bg-opacity-50 z-50">
       <div className="relative bg-white shadow-lg p-8 sm:p-8 w-full max-w-[600px] pb-6 z-10 rounded-[10px] max-h-[740px] overflow-y-auto">

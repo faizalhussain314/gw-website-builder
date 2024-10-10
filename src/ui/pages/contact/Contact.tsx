@@ -13,7 +13,7 @@ function Contact() {
   const ContactFormRedux = useSelector(
     (state: RootState) => state.userData.contactform
   );
-   const businessName = useSelector(
+  const businessName = useSelector(
     (state: RootState) => state.userData.businessName
   );
   const category = useSelector((state: RootState) => state.userData.category);
@@ -30,19 +30,7 @@ function Contact() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prevData) => ({
-      ...prevData,
-      [name]: value,
-    }));
-    console.log("value was changed");
-  };
-
-  useEffect(() => {
-    fetchCustomContent(["contactform"]);
-  }, [fetchCustomContent]);
-
+  // Populate formData from Redux when the component loads
   useEffect(() => {
     if (ContactFormRedux) {
       setFormData({
@@ -52,6 +40,18 @@ function Contact() {
       });
     }
   }, [ContactFormRedux]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prevData) => ({
+      ...prevData,
+      [name]: value,
+    }));
+  };
+
+  useEffect(() => {
+    fetchCustomContent(["contactform"]);
+  }, [fetchCustomContent]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -110,6 +110,8 @@ function Contact() {
                   id="email"
                   autoComplete="email"
                   placeholder="Enter your email"
+                  onChange={handleChange}
+                  value={formData.email}
                   className="block w-full rounded-lg bg-white px-4 py-2.5 border border-[rgba(205, 212, 219, 1)] w-[720px]  focus:border-palatinate-blue-500 active:border-palatinate-blue-500 active:outline-palatinate-blue-500 focus:outline-palatinate-blue-500"
                 />
               </div>
@@ -125,10 +127,12 @@ function Contact() {
                 <div className="absolute inset-y-0 left-0 flex items-center"></div>
                 <input
                   type="tel"
-                  name="phone-number"
+                  name="phoneNumber"
                   id="phone-number"
                   autoComplete="tel"
                   placeholder="Enter your Phone number"
+                  onChange={handleChange}
+                  value={formData.phoneNumber}
                   className="block w-full rounded-lg bg-white px-4 py-2.5 border border-[rgba(205, 212, 219, 1)] w-[720px]  focus:border-palatinate-blue-500 active:border-palatinate-blue-500 active:outline-palatinate-blue-500 focus:outline-palatinate-blue-500"
                 />
               </div>
@@ -143,12 +147,14 @@ function Contact() {
             </label>
             <div className="mt-2.5">
               <textarea
-                name="message"
-                id="message"
+                name="address"
+                id="address"
                 rows={4}
                 placeholder="Enter your address"
                 className="block w-full rounded-lg bg-white px-4 py-2.5 border border-[rgba(205, 212, 219, 1)] w-[720px] focus:border-palatinate-blue-500 active:border-palatinate-blue-500 active:outline-palatinate-blue-500 focus:outline-palatinate-blue-500"
                 defaultValue={""}
+                onChange={handleChange}
+                value={formData.address}
               />
             </div>
           </div>
@@ -161,11 +167,14 @@ function Contact() {
                 Previous
               </button>
             </Link>
-            <Link to={"/design"}>
-              <button className="tertiary px-[30px] py-[15px] text-base text-white sm:mt-2 font-medium rounded-md w-[150px] ">
-                Continue
-              </button>
-            </Link>
+            {/* <Link to={"/design"}> */}
+            <button
+              className="tertiary px-[30px] py-[15px] text-base text-white sm:mt-2 font-medium rounded-md w-[150px] "
+              onClick={handleSubmit}
+            >
+              Continue
+            </button>
+            {/* </Link> */}
           </div>
           <Link to={"/design"}>
             <div className="cursor-pointer">

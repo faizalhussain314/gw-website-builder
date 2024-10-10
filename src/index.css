@@ -60,8 +60,6 @@ If you wanna remove scrollbar please use this class called "no-scrollbar"
   /* Optional: just make scrollbar invisible */
 }
 
-
-
 .tertiary {
   background: linear-gradient(132deg, #963fff -9.83%, #2e42ff 91.64%);
   color: #fff;
@@ -78,7 +76,7 @@ If you wanna remove scrollbar please use this class called "no-scrollbar"
 }
 
 .previous-btn {
-  background: #E6F0FE;
+  background: #e6f0fe;
   color: #1e2022;
   font-weight: 500;
 }
@@ -95,13 +93,11 @@ If you wanna remove scrollbar please use this class called "no-scrollbar"
 /* .css-117w1su-MuiStepIcon-text {
   fill: rgba(46, 66, 255, 1) !important;
 } */
-.MuiStepLabel-labelContainer>.Mui-active {
+.MuiStepLabel-labelContainer > .Mui-active {
   font-size: 16px;
   font-weight: 600 !important;
   font-family: inter;
 }
-
-
 
 .MuiStepLabel-label .Mui-completed {
   color: rgba(136, 137, 138, 1);
@@ -114,12 +110,12 @@ If you wanna remove scrollbar please use this class called "no-scrollbar"
   border: rgba(2, 210, 90, 1) 1px solid;
 }
 
-.MuiStepLabel-labelContainer>.Mui-completed {
+.MuiStepLabel-labelContainer > .Mui-completed {
   color: rgba(136, 137, 138, 1) !important;
   font-size: 20px !important;
 }
 
-.MuiStepLabel-iconContainer>.MuiSvgIcon-root {
+.MuiStepLabel-iconContainer > .MuiSvgIcon-root {
   border: rgba(136, 137, 138, 1) 1px solid;
   border-radius: 50%;
 }
@@ -128,11 +124,15 @@ If you wanna remove scrollbar please use this class called "no-scrollbar"
   color: white !important;
 }
 
-.Mui-disabled .MuiSvgIcon-root>.MuiStepIcon-text {
+.Mui-disabled .MuiSvgIcon-root > .MuiStepIcon-text {
   fill: rgba(136, 137, 138, 1) !important;
 }
 
-.Mui-active.MuiStepIcon-root>.MuiStepIcon-text {
+.Mui-disabled .MuiSvgIcon-root > .MuiStepIcon-text {
+  fill: rgba(136, 137, 138, 1) !important;
+}
+
+.Mui-active.MuiStepIcon-root > .MuiStepIcon-text {
   fill: rgba(46, 66, 255, 1) !important;
 }
 
@@ -150,7 +150,7 @@ If you wanna remove scrollbar please use this class called "no-scrollbar"
   padding-left: 25px !important;
 }
 
-.MuiStepLabel-iconContainer>.MuiSvgIcon-root>text {
+.MuiStepLabel-iconContainer > .MuiSvgIcon-root > text {
   color: rgba(136, 137, 138, 1) !important;
 }
 
@@ -170,16 +170,11 @@ If you wanna remove scrollbar please use this class called "no-scrollbar"
   height: 28px;
 }
 
-
 /* .css-1j0qgw8-MuiAutocomplete-root.Mui-focused > */
-
-
 
 .transition-fade {
   transition: all 0.5s ease-in-out;
 }
-
-
 
 .loader {
   border-top-color: #3498db;

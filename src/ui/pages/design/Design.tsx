@@ -58,6 +58,7 @@ function Design() {
   const [hasFetched, setHasFetched] = useState(false);
 
   const handlePopupClose = () => {
+    setshowValidationError(true);
     setShowPopup(false);
   };
 
@@ -301,7 +302,7 @@ function Design() {
               <div className="w-full">
                 <input
                   className="w-full h-12 px-3 border rounded-md shadow-sm outline-none placeholder:zw-placeholder zw-input  border-app-border focus:border-app-secondary focus:border-palatinate-blue-500 active:border-palatinate-blue-500 focus:border-2 pl-11 false"
-                  value={text} // Show current search text
+                  value={category} // Show current search text
                   onChange={handleSearch}
                   placeholder="Search categories..."
                 />

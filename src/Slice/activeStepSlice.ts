@@ -61,6 +61,7 @@ interface UserDataState {
   templateList: templateList;
   pages: Page[]; // Added 'pages' to state
   contactform: Contactform;
+  isFormDetailsLoaded: boolean;
 }
 
 const initialState: UserDataState = {
@@ -88,6 +89,7 @@ const initialState: UserDataState = {
     address: "",
     phoneNumber: "",
   },
+  isFormDetailsLoaded: false,
 };
 
 export const activeStepSlice = createSlice({
@@ -157,6 +159,13 @@ export const activeStepSlice = createSlice({
         template_id: page.template_id,
       }));
 
+      state.pages = mappedPages.map((page) => ({
+        name: page.title,
+        status: "",
+        slug: page.slug,
+        selected: page.title === "Home" ? true : false, // Home page is always selected
+      }));
+
       // Update the state with the new template information
       state.templateList = {
         id,
@@ -170,7 +179,7 @@ export const activeStepSlice = createSlice({
         name: page.title,
         status: "", // Initially, set status as empty
         slug: page.slug,
-        selected: false, // Initially not selected
+        selected: false,
       }));
     },
 
@@ -203,13 +212,23 @@ export const activeStepSlice = createSlice({
       const page = state.pages.find(
         (page) => page.name === action.payload.name
       );
+
       if (page) {
-        page.status = action.payload.status; // Updating status
+        // Update the page's status
+        page.status = action.payload.status;
+
+        // Check if `selected` is provided
         if (action.payload.selected !== undefined) {
-          page.selected = action.payload.selected; // Update selected if provided
+          // Always force the Home page's selected value to be true
+          if (page.name === "Home") {
+            page.selected = true;
+          } else {
+            page.selected = action.payload.selected; // Use the provided selected value for other pages
+          }
         }
       }
     },
+
     setPagesFromTemplate: (state, action: PayloadAction<Page[]>) => {
       const templatePages = action.payload;
 
@@ -235,9 +254,22 @@ export const activeStepSlice = createSlice({
 
     togglePageSelection: (state, action: PayloadAction<string>) => {
       const page = state.pages.find((page) => page.name === action.payload);
+
+      if (page) {
+        // Prevent toggling for Home page
+        if (page?.name === "Home") {
+          page.selected = true; // Always keep it selected
+        } else {
+          page.selected = !page.selected; // Toggle for other pages
+        }
+      }
+
       if (page) {
         page.selected = !page.selected; // Toggling the selection of a page
       }
+    },
+    setFormDetailsLoaded: (state, action: PayloadAction<boolean>) => {
+      state.isFormDetailsLoaded = action.payload; // Update form loaded state
     },
   },
 });
@@ -262,6 +294,7 @@ export const {
   setPagesFromTemplate,
   togglePageSelection,
   updateContactForm,
+  setFormDetailsLoaded,
 } = activeStepSlice.actions;
 
 export default activeStepSlice.reducer;

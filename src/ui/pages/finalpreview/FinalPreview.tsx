@@ -44,19 +44,17 @@ const FinalPreview: React.FC = () => {
 
   // Default pages if reduxPages is empty
   const defaultPages: Page[] = [
-    { name: "Home", status: "", slug: "homepage", selected: false },
-    { name: "About Us", status: "", slug: "about", selected: false },
+    { name: "Home", status: "", slug: "home", selected: false },
+    { name: "About", status: "", slug: "about", selected: false },
     { name: "Services", status: "", slug: "service", selected: false },
     { name: "Blog", status: "", slug: "blog", selected: false },
-    { name: "Contact", status: "", slug: "contact", selected: false },
+    { name: "Contact Us", status: "", slug: "contact", selected: false },
   ];
 
   const dispatch = useDispatch();
 
   // Use reduxPages if it's not empty; otherwise, fallback to defaultPages
-  const [pages, setPages] = useState<Page[]>(
-    validReduxPages.length ? validReduxPages : defaultPages
-  );
+  const [pages, setPages] = useState<Page[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [viewMode, setViewMode] = useState("desktop");
   const [isLoading, setIsLoading] = useState(true);
@@ -96,6 +94,13 @@ const FinalPreview: React.FC = () => {
   const logoUrl = useSelector((state: RootState) => state.userData.logo);
   const templateList = useSelector(
     (state: RootState) => state.userData.templateList
+  );
+  const [loadedPages, setLoadedPages] = useState<{ [key: string]: boolean }>({
+    Blog: false,
+    Contact: false,
+  });
+  const isFormDetailsLoaded = useSelector(
+    (state: RootState) => state.userData.isFormDetailsLoaded
   );
 
   // const [pages, setPages] = useState<Page[]>([
@@ -450,6 +455,15 @@ const FinalPreview: React.FC = () => {
               );
 
               if (matchingPage) {
+                // Dispatch the Redux action to update the status and selection in the store
+                dispatch(
+                  updateReduxPage({
+                    name: page.name,
+                    status: matchingPage.page_status,
+                    selected: matchingPage.selected === "1",
+                  })
+                );
+
                 return {
                   ...page,
                   status: matchingPage.page_status,
@@ -469,11 +483,13 @@ const FinalPreview: React.FC = () => {
     } catch (error) {
       console.error("Error fetching generated page status:", error);
     }
-  }, [getDomainFromEndpoint]);
+  }, [getDomainFromEndpoint, dispatch]); // Ensure dispatch is included in the dependencies
 
   useEffect(() => {
-    fetchGeneratedPageStatus();
-  }, [fetchGeneratedPageStatus]);
+    if (isFormDetailsLoaded) {
+      fetchGeneratedPageStatus(); // Call the API only when form details are loaded
+    }
+  }, [isFormDetailsLoaded]);
 
   // useEffect(() => {
   //   fetchGeneratedPageStatus(); // Fetch the status when the component mounts
@@ -491,12 +507,20 @@ const FinalPreview: React.FC = () => {
 
     if (!iframe) return;
 
+    if (
+      selectedPage === "Blog" ||
+      selectedPage === "Contact" ||
+      selectedPage === "Contact Us"
+    ) {
+      setLoadedPages((prev) => ({
+        ...prev,
+        [selectedPage]: true,
+      }));
+    }
+
     setLoaded(true);
 
     if (fontFamily) {
-      console.log(
-        `Applying colors: Primary ${Color.primary}, Secondary ${Color.secondary}`
-      );
       console.log(`Applying font: ${fontFamily}`);
 
       iframe.contentWindow.postMessage(
@@ -507,7 +531,8 @@ const FinalPreview: React.FC = () => {
 
     console.log("color", Color.primary, Color.secondary);
 
-    if (Color.primary || Color.secondary) {
+    if (Color.primary && Color.secondary) {
+      console.log("this error not shown");
       iframe.contentWindow.postMessage(
         {
           type: "changeGlobalColors",
@@ -533,14 +558,16 @@ const FinalPreview: React.FC = () => {
         templateName,
         "5.5"
       );
-      iframe.contentWindow.postMessage(
-        {
-          type: "changeGlobalColors",
-          primaryColor: Color.primary,
-          secondaryColor: Color.secondary,
-        },
-        "*"
-      );
+      if (Color.primary && Color.secondary) {
+        iframe.contentWindow.postMessage(
+          {
+            type: "changeGlobalColors",
+            primaryColor: Color.primary,
+            secondaryColor: Color.secondary,
+          },
+          "*"
+        );
+      }
       if (!fetchresult) {
         if (selectedPage === "Home" && pages[0].status !== "Generated") {
           iframe.contentWindow.postMessage(
@@ -568,7 +595,6 @@ const FinalPreview: React.FC = () => {
         //   // updatePageStatus(selectedPage, "Generated");
         // }
       }
-      console.log("second block executed", generatedPage[selectedPage]);
     } else {
       console.log("third block executed");
       if (selectedPage && generatedPage[selectedPage] && isPageGenerated) {
@@ -772,6 +798,7 @@ const FinalPreview: React.FC = () => {
     setShowPopup(false);
     setIsLoading(true);
     setShowGwLoader(true);
+    setIsContentGenerating(true);
 
     const iframe = iframeRef.current;
     const currentPage = pages.find((page) => page.name === selectedPage);
@@ -925,6 +952,12 @@ const FinalPreview: React.FC = () => {
     storePagesInDB();
   }, [savePageEndPoint, pages]);
 
+  useEffect(() => {
+    if (validReduxPages.length > 0) {
+      setPages(validReduxPages); // Always take validReduxPages when available
+    }
+  }, [validReduxPages]);
+
   return (
     <div className="h-screen flex font-[inter] w-screen">
       <div className="w-[23%] lg:w-[30%]">
@@ -974,6 +1007,7 @@ const FinalPreview: React.FC = () => {
               handlePageUpdate={handlePageUpdate}
               setPages={setPages}
               handleGeneratePage={handleGeneratePage}
+              isLoading={isLoading}
             />
           </div>
         </aside>
@@ -1035,7 +1069,9 @@ const FinalPreview: React.FC = () => {
             )}
 
             {/* Skeleton Loader Layer */}
-            {isLoading && !isContentGenerating && <PlumberPageSkeleton />}
+            {isLoading &&
+              !isContentGenerating &&
+              !loadedPages[selectedPage!] && <PlumberPageSkeleton />}
 
             {/* Generated Content Iframe */}
             {generatedPage[selectedPage!] && isPageGenerated && (

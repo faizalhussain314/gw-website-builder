@@ -4,6 +4,8 @@ import { Page } from "../../../types/page.type";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Tooltip from "@mui/material/Tooltip";
+import { updateReduxPage } from "../../../Slice/activeStepSlice";
+import { useDispatch } from "react-redux";
 
 type Props = {
   pages: Page[];
@@ -29,6 +31,7 @@ type Props = {
   ) => void;
   setPages: (pages: Page[]) => void;
   handleGeneratePage: () => void;
+  isLoading: boolean;
 };
 
 const PageSelector: React.FC<Props> = ({
@@ -47,10 +50,13 @@ const PageSelector: React.FC<Props> = ({
   updatePageStatus,
   setPages,
   handleGeneratePage,
+  isLoading,
 }) => {
   const showWarningToast = () => {
     toast.warn("Please wait while content is being generated.");
   };
+
+  const dispatch = useDispatch();
 
   const handlePageClick = (pageName: string) => {
     togglePage(pageName);
@@ -95,6 +101,13 @@ const PageSelector: React.FC<Props> = ({
     );
 
     setPages(updatedPages);
+    dispatch(
+      updateReduxPage({
+        name: currentPage.name,
+        status: currentPage.status,
+        selected: newSelectedValue,
+      })
+    );
   };
 
   const handleGeneratePageClick = () => {
@@ -133,7 +146,7 @@ const PageSelector: React.FC<Props> = ({
                     id={`checkbox-${page.slug}`}
                     type="checkbox"
                     className="mr-4 flex items-center w-4 h-4"
-                    checked={page.selected}
+                    checked={page.name === "Home" ? true : page.selected}
                     onChange={() => handlePageChange(page.slug, !page.selected)} // Make sure the slug is passed to toggle selection
                   />
                 </div>
@@ -220,7 +233,7 @@ const PageSelector: React.FC<Props> = ({
                           handleNext();
                         }
                       }}
-                      disabled={isContentGenerating}
+                      disabled={isContentGenerating || isLoading}
                     >
                       Keep & Next
                     </button>
@@ -233,7 +246,11 @@ const PageSelector: React.FC<Props> = ({
                               ? "opacity-50 cursor-not-allowed"
                               : ""
                           }`}
-                          disabled={isContentGenerating || page.name === "Home"}
+                          disabled={
+                            isContentGenerating ||
+                            page.name === "Home" ||
+                            isLoading
+                          }
                           onClick={() => handleSkipClick(page.name)}
                         >
                           Skip Page
@@ -245,7 +262,7 @@ const PageSelector: React.FC<Props> = ({
                           isContentGenerating ? "opacity-50" : ""
                         }`}
                         onClick={() => handleSkipClick(page.name)}
-                        disabled={isContentGenerating}
+                        disabled={isContentGenerating || isLoading}
                       >
                         Skip Page
                       </button>
@@ -256,6 +273,7 @@ const PageSelector: React.FC<Props> = ({
                     <button
                       className="bg-white text-palatinate-blue-600 hover:bg-palatinate-blue-600 hover:text-white rounded px-3 py-1.5 w-full text-sm font-medium"
                       onClick={handleGeneratePage}
+                      disabled={isLoading}
                     >
                       Generate page
                     </button>
@@ -310,6 +328,9 @@ const PageSelector: React.FC<Props> = ({
           className={`tertiary w-full text-white py-3 px-8 rounded-md mb-4 ${
             pages.every(
               (page) => page.status === "Generated" || page.status === "Skipped"
+            ) ||
+            pages.every(
+              (page) => page.selected === true || page.selected === false
             )
               ? "opacity-100"
               : "opacity-50"
@@ -317,7 +338,7 @@ const PageSelector: React.FC<Props> = ({
           onClick={handleImportSelectedPage}
           disabled={
             !pages.every(
-              (page) => page.status === "Generated" || page.status === "Skipped"
+              (page) => page.selected === true || page.selected === false
             )
           }
         >
