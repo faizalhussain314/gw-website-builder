@@ -4,7 +4,6 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { RootState } from "../../../store/store";
 import { useSelector, useDispatch } from "react-redux";
 import { Link } from "react-router-dom";
-import Popup from "../../component/Popup";
 import useTemplateList from "../../../hooks/useTemplateList";
 import axios from "axios";
 import { saveSelectedTemplate } from "../../../infrastructure/api/wordpress-api/desgin/saveSelectedtemplate";
@@ -16,6 +15,7 @@ import {
   setTemplatename,
   setTemplateList,
 } from "../../../Slice/activeStepSlice";
+import Popup from "../../component/dialogs/Popup";
 
 const API_URL = import.meta.env.VITE_API_BACKEND_URL;
 

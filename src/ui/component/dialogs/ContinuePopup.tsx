@@ -1,7 +1,7 @@
 import React from "react";
 import CloseIcon from "@mui/icons-material/Close";
-import Caution from "../../assets/caution.svg";
-import Crown from "../../assets/crown.svg";
+import Caution from "../../../assets/caution.svg";
+import Crown from "../../../assets/crown.svg";
 
 type ContinuePopup = {
   onClose: () => void;
@@ -43,20 +43,26 @@ const ContinuePopup: React.FC<ContinuePopup> = ({
           className="mt-5 mb-9 text-[#656567] text-lg"
           dangerouslySetInnerHTML={{ __html: message }}
         ></p>
-        <div className="mt-6 flex gap-4 w-full items-center">
-          <button
-            className="previous-btn w-full flex px-3 py-3.5 text-base font-medium text-white rounded-lg justify-center"
-            onClick={onCreateFromScratch}
-          >
-            Create from Scratch
+        {alertType === "regenerate" ? (
+          <button className="mt-8 text-base tertiary text-white flex items-center justify-center gap-2 px-6 py-3 rounded-lg mx-auto">
+            <img src={Crown} alt="Crown" /> Upgrade Plan
           </button>
-          <button
-            className="tertiary w-full px-6 py-3.5 text-base text-white font-medium rounded-lg"
-            onClick={onContinue}
-          >
-            Continue
-          </button>
-        </div>
+        ) : (
+          <div className="mt-6 flex gap-4 w-full items-center">
+            <button
+              className="previous-btn w-full flex px-3 py-3.5 text-base font-medium text-white rounded-lg justify-center"
+              onClick={onCreateFromScratch}
+            >
+              Create from Scratch
+            </button>
+            <button
+              className="tertiary w-full px-6 py-3.5 text-base text-white font-medium rounded-lg"
+              onClick={onContinue}
+            >
+              Continue
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
