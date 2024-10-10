@@ -1,7 +1,7 @@
 import React from "react";
 import CloseIcon from "@mui/icons-material/Close";
-import Caution from "../../assets/caution.svg";
-import Crown from "../../assets/crown.svg";
+import Caution from "../../../assets/caution.svg";
+import Crown from "../../../assets/crown.svg";
 
 type UpgradePopupProps = {
   onClose: () => void;

@@ -1,8 +1,13 @@
-function WarningPopup() {
+type warningProps = {
+  onClose: () => void;
+  onContinue: () => void;
+};
+
+function WarningPopup({ onClose, onContinue }: warningProps) {
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-gray-500 backdrop-blur-xl bg-opacity-50 z-50">
       <div className="relative bg-white shadow-lg p-8 sm:p-8 w-full max-w-[500px] pb-6 z-10 rounded-[10px]">
-        <div className="absolute top-5 right-5" onClick={() => {}}>
+        <div className="absolute top-5 right-5" onClick={onClose}>
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="14"
@@ -76,14 +81,20 @@ function WarningPopup() {
             <p className="text-2xl font-semibold text-neutral-950">Warning</p>
           </div>
           <p className="text-xl text-center text-[#4D586B] mt-5">
-            You’re about to change templates, which will delete the content
+            You're about to change templates, which will delete the content
             you've generated. Do you want to continue?
           </p>
           <div className="flex items-center justify-center gap-5 mt-8 w-full">
-            <button className="flex items-center justify-center px-6 py-4 text-white text-base font-medium rounded-lg bg-[#E6F0FE] w-full previous-btn ">
+            <button
+              className="flex items-center justify-center px-6 py-4 text-white text-base font-medium rounded-lg bg-[#E6F0FE] w-full previous-btn"
+              onClick={onClose}
+            >
               Cancel
             </button>
-            <button className="flex items-center justify-center px-6 py-4 text-white text-base font-medium rounded-lg tertiary w-full ">
+            <button
+              className="flex items-center justify-center px-6 py-4 text-white text-base font-medium rounded-lg tertiary w-full"
+              onClick={onContinue}
+            >
               Continue
             </button>
           </div>

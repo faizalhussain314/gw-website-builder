@@ -155,12 +155,14 @@ const PageSelector: React.FC<Props> = ({
               <div className="flex items-center">
                 {page.status && (
                   <span
-                    className={`ml-2 text-xs font-medium rounded-full px-2.5 py-1 ${
+                    className={`ml-2 text-xs font-medium rounded-full px-2.5 py-1 text-[#1E2022] ${
                       page.status === "Generated"
-                        ? "text-[#1E2022] bg-[#CDF9CD]"
+                        ? "bg-[#CDF9CD]"
                         : page.status === "Skipped"
-                        ? "text-[#1E2002] bg-[#FFDCD5]"
-                        : "text-black bg-[#FFDCD5]"
+                        ? "bg-[#FFDCD5]"
+                        : page.status === "Added"
+                        ? "bg-[#E4C9FF]"
+                        : "bg-[#d1d5db]"
                     }`}
                   >
                     {page.status}
@@ -216,6 +218,7 @@ const PageSelector: React.FC<Props> = ({
             {selectedPage === page.name && (
               <div className="mt-3 flex justify-evenly text-sm">
                 {page.status === "Generated" ||
+                page.status === "Added" ||
                 page.status === "Skipped" ||
                 page.name === "Blog" ||
                 page.name === "Contact" ||

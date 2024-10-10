@@ -12,7 +12,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../../../store/store";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import UpgradePopup from "../../component/UpgradePopup";
+import UpgradePopup from "../../component/dialogs/UpgradePopup";
 import { Link, useNavigate } from "react-router-dom";
 import useIframeMessage from "../../../hooks/useIframeMessage";
 import { ChangeLogoMessage } from "../../../types/iframeMessages.type";

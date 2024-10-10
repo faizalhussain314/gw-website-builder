@@ -14,7 +14,7 @@ import ProcessingScreen from "./ui/pages/processingScreen/ProcessingScreen.tsx";
 import FinalPreview from "./ui/pages/finalpreview/FinalPreview.tsx";
 import CustomDesign from "./ui/pages/customdesign/CustomDesign.tsx";
 import Success from "./ui/pages/successPage/Success.tsx";
-import ContinuePopup from "./ui/component/ContinuePopup.tsx";
+import ContinuePopup from "./ui/component/dialogs/ContinuePopup.tsx";
 import useFetchContentData from "./hooks/useFetchContentData";
 import useStoreContent from "./hooks/useStoreContent .ts";
 import { useDispatch } from "react-redux";
