@@ -2,23 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* @layer base {
-  @font-face {
-    font-family: "inter";
-    font-style: normal;
-    font-weight: 200;
-    font-display: swap;
-    src: url("./assets/Inter/static/Inter-Black.ttf") format("woff2");
-  }
-
-  @font-face {
-    font-family: "inter";
-    font-style: normal;
-    font-weight: 400;
-    font-display: swap;
-    src: url("./assets/Inter/static/Inter-Medium.ttf") format("woff2");
-  }
-} */
 * {
   font-family: "Inter", sans-serif, system-ui;
 }
@@ -90,10 +73,8 @@ If you wanna remove scrollbar please use this class called "no-scrollbar"
   outline: 1px solid #97bbff;
 }
 
-/* .css-117w1su-MuiStepIcon-text {
-  fill: rgba(46, 66, 255, 1) !important;
-} */
-.MuiStepLabel-labelContainer > .Mui-active {
+
+/* .MuiStepLabel-labelContainer > .Mui-active {
   font-size: 16px;
   font-weight: 600 !important;
   font-family: inter;
@@ -138,7 +119,7 @@ If you wanna remove scrollbar please use this class called "no-scrollbar"
 
 /* css-10psl7k */
 
-.MuiStepConnector-line {
+/* .MuiStepConnector-line {
   min-height: 24px !important;
 }
 
@@ -150,27 +131,73 @@ If you wanna remove scrollbar please use this class called "no-scrollbar"
   padding-left: 25px !important;
 }
 
-.MuiStepLabel-iconContainer > .MuiSvgIcon-root > text {
+.MuiStepLabel-iconContainer>.MuiSvgIcon-root>text {
   color: rgba(136, 137, 138, 1) !important;
-}
+} */
 
-.spining-animation {
-  animation: spin 4s linear infinite;
-}
+
 
 /** 
 -------------------------
 */
-.MuiStepLabel-iconContainer {
+/* .MuiStepLabel-iconContainer {
   padding-right: 15px !important;
 }
 
 .MuiStepLabel-iconContainer svg {
   width: 28px;
   height: 28px;
-}
+} */
 
 /* .css-1j0qgw8-MuiAutocomplete-root.Mui-focused > */
+
+
+/* ------------------ Stepper component styles start ------------------- */
+
+/* general style */
+.MuiSvgIcon-root {
+  width: 30px !important;
+  height: 30px !important;
+}
+
+.css-1u4zpwo-MuiSvgIcon-root-MuiStepIcon-root {
+  color: #fff !important;
+}
+
+.MuiStepLabel-iconContainer .MuiSvgIcon-root {
+  border: 1px solid #88898A !important;
+  border-radius: 50% !important;
+}
+
+.MuiSvgIcon-root text {
+  fill: #88898A !important;
+}
+
+/* when active styles */
+
+.MuiStepLabel-iconContainer .Mui-active {
+  color: #fff !important;
+  border: 1px solid #2e42ff !important;
+  border-radius: 50% !important;
+}
+
+.Mui-active svg text {
+  fill: #2e42ff !important;
+}
+
+/* when completed style */
+.MuiStepLabel-iconContainer .Mui-completed {
+  color: #02D25A !important;
+  border: 1px solid #02D25A !important;
+}
+
+/* -------------- Stepper component styles end ------------------- */
+
+
+.spining-animation {
+  animation: spin 4s linear infinite;
+}
+
 
 .transition-fade {
   transition: all 0.5s ease-in-out;

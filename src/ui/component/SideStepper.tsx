@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from "react";
-import Box from "@mui/material/Box";
 import Stepper from "@mui/material/Stepper";
 import Step from "@mui/material/Step";
 import StepLabel from "@mui/material/StepLabel";
-import StepContent from "@mui/material/StepContent";
 import Button from "@mui/material/Button";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
@@ -66,33 +64,11 @@ const SideStepper: React.FC = () => {
     }
   }, [location.pathname]);
 
-  const stepStyle = {
-    backgroundColor: "#fff",
-    padding: "10px",
-    "@media (min-width: 1280px)": {
-      padding: "30px",
-    },
-    "& .Mui-active": {
-      "&.MuiStepIcon-root": {
-        color: "white",
-        border: "rgba(46, 66, 255, 1) 1px solid",
-        borderRadius: "50%",
-        backgroundColor: "rgba(46, 66, 255, 1)",
-        width: "28px",
-        height: "28px",
-        "&.css-117w1su-MuiStepIcon-text": {
-          fill: "rgba(46, 66, 255, 1) !important",
-        },
-      },
-    },
-  };
-
   return (
     <div>
       <Stepper
         activeStep={activeStep}
         orientation="vertical"
-        sx={stepStyle}
         style={{ padding: "25px 20px" }}
       >
         {steps.map((step, index) => (
@@ -111,12 +87,6 @@ const SideStepper: React.FC = () => {
                 {step.description}
               </Typography>
             </StepLabel>
-            {/* <StepContent className="!p-0">
-              <Typography className="!font-light !text-sm !pl-6 text-[#88898A] tracking-[-0.28px] leading-[22px] -mt-1">
-                {step.description}
-              </Typography> */}
-            {/* <Box sx={{ mb: 2 }}></Box> */}
-            {/* </StepContent> */}
           </Step>
         ))}
       </Stepper>
