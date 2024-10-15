@@ -47,6 +47,10 @@ If you wanna remove scrollbar please use this class called "no-scrollbar"
   background: linear-gradient(132deg, #963fff -9.83%, #2e42ff 91.64%);
   color: #fff;
   transition: all 0.3s;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
 }
 
 .tertiary:hover {
@@ -62,6 +66,10 @@ If you wanna remove scrollbar please use this class called "no-scrollbar"
   background: #e6f0fe;
   color: #1e2022;
   font-weight: 500;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
 }
 
 .previous-btn:hover {
