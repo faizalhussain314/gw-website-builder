@@ -74,85 +74,10 @@ If you wanna remove scrollbar please use this class called "no-scrollbar"
 }
 
 
-/* .MuiStepLabel-labelContainer > .Mui-active {
-  font-size: 16px;
-  font-weight: 600 !important;
-  font-family: inter;
-}
 
-.MuiStepLabel-label .Mui-completed {
-  color: rgba(136, 137, 138, 1);
-  font-size: 14px !important;
-  font-weight: 400 !important;
-}
-
-.MuiStepLabel-iconContainer svg.Mui-completed {
-  color: rgba(2, 210, 90, 1) !important;
-  border: rgba(2, 210, 90, 1) 1px solid;
-}
-
-.MuiStepLabel-labelContainer > .Mui-completed {
-  color: rgba(136, 137, 138, 1) !important;
-  font-size: 20px !important;
-}
-
-.MuiStepLabel-iconContainer > .MuiSvgIcon-root {
-  border: rgba(136, 137, 138, 1) 1px solid;
-  border-radius: 50%;
-}
-
-.css-1u4zpwo-MuiSvgIcon-root-MuiStepIcon-root {
-  color: white !important;
-}
-
-.Mui-disabled .MuiSvgIcon-root > .MuiStepIcon-text {
-  fill: rgba(136, 137, 138, 1) !important;
-}
-
-.Mui-disabled .MuiSvgIcon-root > .MuiStepIcon-text {
-  fill: rgba(136, 137, 138, 1) !important;
-}
-
-.Mui-active.MuiStepIcon-root > .MuiStepIcon-text {
-  fill: rgba(46, 66, 255, 1) !important;
-}
-
-/* css-10psl7k */
-
-/* .MuiStepConnector-line {
-  min-height: 24px !important;
-}
-
-.MuiAutocomplete-endAdornment {
-  left: 9px;
-}
-
-.MuiAutocomplete-input {
-  padding-left: 25px !important;
-}
-
-.MuiStepLabel-iconContainer>.MuiSvgIcon-root>text {
-  color: rgba(136, 137, 138, 1) !important;
-} */
-
-
-
-/** 
--------------------------
-*/
-/* .MuiStepLabel-iconContainer {
-  padding-right: 15px !important;
-}
-
-.MuiStepLabel-iconContainer svg {
-  width: 28px;
-  height: 28px;
-} */
-
-/* .css-1j0qgw8-MuiAutocomplete-root.Mui-focused > */
-
-
-/* ------------------ Stepper component styles start ------------------- */
+/**
+ ------------------ Stepper component styles start ------------------- 
+ */
 
 /* general style */
 .MuiSvgIcon-root {
@@ -160,13 +85,14 @@ If you wanna remove scrollbar please use this class called "no-scrollbar"
   height: 30px !important;
 }
 
-.css-1u4zpwo-MuiSvgIcon-root-MuiStepIcon-root {
-  color: #fff !important;
-}
 
 .MuiStepLabel-iconContainer .MuiSvgIcon-root {
   border: 1px solid #88898A !important;
   border-radius: 50% !important;
+}
+
+.MuiSvgIcon-root circle {
+  color: #fff !important;
 }
 
 .MuiSvgIcon-root text {
@@ -191,7 +117,9 @@ If you wanna remove scrollbar please use this class called "no-scrollbar"
   border: 1px solid #02D25A !important;
 }
 
-/* -------------- Stepper component styles end ------------------- */
+/**
+ -------------- Stepper comonent styles end ------------------- 
+ */
 
 
 .spining-animation {
