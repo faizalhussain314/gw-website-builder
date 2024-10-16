@@ -6,63 +6,66 @@ import {
   setCategory,
   setTemplateId,
   setTemplatename,
+  setLogo,
   setContent,
   setColor,
   setFont,
   setTemplateList,
-  setLogo,
   updateContactForm,
+  setlastStep,
 } from "../Slice/activeStepSlice";
 import useDomainEndpoint from "./useDomainEndpoint";
-import { useCallback, useEffect } from "react";
+import { useCallback } from "react";
+import axios from "axios";
 
 const useFetchContentData = () => {
   const dispatch = useDispatch();
   const { getDomainFromEndpoint } = useDomainEndpoint();
 
+  // Define emptyTable inside the hook
+  const emptyTable = async (endpoint: string, data: object) => {
+    const url = getDomainFromEndpoint(endpoint);
+
+    if (!url) return null;
+
+    try {
+      const response = await axios.delete(url, {
+        headers: { "Content-Type": "application/json" },
+        data: JSON.stringify(data),
+      });
+      return response.data;
+    } catch (error) {
+      console.error(`Error clearing table at ${url}:`, error);
+      return null;
+    }
+  };
+
   const fetchContent = useCallback(async () => {
     const url = getDomainFromEndpoint("wp-json/custom/v1/get-form-details");
 
     try {
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          fields: [
-            "businessName",
-            "description1",
-            "description2",
-            "images",
-            "designs",
-            "templateid",
-            "templatename",
-            "logo",
-            "category",
-            "content",
-            "color",
-            "font",
-            "templateList",
-            "contactform",
-          ],
-        }),
+      const response = await axios.post(url, {
+        fields: [
+          "businessName",
+          "description1",
+          "description2",
+          "images",
+          "designs",
+          "templateid",
+          "templatename",
+          "logo",
+          "category",
+          "content",
+          "color",
+          "font",
+          "templateList",
+          "contactform",
+          "lastStep",
+        ],
       });
 
-      // Log full response for debugging
-      console.log("Full API Response:", response);
+      const data = response.data;
 
-      // Check if response is ok (status 200)
-      if (!response.ok) {
-        throw new Error(`API returned status: ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      // Log parsed data
-      console.log("Parsed API Data:", data);
-
-      // Handle the data properly
       if (data) {
         dispatch(setBusinessName(data.businessName || ""));
         dispatch(setDescriptionOne(data.description1 || ""));
@@ -72,41 +75,34 @@ const useFetchContentData = () => {
         dispatch(setTemplatename(data.templatename || ""));
         dispatch(setLogo(data.logo || ""));
         dispatch(setContent(data.content || []));
-        dispatch(updateContactForm(JSON.parse(data.contactform)));
-
-        if (data.templateList) {
-          try {
-            const parsedTemplateList = JSON.parse(data.templateList);
-            dispatch(setTemplateList(parsedTemplateList || []));
-          } catch (error) {
-            console.error("Error parsing templateList:", error);
-          }
-        }
+        dispatch(setFont(data.font || ""));
 
         if (data.color) {
-          try {
-            const parsedColor = JSON.parse(data.color);
-            dispatch(setColor(parsedColor || { primary: "", secondary: "" }));
-          } catch (error) {
-            console.error("Error parsing color:", error);
-          }
+          const parsedColor = JSON.parse(data.color);
+          dispatch(setColor(parsedColor || { primary: "", secondary: "" }));
         }
 
-        dispatch(setFont(data.font || ""));
+        if (data.templateList) {
+          const parsedTemplateList = JSON.parse(data.templateList);
+          dispatch(setTemplateList(parsedTemplateList || []));
+        }
+
+        if (data.contactform) {
+          const parsedContactForm = JSON.parse(data.contactform);
+          dispatch(updateContactForm(parsedContactForm));
+        }
+
+        dispatch(setlastStep(data.lastStep || ""));
       }
 
-      return data; // Return the data for further use
+      return data;
     } catch (error) {
       console.error("Error fetching content:", error);
-      return null; // Return null on error
+      return null;
     }
   }, [dispatch, getDomainFromEndpoint]);
 
-  useEffect(() => {
-    fetchContent();
-  }, [fetchContent]);
-
-  return fetchContent;
+  return { fetchContent, emptyTable };
 };
 
 export default useFetchContentData;

@@ -62,6 +62,7 @@ interface UserDataState {
   pages: Page[]; // Added 'pages' to state
   contactform: Contactform;
   isFormDetailsLoaded: boolean;
+  lastStep: string;
 }
 
 const initialState: UserDataState = {
@@ -90,6 +91,7 @@ const initialState: UserDataState = {
     phoneNumber: "",
   },
   isFormDetailsLoaded: false,
+  lastStep: "",
 };
 
 export const activeStepSlice = createSlice({
@@ -141,11 +143,25 @@ export const activeStepSlice = createSlice({
       state.description2 = "";
       state.images = [];
       state.designs = [];
+      state.templateid = 0;
+      state.templatename = "";
+      state.logo = "";
       state.category = null;
       state.content = [];
       state.color = { primary: "", secondary: "" };
       state.font = "";
+      state.templateList = {
+        id: null,
+        name: null,
+        pages: [],
+        site_category_id: null,
+      };
+      state.pages = [];
+      state.contactform = { email: "", phoneNumber: "", address: "" };
+      state.isFormDetailsLoaded = false;
+      state.lastStep = "";
     },
+
     setTemplateList: (state, action: PayloadAction<templateList>) => {
       // Destructure the incoming payload to extract id, name, site_category_id, and pages
       const { id, name, site_category_id, pages } = action.payload;
@@ -271,6 +287,9 @@ export const activeStepSlice = createSlice({
     setFormDetailsLoaded: (state, action: PayloadAction<boolean>) => {
       state.isFormDetailsLoaded = action.payload; // Update form loaded state
     },
+    setlastStep: (state, action: PayloadAction<string>) => {
+      state.lastStep = action.payload;
+    },
   },
 });
 
@@ -295,6 +314,7 @@ export const {
   togglePageSelection,
   updateContactForm,
   setFormDetailsLoaded,
+  setlastStep,
 } = activeStepSlice.actions;
 
 export default activeStepSlice.reducer;
