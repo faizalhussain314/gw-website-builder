@@ -4,108 +4,79 @@ import { CircularProgressbar, buildStyles } from "react-circular-progressbar";
 import "react-circular-progressbar/dist/styles.css";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { setTemplateList, setPages } from "../../../Slice/activeStepSlice";
+import { setPages } from "../../../Slice/activeStepSlice";
 import "../../../index.css";
 import websitebg from "../../../assets/websiteloader-bg.svg";
 import useDomainEndpoint from "../../../hooks/useDomainEndpoint";
-import { RootState } from "../../../store/store"; // Import your RootState
-
-interface Page {
-  name: string;
-  status: string;
-  slug: string;
-  selected: boolean;
-  xml_url?: string; // Add this to avoid errors when accessing xml_url
-}
+import { RootState } from "../../../store/store";
+import {
+  ApiPage,
+  Plugin,
+  ReduxPage,
+  ApiStep,
+  TemplateData,
+  TemplateImportUrl,
+  mapApiPageToReduxPage,
+} from "../../../types/processingpage.type";
 
 const ProcessingScreen: React.FC = () => {
   const [progress, setProgress] = useState(0);
-  const [totalSteps, setTotalSteps] = useState(0); // Dynamically calculated
-  const [loading, setLoading] = useState(true);
+  const [totalSteps, setTotalSteps] = useState(0);
   const [status, setStatus] = useState("");
-  const [isProcessing, setIsProcessing] = useState(false); // Flag to prevent duplicate calls
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { getDomainFromEndpoint } = useDomainEndpoint();
   const logo = useSelector((state: RootState) => state.userData.logo);
-
   const template_id = useSelector(
     (state: RootState) => state.userData.templateid
   );
-  const selectedPages = useSelector((state: RootState) => state.userData.pages);
-  const [allPageDetails, setallPageDetails] = useState();
 
-  const fetchTemplates = async () => {
+  // Using Redux for selected pages
+  const selectedPages = useSelector(
+    (state: RootState) => state.userData.pages as ReduxPage[]
+  );
+
+  // Fetch template details
+  const fetchTemplates = async (): Promise<TemplateData | null> => {
     try {
       const response = await fetch(
         `https://dev.gravitywrite.com/api/getTemplates?template_id=${template_id}`
       );
+      if (!response.ok) throw new Error("Failed to fetch templates");
       const data = await response.json();
-      return data;
+      return data.data; // Return actual data from the response
     } catch (error) {
       console.error("Error fetching templates:", error);
       return null;
     }
   };
 
-  const postData = async (endpoint: string, data: object) => {
+  // Post API calls
+  const postData = async (
+    endpoint: string,
+    data: object,
+    method: "POST" | "DELETE" = "POST"
+  ): Promise<any> => {
     const url = getDomainFromEndpoint(endpoint);
-
     if (!url) return null;
 
     try {
       const response = await fetch(url, {
-        method: "POST",
+        method: method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
+      if (!response.ok) throw new Error(`Error posting data to ${url}`);
       return await response.json();
     } catch (error) {
-      console.error(`Error posting data to ${url}:`, error);
+      console.error(`Error in API call (${method}) to ${url}:`, error);
       return null;
     }
   };
 
-  // Development only: Fallback pages data
-  const pagesapi = [
-    {
-      id: 11,
-      title: "Home",
-      template_id: 2,
-      xml_url:
-        "https://plugin.mywpsite.org/tourstemplate1/tours-template-home-page.xml",
-    },
-    {
-      id: 12,
-      title: "About Us",
-      template_id: 2,
-      xml_url:
-        "https://plugin.mywpsite.org/tourstemplate1/tours-template-about-page.xml",
-    },
-    {
-      id: 13,
-      title: "Service",
-      template_id: 2,
-      xml_url:
-        "https://plugin.mywpsite.org/tourstemplate1/tours-template-services-page.xml",
-    },
-    {
-      id: 14,
-      title: "Blog",
-      template_id: 2,
-      xml_url:
-        "https://plugin.mywpsite.org/tourstemplate1/tours-template-blog-page.xml",
-    },
-    {
-      id: 15,
-      title: "Contact Us",
-      template_id: 2,
-      xml_url:
-        "https://plugin.mywpsite.org/tourstemplate1/tours-template-contactus-page.xml",
-    },
-  ];
-
+  // Main processing logic
   const processAPIs = async () => {
     if (isProcessing) return;
     setIsProcessing(true);
@@ -114,20 +85,23 @@ const ProcessingScreen: React.FC = () => {
     if (!templateData) {
       console.error("Template has no data");
       return;
-    } else {
-      setallPageDetails(templateData.data); // Store page details
-      console.log("Template data", templateData.data.pages);
     }
 
-    const { plugins, template_import_urls, pages } = templateData.data;
+    const { plugins, pages, template_import_urls, sitelogo } = templateData;
 
-    dispatch(setPages(selectedPages));
+    // Map API pages to Redux pages
+    const reduxPages = pages.map((apiPage: ApiPage) =>
+      mapApiPageToReduxPage(apiPage)
+    );
 
-    const apiSteps = [
+    // Dispatch the mapped pages to Redux
+    dispatch(setPages(reduxPages));
+
+    const apiSteps: ApiStep[] = [
       {
         name: "Plugins",
         endpoint: "/wp-json/custom/v1/install-plugin",
-        body: { plugins: plugins.map((plugin: any) => plugin.slug) },
+        body: { plugins: plugins.map((plugin: Plugin) => plugin.slug) },
       },
       { name: "Theme", endpoint: "/wp-json/custom/v1/install-theme", body: {} },
       {
@@ -135,7 +109,7 @@ const ProcessingScreen: React.FC = () => {
         endpoint: "/wp-json/custom/v1/install-forms",
         body: {
           fileurl: template_import_urls.find(
-            (url: any) => url.name === "Forms Data"
+            (url: TemplateImportUrl) => url.name === "Forms Data"
           )?.url,
         },
       },
@@ -144,121 +118,109 @@ const ProcessingScreen: React.FC = () => {
         endpoint: "/wp-json/custom/v1/install-header-footer",
         body: {
           fileurl: template_import_urls.find(
-            (url: any) => url.name === "Elementor Header Footer Data"
+            (url: TemplateImportUrl) =>
+              url.name === "Elementor Header Footer Data"
           )?.url,
         },
       },
-      {
+      // {
+      //   name: "Post",
+      //   endpoint: "/wp-json/custom/v1/install-posts",
+      //   body: {
+      //     fileurl: template_import_urls.find(
+      //       (url: TemplateImportUrl) => url.name === "Posts Data"
+      //     )?.url,
+      //   },
+      // },
+    ];
+
+    const isBlogSelected = selectedPages.some(
+      (page: ReduxPage) => page.slug === "blog" && page.selected
+    );
+
+    // Only add the "Post" step if Blog is selected
+    if (isBlogSelected) {
+      apiSteps.push({
         name: "Post",
         endpoint: "/wp-json/custom/v1/install-posts",
         body: {
           fileurl: template_import_urls.find(
-            (url: any) => url.name === "Posts Data"
+            (url: TemplateImportUrl) => url.name === "Posts Data"
           )?.url,
         },
-      },
-    ];
+      });
+    }
 
     const selectedPagesToInstall = selectedPages.filter(
-      (page: any) => page.selected
+      (page: ReduxPage) => page.selected
     );
 
-    const stepsCount = apiSteps.length + selectedPagesToInstall.length * 2 + 4; // Including additional steps
+    const stepsCount = apiSteps.length + selectedPagesToInstall.length * 2 + 4;
     setTotalSteps(stepsCount);
 
     // Execute API steps for plugins, theme, and forms
     for (let i = 0; i < apiSteps.length; i++) {
       setStatus(apiSteps[i].name);
-      try {
-        await postData(apiSteps[i].endpoint, apiSteps[i].body);
-      } catch (error) {
-        console.error(`Error on step: ${apiSteps[i].name}`, error);
-        continue;
-      }
+      await postData(apiSteps[i].endpoint, apiSteps[i].body);
       setProgress(((i + 1) / stepsCount) * 100);
     }
 
-    // Install pages
+    // Install selected pages only
     for (let i = 0; i < selectedPagesToInstall.length; i++) {
       const page = selectedPagesToInstall[i];
       setStatus(`${page.name} page`);
 
-      let fileurl = "";
-      if (pages) {
-        // Get the corresponding xml_url for the page
-        fileurl = pages.find((p: any) => p.title === page.name)?.xml_url || "";
-        console.log(fileurl, "this is file url");
-      }
-
+      const fileurl =
+        pages.find((p: ApiPage) => p.title === page.name)?.xml_url || "";
       if (!fileurl) {
         console.error(`XML URL not found for page: ${page.name}`);
         continue;
       }
 
-      try {
-        await postData("/wp-json/custom/v1/install-pages", { fileurl });
-      } catch (error) {
-        console.error(`Error installing page: ${page.name}`, error);
-        continue;
-      }
-
+      await postData("/wp-json/custom/v1/install-pages", { fileurl });
       setProgress(((apiSteps.length + i + 1) / stepsCount) * 100);
     }
-    setStatus("Importing Site Logo");
-    try {
-      await postData("/wp-json/custom/v1/import-sitelogo", { fileurl: logo });
-    } catch (error) {
-      console.error("Error importing site logo", error);
-    }
-    // Install additional components such as Elementor kits and settings
-    try {
-      await postData("/wp-json/custom/v1/install-elementor-kit", {
-        fileurl: template_import_urls.find(
-          (url: any) => url.name === "Templates Data"
-        )?.url,
+
+    const logoToUse = logo || sitelogo;
+
+    if (logoToUse) {
+      // Import site logo if available
+      setStatus("Importing Site Logo");
+      await postData("/wp-json/custom/v1/import-sitelogo", {
+        fileurl: logoToUse,
       });
-    } catch (error) {
-      console.error("Error while importing Elementor kit", error);
     }
 
-    try {
-      await postData("/wp-json/custom/v1/install-elementor-settings", {
-        fileurl: template_import_urls.find(
-          (url: any) => url.name === "Site Settings Data"
-        )?.url,
-      });
-    } catch (error) {
-      console.error("Error while importing Elementor settings", error);
-    }
+    // Install additional components
+    await postData("/wp-json/custom/v1/install-elementor-kit", {
+      fileurl: template_import_urls.find(
+        (url: TemplateImportUrl) => url.name === "Templates Data"
+      )?.url,
+    });
+    await postData("/wp-json/custom/v1/install-elementor-settings", {
+      fileurl: template_import_urls.find(
+        (url: TemplateImportUrl) => url.name === "Site Settings Data"
+      )?.url,
+    });
 
-    // Importing menus and CSS
+    // Import menus and CSS
     setStatus("Importing Menus and CSS");
-    try {
-      await postData("/wp-json/custom/v1/import-menus-css", {
-        fileurl: template_import_urls.find(
-          (url: any) => url.name === "Menu Css Data"
-        )?.url,
-      });
-    } catch (error) {
-      console.error("Error importing menus and CSS", error);
-    }
-
-    // Import site logo
+    await postData("/wp-json/custom/v1/import-menus-css", {
+      fileurl: template_import_urls.find(
+        (url: TemplateImportUrl) => url.name === "Menu Css Data"
+      )?.url,
+    });
 
     // Update content for each selected page
     for (let i = 0; i < selectedPagesToInstall.length; i++) {
       const page = selectedPagesToInstall[i];
-      setStatus(`Updating content for page: ${page.name}`);
-
-      try {
-        await postData("/wp-json/custom/v1/update-content", {
-          page_name: page.name,
-        });
-      } catch (error) {
-        console.error(`Error updating content for page: ${page.name}`, error);
+      if (page.slug === "blog" || page.slug === "contact-us") {
         continue;
       }
-
+      setStatus(`Updating content for page: ${page.name}`);
+      await postData("/wp-json/custom/v1/update-content", {
+        page_name: page.name,
+      });
       setProgress(
         ((apiSteps.length + selectedPagesToInstall.length + i + 1) /
           stepsCount) *
@@ -268,52 +230,22 @@ const ProcessingScreen: React.FC = () => {
 
     // Applying color, font, and logo changes
     setStatus("Applying color, font, and logo changes");
-    try {
-      await postData("/wp-json/custom/v1/update-style-changes", {});
-    } catch (error) {
-      console.error("Error applying style changes", error);
-    }
+    await postData("/wp-json/custom/v1/update-style-changes", {});
 
     // Regenerating Global CSS
     setStatus("Regenerating Global CSS");
-    try {
-      await postData("/wp-json/custom/v1/regenerate-global-css", {});
-    } catch (error) {
-      console.error("Error regenerating global CSS", error);
-    }
+    await postData("/wp-json/custom/v1/regenerate-global-css", {});
 
-    // Emptying tables
+    // Emptying tables using DELETE method
     setStatus("Emptying tables");
-    try {
-      await postData("/wp-json/custom/v1/empty-tables", {});
-    } catch (error) {
-      console.error("Error emptying tables", error);
-    }
+    await postData("/wp-json/custom/v1/empty-tables", {}, "DELETE");
 
     setProgress(100);
-    setLoading(false);
     setIsProcessing(false);
   };
 
-  // useEffect(() => {
-  //   if (!isProcessing) {
-  //     processAPIs(); // Execute the API process on initial render
-  //   }
-  // }, []);
-
-  // useEffect(() => {
-  //   if (progress === 100) {
-  //     const timeout = setTimeout(() => {
-  //       navigate("/success");
-  //     }, 3000);
-  //     return () => clearTimeout(timeout);
-  //   }
-  // }, [progress, navigate]);
-
   useEffect(() => {
-    if (!isProcessing) {
-      processAPIs(); // Process the APIs only on the initial render
-    }
+    if (!isProcessing) processAPIs();
   }, []);
 
   useEffect(() => {
@@ -324,7 +256,6 @@ const ProcessingScreen: React.FC = () => {
       return () => clearTimeout(timeout);
     }
   }, [progress, navigate]);
-
   return (
     <MainLayout>
       <div className="flex flex-col items-center justify-center h-[90vh]">

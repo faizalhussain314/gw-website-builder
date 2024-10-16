@@ -81,8 +81,6 @@ If you wanna remove scrollbar please use this class called "no-scrollbar"
   outline: 1px solid #97bbff;
 }
 
-
-
 /**
  ------------------ Stepper component styles start ------------------- 
  */
@@ -93,9 +91,8 @@ If you wanna remove scrollbar please use this class called "no-scrollbar"
   height: 30px !important;
 }
 
-
 .MuiStepLabel-iconContainer .MuiSvgIcon-root {
-  border: 1px solid #88898A !important;
+  border: 1px solid #88898a !important;
   border-radius: 50% !important;
 }
 
@@ -104,7 +101,7 @@ If you wanna remove scrollbar please use this class called "no-scrollbar"
 }
 
 .MuiSvgIcon-root text {
-  fill: #88898A !important;
+  fill: #88898a !important;
 }
 
 /* when active styles */
@@ -121,19 +118,17 @@ If you wanna remove scrollbar please use this class called "no-scrollbar"
 
 /* when completed style */
 .MuiStepLabel-iconContainer .Mui-completed {
-  color: #02D25A !important;
-  border: 1px solid #02D25A !important;
+  color: #02d25a !important;
+  border: 1px solid #02d25a !important;
 }
 
 /**
  -------------- Stepper comonent styles end ------------------- 
  */
 
-
 .spining-animation {
   animation: spin 4s linear infinite;
 }
-
 
 .transition-fade {
   transition: all 0.5s ease-in-out;

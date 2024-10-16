@@ -33,20 +33,23 @@ function Name() {
     fetchInitialName();
   }, [dispatch, getDomainFromEndpoint]);
 
-  const handleChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newName = event.target.value;
     setName(newName);
     if (newName) {
       setError(null);
-      await updateBusinessName(newName, getDomainFromEndpoint); // Store content on every change
-      dispatch(setBusinessName(newName));
     }
   };
 
-  const handleClick = () => {
+  const handleClick = async () => {
     if (name) {
-      dispatch(setBusinessName(name));
-      navigate("/description");
+      try {
+        await updateBusinessName(name, getDomainFromEndpoint);
+        dispatch(setBusinessName(name));
+        navigate("/description");
+      } catch (error) {
+        console.error("Failed to update business name:", error);
+      }
     } else {
       setError("Please enter a business name.");
     }

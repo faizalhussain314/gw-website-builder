@@ -10,7 +10,7 @@ const useDomainEndpoint = () => {
       return `${baseUrl}/${endpoint}`;
     } else {
       // console.error("Could not find wp-admin in the current URL.");
-      const tempurl = `https://dreamwalker-deshaies-4p92.zipwp.link/${endpoint}`;
+      const tempurl = `https://practical-part-2mxpw.zipwp.link/${endpoint}`;
       // const tempurl = `https://plugin.mywpsite.org/${endpoint}`;
       return tempurl;
     }

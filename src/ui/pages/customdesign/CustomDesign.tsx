@@ -1,16 +1,13 @@
 import React, { useEffect, useState } from "react";
 import CustomizeLayout from "../../Layouts/CustomizeLayout";
-import { RootState } from "../../../store/store";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import useDomainEndpoint from "../../../hooks/useDomainEndpoint";
 import { setTemplateList } from "../../../Slice/activeStepSlice";
 import PlumberPageSkeleton from "../../component/PlumberPageSkeleton ";
 
 function CustomDesign() {
-  const [parsedTemplateList, setParsedTemplateList] = useState(null); // Local state to store parsed data
-  const templateListFromRedux = useSelector(
-    (state: RootState) => state.userData.templateList // Using Redux as is
-  );
+  const [parsedTemplateList, setParsedTemplateList] = useState(null);
+
   const dispatch = useDispatch();
   const { getDomainFromEndpoint } = useDomainEndpoint();
 
@@ -58,8 +55,7 @@ function CustomDesign() {
   const fetchInitialData = async () => {
     const url = getDomainFromEndpoint("/wp-json/custom/v1/get-form-details");
     const iframe = document.getElementById("myIframe") as HTMLIFrameElement;
-    // const url =
-    //   "https://solitaire-sojourner-02c.zipwp.link/wp-json/custom/v1/get-form-details";
+
     try {
       const response = await fetch(url, {
         method: "POST",
@@ -110,7 +106,6 @@ function CustomDesign() {
       "*"
     );
   };
-  // <div id="overlay" style="position:fixed;width: 100vw;height: 100vh;z-index: 1000000;top: 0;left: 0;"></div>
 
   const fetchTemplateData = async () => {
     const url = getDomainFromEndpoint("/wp-json/custom/v1/get-form-details");
@@ -118,16 +113,14 @@ function CustomDesign() {
       const response = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fields: ["templateList"] }), // Requesting templateList data
+        body: JSON.stringify({ fields: ["templateList"] }),
       });
       const result = await response.json();
 
       if (result && result.templateList) {
-        // Parse the template_json_data from the response
         const parsedData = JSON.parse(result.templateList);
-        setParsedTemplateList(parsedData); // Save locally in component state
+        setParsedTemplateList(parsedData);
 
-        // Optionally dispatch to Redux if needed
         dispatch(setTemplateList(parsedData));
       }
     } catch (error) {
@@ -154,7 +147,7 @@ function CustomDesign() {
           onLoad={onLoadmsg}
         />
       ) : (
-        <PlumberPageSkeleton /> // Show loader if currentUrl is empty
+        <PlumberPageSkeleton />
       )}
     </CustomizeLayout>
   );
