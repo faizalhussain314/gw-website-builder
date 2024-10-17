@@ -83,7 +83,7 @@ const SideStepper: React.FC = () => {
               <Typography className="!font-medium text-txt-black-600 tracking-[-0.32px] text-base">
                 {step.label}
               </Typography>
-              <Typography className="!text-sm !font-light text-[#88898A]">
+              <Typography className="!text-sm text-[#88898A]">
                 {step.description}
               </Typography>
             </StepLabel>
