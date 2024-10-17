@@ -83,7 +83,7 @@ If you wanna remove scrollbar please use this class called "no-scrollbar"
 
 /**
  ------------------ Stepper component styles start ------------------- 
- */
+*/
 
 /* general style */
 .MuiSvgIcon-root {
@@ -124,7 +124,7 @@ If you wanna remove scrollbar please use this class called "no-scrollbar"
 
 /**
  -------------- Stepper comonent styles end ------------------- 
- */
+*/
 
 .spining-animation {
   animation: spin 4s linear infinite;
