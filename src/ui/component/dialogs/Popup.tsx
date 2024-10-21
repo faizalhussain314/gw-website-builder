@@ -117,10 +117,17 @@ const Popup: React.FC<PopupProps> = ({
         <div className="mt-6">
           <p className="font-semibold text-base mb-2">Contact Details:</p>
           <ul className="text-base text-[#4D586B] list-none">
-            <li className="text-[#4D586B]">Email : {contactform.email}</li>
-            <li className="text-[#4D586B]">Address : {contactform.address}</li>
-            <li className="text-[#4D586B]">
-              Phone Number : {contactform.phoneNumber}
+            <li className="text-[#4D586B] flex justify-start items-center gap-2">
+              <span className="mr-[83px]">Email</span>
+              <span>: {contactform.email}</span>
+            </li>
+            <li className="text-[#4D586B] flex justify-start items-center gap-2">
+              <span className="mr-[61px]">Address</span>
+              <span>: {contactform.address}</span>
+            </li>
+            <li className="text-[#4D586B] flex justify-start items-center gap-2">
+              <span className="mr-[10px]">Phone Number</span>
+              <span>: {contactform.phoneNumber}</span>
             </li>
           </ul>
         </div>
