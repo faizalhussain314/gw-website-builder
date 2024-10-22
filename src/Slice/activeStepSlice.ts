@@ -1,69 +1,14 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-
-interface Page {
-  name: string;
-  status: string;
-  slug: string;
-  selected: boolean;
-}
-
-interface ImageState {
-  url: string;
-  description: string;
-}
-
-interface Design {
-  templateId: string;
-  description: string;
-}
-
-interface Color {
-  primary: string;
-  secondary: string;
-}
-interface Contactform {
-  email: string | null;
-  address: string | null;
-  phoneNumber: string | null;
-}
-interface UpdateContactFormPayload {
-  email?: string;
-  address?: string;
-  phoneNumber?: string;
-}
-
-interface page {
-  id: number;
-  title: string;
-  iframe_url: string;
-  slug: string;
-  template_id: number;
-}
-interface templateList {
-  id: number;
-  name: string;
-  pages: page[];
-  site_category_id: number;
-}
-interface UserDataState {
-  businessName: string;
-  description1: string;
-  description2: string;
-  images: ImageState[];
-  designs: Design[];
-  templateid: number;
-  templatename: string;
-  category: string | null;
-  content: string[];
-  logo: string;
-  color: Color;
-  font: string;
-  templateList: templateList;
-  pages: Page[]; // Added 'pages' to state
-  contactform: Contactform;
-  isFormDetailsLoaded: boolean;
-  lastStep: string;
-}
+import {
+  UserDataState,
+  Page,
+  Design,
+  Color,
+  Font,
+  UpdateContactFormPayload,
+  templateList,
+  StyleState,
+} from "../types/activeStepSlice.type";
 
 const initialState: UserDataState = {
   businessName: "",
@@ -77,14 +22,14 @@ const initialState: UserDataState = {
   category: null,
   content: [],
   color: { primary: "", secondary: "" },
-  font: "",
+  font: { primary: "", secondary: "" },
   templateList: {
     id: null,
     name: null,
     pages: [],
     site_category_id: null,
   },
-  pages: [], // Default page structure
+  pages: [],
   contactform: {
     email: "",
     address: "",
@@ -92,6 +37,12 @@ const initialState: UserDataState = {
   },
   isFormDetailsLoaded: false,
   lastStep: "",
+  style: {
+    defaultColor: { primary: "", secondary: "" },
+    defaultFont: { primary: "", secondary: "" },
+    color: [],
+    fonts: [],
+  },
 };
 
 export const activeStepSlice = createSlice({
@@ -127,8 +78,9 @@ export const activeStepSlice = createSlice({
     setLogo: (state, action: PayloadAction<string>) => {
       state.logo = action.payload;
     },
-    setFont: (state, action: PayloadAction<string>) => {
-      state.font = action.payload;
+    setFont: (state, action: PayloadAction<Color>) => {
+      state.font.primary = action.payload.primary;
+      state.font.secondary = action.payload.secondary;
     },
     setColor: (state, action: PayloadAction<Color>) => {
       state.color.primary = action.payload.primary;
@@ -149,7 +101,7 @@ export const activeStepSlice = createSlice({
       state.category = null;
       state.content = [];
       state.color = { primary: "", secondary: "" };
-      state.font = "";
+      state.font = { primary: "", secondary: "" };
       state.templateList = {
         id: null,
         name: null,
@@ -163,10 +115,8 @@ export const activeStepSlice = createSlice({
     },
 
     setTemplateList: (state, action: PayloadAction<templateList>) => {
-      // Destructure the incoming payload to extract id, name, site_category_id, and pages
       const { id, name, site_category_id, pages } = action.payload;
 
-      // Map the pages array to match the expected structure
       const mappedPages = pages.map((page) => ({
         id: page.id,
         title: page.title,
@@ -179,28 +129,26 @@ export const activeStepSlice = createSlice({
         name: page.title,
         status: "",
         slug: page.slug,
-        selected: page.title === "Home" ? true : false, // Home page is always selected
+        selected: page.title === "Home" ? true : false,
       }));
 
-      // Update the state with the new template information
       state.templateList = {
         id,
         name,
         site_category_id,
-        pages: mappedPages, // Store the mapped pages into the templateList
+        pages: mappedPages,
       };
 
-      // Optionally, update the pages in the main state if you want to keep them in sync
       state.pages = mappedPages.map((page) => ({
         name: page.title,
-        status: "", // Initially, set status as empty
+        status: "",
         slug: page.slug,
         selected: false,
       }));
     },
 
     setPages: (state, action: PayloadAction<Page[]>) => {
-      state.pages = action.payload; // Updating pages in Redux
+      state.pages = action.payload;
     },
     updateContactForm: (
       state,
@@ -230,16 +178,13 @@ export const activeStepSlice = createSlice({
       );
 
       if (page) {
-        // Update the page's status
         page.status = action.payload.status;
 
-        // Check if `selected` is provided
         if (action.payload.selected !== undefined) {
-          // Always force the Home page's selected value to be true
           if (page.name === "Home") {
             page.selected = true;
           } else {
-            page.selected = action.payload.selected; // Use the provided selected value for other pages
+            page.selected = action.payload.selected;
           }
         }
       }
@@ -256,15 +201,13 @@ export const activeStepSlice = createSlice({
       //   selected: false, // Initially not selected
       // };
 
-      // Map the incoming templatePages array to match our Redux structure
       const mappedPages = templatePages.map((page: any) => ({
-        name: page.title, // Use title as name
-        status: "", // Initially no status
-        slug: page.slug, // Use the slug from the template page
-        selected: false, // Initially not selected
+        name: page.title,
+        status: "",
+        slug: page.slug,
+        selected: false,
       }));
 
-      // Combine Home page and mapped template pages
       state.pages = [...mappedPages];
     },
 
@@ -281,14 +224,17 @@ export const activeStepSlice = createSlice({
       }
 
       if (page) {
-        page.selected = !page.selected; // Toggling the selection of a page
+        page.selected = !page.selected;
       }
     },
     setFormDetailsLoaded: (state, action: PayloadAction<boolean>) => {
-      state.isFormDetailsLoaded = action.payload; // Update form loaded state
+      state.isFormDetailsLoaded = action.payload;
     },
     setlastStep: (state, action: PayloadAction<string>) => {
       state.lastStep = action.payload;
+    },
+    setStyle: (state, action: PayloadAction<any>) => {
+      state.style = action.payload;
     },
   },
 });
@@ -315,6 +261,7 @@ export const {
   updateContactForm,
   setFormDetailsLoaded,
   setlastStep,
+  setStyle,
 } = activeStepSlice.actions;
 
 export default activeStepSlice.reducer;

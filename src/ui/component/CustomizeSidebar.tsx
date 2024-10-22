@@ -10,7 +10,7 @@ import useStoreContent from "../../hooks/useStoreContent ";
 import {
   FontCombination,
   SelectedColor,
-  ColorCombination,
+  SelectedFont,
 } from "../../types/customdesign.type";
 import FontSelector from "../component/custom-design/FontSelector";
 import ColorSelector from "../component/custom-design//ColorSelector";
@@ -18,61 +18,23 @@ import {
   fetchInitialCustomizationData,
   sendMessageToIframes,
 } from "../../core/utils/design.utils";
-
-const fontCombinations: FontCombination[] = [
-  { label: "Lora/Lato", primaryFont: "Lora", secondaryFont: "" },
-  { label: "Lato/Inter", primaryFont: "Lato", secondaryFont: "" },
-  { label: "Manrope/Inter", primaryFont: "Manrope", secondaryFont: "" },
-  {
-    label: "Red Hat Display/Inter",
-    primaryFont: "Red Hat Display",
-    secondaryFont: "",
-  },
-  {
-    label: "Merriweather/Inter",
-    primaryFont: "Merriweather",
-    secondaryFont: "",
-  },
-  { label: "PT Serif/Inter", primaryFont: "PT Serif", secondaryFont: "" },
-  { label: "Montserrat/Inter", primaryFont: "Montserrat", secondaryFont: "" },
-  {
-    label: "Plus Jakarta Sans/Inter",
-    primaryFont: "Plus Jakarta Sans",
-    secondaryFont: "",
-  },
-  { label: "Open Sans/Inter", primaryFont: "Open Sans", secondaryFont: "" },
-  { label: "Work Sans/Inter", primaryFont: "Work Sans", secondaryFont: "" },
-  { label: "Rubik/Inter", primaryFont: "Rubik", secondaryFont: "" },
-  { label: "Mulish/Inter", primaryFont: "Mulish", secondaryFont: "" },
-  {
-    label: "Kaushan Script/Inter",
-    primaryFont: "Kaushan Script",
-    secondaryFont: "",
-  },
-  { label: "Figtree/Inter", primaryFont: "Figtree", secondaryFont: "" },
-];
-
-const colorCombinations: ColorCombination[] = [
-  { primary: "#1FB68D", secondary: "#EFFFFB" },
-  { primary: "#7F27FF", secondary: "#F5F3FF" },
-  { primary: "#5755FE", secondary: "#F2F2FE" },
-  { primary: "#FFA800", secondary: "#FFFCE5" },
-  { primary: "#16A34A", secondary: "#F0FDF4" },
-  { primary: "#3D065A", secondary: "#F9ECFF" },
-  { primary: "#FF8329", secondary: "#FFF7ED" },
-  { primary: "#0E17FB", secondary: "#F6F6FF" },
-  { primary: "#009FF1", secondary: "#F0F9FF" },
-  { primary: "#FF5151", secondary: "#FEF2F2" },
-];
+import { Font } from "../../types/activeStepSlice.type";
 
 const CustomizeSidebar: React.FC = () => {
   const [selectedColor, setSelectedColor] = useState<SelectedColor>({
     primary: "",
     secondary: "",
   });
-  const [selectedFont, setSelectedFont] = useState<FontCombination | null>(
-    null
+  const fontCombinations = useSelector(
+    (state: RootState) => state.userData.style.fonts || null
   );
+  const previousFont = useSelector((state: RootState) => state.userData.font);
+
+  const [selectedFont, setSelectedFont] = useState<Font>(previousFont);
+  const colorCombinations = useSelector(
+    (state: RootState) => state.userData?.style.color || []
+  );
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
@@ -85,10 +47,10 @@ const CustomizeSidebar: React.FC = () => {
   const storeContent = useStoreContent();
 
   const initialStyles = useSelector((state: RootState) => ({
-    primaryColor: state.userData.color.primary,
-    secondaryColor: state.userData.color.secondary,
-    fontFamily: state.userData.font,
-    logoUrl: state.userData.logo,
+    primaryColor: state.userData.style.defaultColor.primary,
+    secondaryColor: state.userData.style.defaultColor.secondary,
+    primaryFont: state.userData.style.defaultFont.primary,
+    secondaryFont: state.userData.style.defaultFont.secondary,
   }));
 
   useEffect(() => {
@@ -102,13 +64,14 @@ const CustomizeSidebar: React.FC = () => {
     );
   }, [dispatch, getDomainFromEndpoint]);
 
-  const handleFontChange = async (fontCombination: FontCombination) => {
+  const handleFontChange = async (fontCombination: SelectedFont) => {
     setSelectedFont(fontCombination);
-    dispatch(setFont(fontCombination.primaryFont));
+    dispatch(setFont(fontCombination));
     setIsDropdownOpen(false);
 
-    await storeContent({ font: fontCombination.primaryFont });
-    sendMessageToIframes("changeFont", { font: fontCombination.primaryFont });
+    await storeContent({ font: fontCombination });
+    console.log("fontCombinationn", fontCombination);
+    sendMessageToIframes("changeFont", { font: fontCombination });
   };
 
   const handleColorChange = async (color: SelectedColor, store = true) => {
@@ -159,14 +122,38 @@ const CustomizeSidebar: React.FC = () => {
     }
   };
 
-  const resetStyles = () => {
-    dispatch(setFont(initialStyles.fontFamily));
-    sendMessageToIframes("resetStyles", {
-      primary: initialStyles.primaryColor,
-      secondary: initialStyles.secondaryColor,
-      font: initialStyles.fontFamily,
-      logoUrl: initialStyles.logoUrl,
-    });
+  const resetStyles = async (resetType: "color" | "font" | "both") => {
+    if (resetType === "color" || resetType === "both") {
+      const color = {
+        primary: initialStyles.primaryColor,
+        secondary: initialStyles.secondaryColor,
+      };
+      dispatch(
+        setColor({
+          primary: initialStyles.primaryColor,
+          secondary: initialStyles.secondaryColor,
+        })
+      );
+      setSelectedColor(color);
+      await storeContent({ color });
+      sendMessageToIframes("changeGlobalColors", {
+        primary: initialStyles.primaryColor,
+        secondary: initialStyles.secondaryColor,
+      });
+    }
+
+    if (resetType === "font" || resetType === "both") {
+      const font = {
+        primary: initialStyles.primaryFont,
+        secondary: initialStyles.secondaryFont,
+      };
+      dispatch(setFont(font));
+      await storeContent({ font });
+      sendMessageToIframes("changeFont", {
+        font: font,
+      });
+      setSelectedFont(font);
+    }
   };
 
   const nextPage = () => navigate("/final-preview");

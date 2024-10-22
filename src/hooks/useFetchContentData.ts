@@ -13,6 +13,7 @@ import {
   setTemplateList,
   updateContactForm,
   setlastStep,
+  setStyle,
 } from "../Slice/activeStepSlice";
 import useDomainEndpoint from "./useDomainEndpoint";
 import { useCallback } from "react";
@@ -75,7 +76,11 @@ const useFetchContentData = () => {
         dispatch(setTemplatename(data.templatename || ""));
         dispatch(setLogo(data.logo || ""));
         dispatch(setContent(data.content || []));
-        dispatch(setFont(data.font || ""));
+        if (data.font) {
+          dispatch(
+            setFont(JSON.parse(data.font) || { primary: "", secondary: "" })
+          );
+        }
 
         if (data.color) {
           const parsedColor = JSON.parse(data.color);
@@ -84,7 +89,10 @@ const useFetchContentData = () => {
 
         if (data.templateList) {
           const parsedTemplateList = JSON.parse(data.templateList);
+          const Style = parsedTemplateList?.styles;
           dispatch(setTemplateList(parsedTemplateList || []));
+          console.log("parsed Template List", Style);
+          dispatch(setStyle(Style));
         }
 
         if (data.contactform) {

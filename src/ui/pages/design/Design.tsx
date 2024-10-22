@@ -14,6 +14,7 @@ import {
   setTemplateId,
   setTemplatename,
   setTemplateList,
+  setStyle,
 } from "../../../Slice/activeStepSlice";
 import Popup from "../../component/dialogs/Popup";
 
@@ -232,6 +233,17 @@ function Design() {
       );
       await saveSelectedTemplate(template, endpoint);
       console.log("Template saved successfully to the backend.", template);
+
+      const { styles } = template;
+      if (styles) {
+        const styleData = {
+          defaultColor: styles.defaultColor,
+          defaultFont: styles.defaultFont,
+          color: styles.color,
+          fonts: styles.fonts,
+        };
+        dispatch(setStyle(styleData));
+      }
     } catch (error) {
       console.error("Error saving template to backend:", error);
     }

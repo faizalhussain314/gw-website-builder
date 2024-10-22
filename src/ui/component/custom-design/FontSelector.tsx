@@ -1,11 +1,16 @@
 import React from "react";
-import { FontCombination } from "../../../types/customdesign.type";
+// import { Font } from "../../../types/activeStepSlice.type";
+
+interface Font {
+  primary: string;
+  secondary: string;
+}
 
 interface FontSelectorProps {
-  fontCombinations: FontCombination[];
-  selectedFont: FontCombination | null;
-  handleFontChange: (font: FontCombination) => void;
-  resetStyles: () => void;
+  fontCombinations: Font[];
+  selectedFont: Font | null;
+  handleFontChange: (font: Font) => void;
+  resetStyles: (resetType: "color" | "font" | "both") => void;
   isDropdownOpen: boolean;
   setIsDropdownOpen: (open: boolean) => void;
   dropdownRef: React.RefObject<HTMLDivElement>;
@@ -25,7 +30,7 @@ const FontSelector: React.FC<FontSelectorProps> = ({
       <div className="flex w-full justify-between items-center mb-2.5">
         <label className="block text-base font-semibold">Font Pair</label>
         <span
-          onClick={resetStyles}
+          onClick={() => resetStyles("font")}
           className="text-gray-400 text-base font-medium cursor-pointer hover:text-palatinate-blue-600"
         >
           Reset
@@ -36,7 +41,10 @@ const FontSelector: React.FC<FontSelectorProps> = ({
           onClick={() => setIsDropdownOpen(!isDropdownOpen)}
           className="w-full p-2 border rounded-md flex items-center justify-between bg-white text-left focus:border-palatinate-blue-600"
         >
-          {selectedFont ? selectedFont.label : "Choose Your Font"}
+          {selectedFont && (selectedFont.primary || selectedFont.secondary)
+            ? `${selectedFont.primary}/${selectedFont.secondary}`
+            : "Choose Your Font"}
+
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="24"
@@ -60,13 +68,13 @@ const FontSelector: React.FC<FontSelectorProps> = ({
           <div className="absolute z-10 w-full bg-white border rounded-md mt-1 max-h-60 overflow-y-auto p-2.5">
             {fontCombinations.map((font) => (
               <div
-                key={font.label}
+                key={font.primary}
                 className={`p-2.5 hover:bg-[#F9FAFB] cursor-pointer ${
-                  selectedFont?.label === font.label ? "bg-[#F9FAFB]" : ""
+                  selectedFont?.primary === font.primary ? "bg-[#F9FAFB]" : ""
                 }`}
                 onClick={() => handleFontChange(font)}
               >
-                {font.label}
+                {font.primary}/{font.secondary}
               </div>
             ))}
           </div>

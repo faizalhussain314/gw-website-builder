@@ -29,7 +29,7 @@ export interface TemplateData {
   plugins: Plugin[];
   pages: ApiPage[];
   template_import_urls: TemplateImportUrl[];
-  sitelogo?: "string";
+  site_logo?: "string";
 }
 
 export interface ApiStep {
