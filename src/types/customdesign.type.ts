@@ -1,7 +1,7 @@
 export type FontCombination = {
-  label: string;
-  primaryFont: string;
-  secondaryFont: string;
+  label?: string;
+  primary: string;
+  secondary: string;
 };
 
 export type SelectedColor = {
@@ -13,3 +13,8 @@ export interface ColorCombination {
   primary: string;
   secondary: string;
 }
+
+export type SelectedFont = {
+  primary: string;
+  secondary: string;
+};

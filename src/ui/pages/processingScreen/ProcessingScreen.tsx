@@ -19,6 +19,8 @@ import {
   mapApiPageToReduxPage,
 } from "../../../types/processingpage.type";
 
+const API_URL = import.meta.env.VITE_API_BACKEND_URL;
+
 const ProcessingScreen: React.FC = () => {
   const [progress, setProgress] = useState(0);
   const [totalSteps, setTotalSteps] = useState(0);
@@ -42,7 +44,7 @@ const ProcessingScreen: React.FC = () => {
   const fetchTemplates = async (): Promise<TemplateData | null> => {
     try {
       const response = await fetch(
-        `https://dev.gravitywrite.com/api/getTemplates?template_id=${template_id}`
+        `${API_URL}getTemplates?template_id=${template_id}`
       );
       if (!response.ok) throw new Error("Failed to fetch templates");
       const data = await response.json();
@@ -87,7 +89,7 @@ const ProcessingScreen: React.FC = () => {
       return;
     }
 
-    const { plugins, pages, template_import_urls, sitelogo } = templateData;
+    const { plugins, pages, template_import_urls, site_logo } = templateData;
 
     // Map API pages to Redux pages
     const reduxPages = pages.map((apiPage: ApiPage) =>
@@ -181,10 +183,12 @@ const ProcessingScreen: React.FC = () => {
       setProgress(((apiSteps.length + i + 1) / stepsCount) * 100);
     }
 
-    const logoToUse = logo || sitelogo;
+    const logoToUse = logo || site_logo;
+    console.log("this is site logo", logoToUse);
 
     if (logoToUse) {
       // Import site logo if available
+      console.log("true executed");
       setStatus("Importing Site Logo");
       await postData("/wp-json/custom/v1/import-sitelogo", {
         fileurl: logoToUse,

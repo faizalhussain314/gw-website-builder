@@ -1,6 +1,7 @@
 import { Dispatch } from "redux";
 import { setColor, setFont, setLogo } from "../../Slice/activeStepSlice";
-import { FontCombination, SelectedColor } from "../../types/customdesign.type";
+import { SelectedColor, SelectedFont } from "../../types/customdesign.type";
+import { Font } from "../../types/activeStepSlice.type";
 
 interface FormDetailsResponse {
   color?: string;
@@ -11,7 +12,7 @@ interface FormDetailsResponse {
 interface SendMessagePayload {
   primary?: string;
   secondary?: string;
-  font?: string;
+  font?: SelectedFont;
   logoUrl?: string;
 }
 
@@ -19,7 +20,7 @@ export const fetchInitialCustomizationData = async (
   getDomainFromEndpoint: (endpoint: string) => string,
   dispatch: Dispatch,
   setSelectedColor: (color: SelectedColor) => void,
-  setSelectedFont: (font: FontCombination | null) => void,
+  setSelectedFont: (font: SelectedFont | null) => void,
   setLogoUrl: (url: string | null) => void,
   storeContent: (content: {
     logo?: string;
@@ -53,13 +54,11 @@ export const fetchInitialCustomizationData = async (
 
       // Handle font data
       if (result.font) {
-        dispatch(setFont(result.font));
-        setSelectedFont({
-          label: result.font,
-          primaryFont: result.font,
-          secondaryFont: "",
-        }); // Adjust this based on your actual structure
-        sendMessageToIframes("changeFont", { font: result.font });
+        const selectedfont: SelectedFont = JSON.parse(result.font); // Parse the font string to an object
+
+        setSelectedFont(selectedfont);
+        dispatch(setFont(selectedfont));
+        sendMessageToIframes("changeFont", { font: selectedfont });
       }
 
       // Handle logo data
