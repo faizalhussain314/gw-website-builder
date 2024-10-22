@@ -63,7 +63,7 @@ function Contact() {
       })
     );
 
-    const url = getDomainFromEndpoint("wp-json/custom/v1/update-form-details");
+    const url = getDomainFromEndpoint("/wp-json/custom/v1/update-form-details");
     try {
       const response = await fetch(url, {
         method: "POST",
