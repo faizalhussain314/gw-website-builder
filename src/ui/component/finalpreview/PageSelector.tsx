@@ -5,15 +5,17 @@ import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Tooltip from "@mui/material/Tooltip";
 import { updateReduxPage } from "../../../Slice/activeStepSlice";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState } from "../../../store/store";
 
 type Props = {
   pages: Page[];
   selectedPage: string | null;
   isContentGenerating: boolean;
   togglePage: (page: string) => void;
-  handleNext: () => void;
-  handleSkipPage: () => void;
+  handleNext: (page: string) => void;
+  handleSkipPage: (page: string) => void;
+  handleAddPage: (page:string) => void;
   setShowPopup: (show: boolean) => void;
   previousClicked: boolean;
   handlePageUpdate: (
@@ -42,6 +44,7 @@ const PageSelector: React.FC<Props> = ({
   togglePage,
   handleNext,
   handleSkipPage,
+  handleAddPage,
   setShowPopup,
   previousClicked,
   handlePrevious,
@@ -57,6 +60,10 @@ const PageSelector: React.FC<Props> = ({
   };
 
   const dispatch = useDispatch();
+
+  const currentPages = useSelector(
+    (state: RootState) => state.userData.pages
+  );
 
   const handlePageClick = (pageName: string) => {
     togglePage(pageName);
@@ -80,7 +87,7 @@ const PageSelector: React.FC<Props> = ({
       setPages(updatedPages);
 
       // Proceed to the next page
-      handleSkipPage();
+      handleSkipPage(pageName);
     }
   };
   const handlePageChange = (slug: string, newSelectedValue: boolean) => {
@@ -141,12 +148,12 @@ const PageSelector: React.FC<Props> = ({
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center">
-                <div className="custom-checkbox">
+                <div className="custom-checkbox" onClick={() => {handleAddPage(page.name);}}>
                   <input
                     id={`checkbox-${page.slug}`}
                     type="checkbox"
                     className="mr-4 flex items-center w-4 h-4"
-                    checked={page.name === "Home" ? true : page.selected}
+                    checked={page.name === "Home" ? true : page.selected === true ? true : page.status ? true : false}
                     onChange={() => handlePageChange(page.slug, !page.selected)} // Make sure the slug is passed to toggle selection
                   />
                 </div>
@@ -165,7 +172,7 @@ const PageSelector: React.FC<Props> = ({
                         : "bg-[#d1d5db]"
                     }`}
                   >
-                    {page.status}
+                    {page.name == "Home" ? "Generated" : page.status}
                   </span>
                 )}
                 {/* {(page.status === "Generated" || selectedPage === page.name) &&
@@ -233,7 +240,7 @@ const PageSelector: React.FC<Props> = ({
                         if (isContentGenerating) {
                           showWarningToast();
                         } else {
-                          handleNext();
+                          handleNext(page.name);
                         }
                       }}
                       disabled={isContentGenerating || isLoading}
