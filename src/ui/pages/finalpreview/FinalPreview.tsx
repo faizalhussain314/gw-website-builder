@@ -27,6 +27,9 @@ import useDomainEndpoint from "../../../hooks/useDomainEndpoint";
 // import usePageData from "../../../hooks/usePageData";
 import { savePagesToDB } from "../../../infrastructure/api/wordpress-api/final-preview/savePagesApi.api";
 import { updateReduxPage } from "../../../Slice/activeStepSlice";
+import CustomizePopup from "../../component/dialogs/CustomizePopup";
+import { deletePage } from "../../../infrastructure/api/wordpress-api/final-preview/deletePage.api";
+import { deleteStyle } from "../../../infrastructure/api/wordpress-api/final-preview/deleteStyle.api";
 
 const FinalPreview: React.FC = () => {
   const reduxPages =
@@ -67,7 +70,9 @@ const FinalPreview: React.FC = () => {
   const [generatedPage, setGeneratedPage] = useState<any>({});
   const [pageContents, setPageContents] = useState<any>({});
   const [showPopup, setShowPopup] = useState(false);
+  const [resetPopup, setresetPopup] = useState(false);
   const [previousClicked, setPreviousClicked] = useState(false);
+  const [buttonLoader, setButtonLoader] = useState(false);
   const [iframeSrc, setIframeSrc] = useState<string>("");
   const [currentContent, setCurrentContent] = useState<string>("");
   const [showUpgradePopup, setShowUpgradePopup] = useState(false);
@@ -103,6 +108,10 @@ const FinalPreview: React.FC = () => {
     (state: RootState) => state.userData.isFormDetailsLoaded
   );
 
+  const currentPages = useSelector(
+    (state: RootState) => state.userData.pages
+  );
+
   // const [pages, setPages] = useState<Page[]>([
   //   { name: "Home", status: "", slug: "homepage", selected: false },
   //   { name: "About Us", status: "", slug: "about", selected: false },
@@ -119,7 +128,12 @@ const FinalPreview: React.FC = () => {
   const toggleDropdown = () => {
     setIsOpen(!isOpen);
   };
-
+  const handleContinue = () => {
+    setresetPopup(false);
+  };
+  const handleCustomize = async () => {
+    deleteGeneratedPage();
+  };
   const handleViewChange = (mode: string) => {
     setViewMode(mode);
     setIsOpen(false);
@@ -239,13 +253,13 @@ const FinalPreview: React.FC = () => {
           html_data: JSON.stringify(htmlContent),
         });
 
-        if (response.status === 200) {
-          console.log("HTML content stored successfully:", response.data);
-        } else {
-          console.error("Failed to store HTML content:", response);
-        }
+        // if (response.status === 200) {
+        //   console.log("HTML content stored successfully:", response.data);
+        // } else {
+        //   console.error("Failed to store HTML content:", response);
+        // }
       } catch (error) {
-        console.error("Error storing HTML content:", error);
+        // console.error("Error storing HTML content:", error);
       }
     },
     [getDomainFromEndpoint, templateName]
@@ -301,7 +315,7 @@ const FinalPreview: React.FC = () => {
               setShowIframe(false);
               setIsPageGenerated(true);
             }
-            console.log("api triggered");
+            // console.log("api triggered");
 
             return updatedPages;
           });
@@ -340,23 +354,23 @@ const FinalPreview: React.FC = () => {
           template_name: templateName,
           json_content: jsonContent,
         });
-        console.log(
-          "page name",
-          pageName,
-          "this is current page from state",
-          selectedPage // This is fine for logging the current selectedPage
-        );
+        // console.log(
+        //   "page name",
+        //   pageName,
+        //   "this is current page from state",
+        //   selectedPage // This is fine for logging the current selectedPage
+        // );
 
-        if (response.status === 200) {
-          console.log(
-            "Old and new content stored successfully:",
-            response.data
-          );
-        } else {
-          console.error("Failed to store old and new content:", response);
-        }
+        // if (response.status === 200) {
+        //   console.log(
+        //     "Old and new content stored successfully:",
+        //     response.data
+        //   );
+        // } else {
+        //   console.error("Failed to store old and new content:", response);
+        // }
       } catch (error) {
-        console.error("Error storing old and new content:", error);
+        // console.error("Error storing old and new content:", error);
       }
     },
     [getDomainFromEndpoint, templateName]
@@ -369,7 +383,7 @@ const FinalPreview: React.FC = () => {
         ...prevContent,
         [pageName]: content,
       }));
-      console.log("page name", pageName);
+      // console.log("page name", pageName);
 
       // Store the old and new content in the backend
       storeOldNewContent(pageName, content);
@@ -501,6 +515,8 @@ const FinalPreview: React.FC = () => {
     const currentPageIndex = pages.findIndex(
       (page) => page.name === selectedPage
     );
+    console.log(currentPageIndex);
+    
 
     setfindIndex(currentPageIndex);
     sendNonClickable();
@@ -521,7 +537,7 @@ const FinalPreview: React.FC = () => {
     setLoaded(true);
 
     if (fontFamily) {
-      console.log(`Applying font: ${fontFamily}`);
+      // console.log(`Applying font: ${fontFamily}`);
 
       iframe.contentWindow.postMessage(
         { type: "changeFont", font: fontFamily },
@@ -529,10 +545,10 @@ const FinalPreview: React.FC = () => {
       );
     }
 
-    console.log("color", Color.primary, Color.secondary);
+    // console.log("color", Color.primary, Color.secondary);
 
     if (Color.primary && Color.secondary) {
-      console.log("this error not shown");
+      // console.log("this error not shown");
       iframe.contentWindow.postMessage(
         {
           type: "changeGlobalColors",
@@ -551,7 +567,7 @@ const FinalPreview: React.FC = () => {
       const existingContent = generatedPage[selectedPage][0];
       updateIframeSrc(existingContent);
       setShowIframe(false);
-      console.log("first block executed");
+      // console.log("first block executed");
     } else if (selectedPage && !generatedPage[selectedPage]) {
       const fetchresult = await fetchAndStorePageData(
         selectedPage,
@@ -596,7 +612,7 @@ const FinalPreview: React.FC = () => {
         // }
       }
     } else {
-      console.log("third block executed");
+      // console.log("third block executed");
       if (selectedPage && generatedPage[selectedPage] && isPageGenerated) {
         const existingContent = generatedPage[selectedPage][0];
         updateIframeSrc(existingContent);
@@ -701,14 +717,14 @@ const FinalPreview: React.FC = () => {
     }
   };
 
-  const handlePageNavigation = (action: "next" | "skip") => {
+  const handlePageNavigation = (action: "next" | "skip" | "add",currentPage:any) => {
     if (isContentGenerating) {
       showWarningToast();
       return;
     }
 
     const currentPageIndex = pages.findIndex(
-      (page) => page.name === selectedPage
+      (page) => page.name === currentPage
     );
     if (currentPageIndex !== -1) {
       const updatedPages = [...pages];
@@ -727,13 +743,36 @@ const FinalPreview: React.FC = () => {
         updatedPages[currentPageIndex].status = "Skipped";
         updatedPages[currentPageIndex].selected = false;
       }
-      // updatedPages[currentPageIndex].selected = true;
-
+      else if (action === "add") {
+        if(currentPages[currentPageIndex].status == ''){
+        updatedPages[currentPageIndex].status = "Added";
+        updatedPages[currentPageIndex].selected = true;
+        dispatch(
+          updateReduxPage({
+            name: updatedPages[currentPageIndex].name, // Page name
+            status: "Added", // Mark as Added
+            selected: true, // Set as selected
+          })
+        );
+      }
+      if(currentPages[currentPageIndex].status == 'Added'){
+        updatedPages[currentPageIndex].status = "";
+        updatedPages[currentPageIndex].selected = false;
+        dispatch(
+          updateReduxPage({
+            name: updatedPages[currentPageIndex].name, // Page name
+            status: "", // Mark as Added
+            selected: false, // Set as not selected
+          })
+        );
+      }
+      }
+      updatedPages[currentPageIndex].selected = true;
       setPages(updatedPages);
 
       const nextPageIndex = currentPageIndex + 1;
       if (nextPageIndex < updatedPages.length) {
-        setSelectedPage(updatedPages[nextPageIndex].name);
+        // setSelectedPage(updatedPages[nextPageIndex].name);
 
         const nextPageContent = generatedPage[updatedPages[nextPageIndex].name];
         if (nextPageContent) {
@@ -766,9 +805,9 @@ const FinalPreview: React.FC = () => {
       prevPages.map((page) => {
         if (page.name === pageName) {
           // Debugging log to check if the condition matches
-          console.log(
-            `Updating ${pageName}: status=${status}, selected=${selected}`
-          );
+          // console.log(
+          //   `Updating ${pageName}: status=${status}, selected=${selected}`
+          // );
           return { ...page, status, selected };
         }
         return page;
@@ -781,7 +820,6 @@ const FinalPreview: React.FC = () => {
   };
   const sendNonClickable = () => {
     const iframe = document.getElementById("myIframe") as HTMLIFrameElement;
-    console.log("event triggered");
     iframe.contentWindow?.postMessage(
       {
         type: "nonClickable",
@@ -842,14 +880,17 @@ const FinalPreview: React.FC = () => {
     }
   };
 
-  const handleNext = () => {
-    handlePageNavigation("next");
-
+  const handleNext = (page:string) => {
+    handlePageNavigation("next",page);
     selectNextPage();
   };
 
-  const handleSkipPage = () => {
-    handlePageNavigation("skip");
+  const handleSkipPage = (page:string) => {
+    handlePageNavigation("skip",page);
+  };
+
+  const handleAddPage = (page:string) => {
+    handlePageNavigation("add",page);
   };
 
   // Effect to handle iframe resizing based on view mode
@@ -907,7 +948,7 @@ const FinalPreview: React.FC = () => {
       } else if (event.data.type === "oldNewContent") {
         const pageName = event.data.pageName || selectedPage || "";
         handleOldNewContent(pageName, event.data.content);
-        console.log("log from event handler", pageName);
+        // console.log("log from event handler", pageName);
       }
     };
 
@@ -938,11 +979,19 @@ const FinalPreview: React.FC = () => {
   const savePageEndPoint = getDomainFromEndpoint(
     "/wp-json/custom/v1/save-generated-page-status"
   );
+  const deletePageEndPoint = getDomainFromEndpoint(
+    "/wp-json/custom/v1/remove-all-generated-data"
+  );
+  const deleteStyleEndPoint = getDomainFromEndpoint(
+    "/wp-json/custom/v1/delete-all-styles"
+  );
   useEffect(() => {
+    // console.log(pages,findIndex);
+    
     const storePagesInDB = async () => {
       if (savePageEndPoint) {
         try {
-          await savePagesToDB(savePageEndPoint, pages, findIndex); // Pass the endpoint and pages to savePagesToDB
+          await savePagesToDB(savePageEndPoint, pages, findIndex != -1 ? findIndex : 0); // Pass the endpoint and pages to savePagesToDB
         } catch (error) {
           console.error("Failed to store pages:", error);
         }
@@ -957,6 +1006,29 @@ const FinalPreview: React.FC = () => {
       setPages(validReduxPages); // Always take validReduxPages when available
     }
   }, [validReduxPages]);
+
+  const deleteGeneratedPage = async () => {
+    setButtonLoader(true);
+    if (deleteStyleEndPoint) {
+      try {
+        await deleteStyle(deleteStyleEndPoint); // delete style
+        if (deletePageEndPoint) {
+          try {
+            let response = await deletePage(deletePageEndPoint); // delete generated file
+            if (response) {
+              setButtonLoader(false)
+              navigate("/custom-design");
+              setresetPopup(false);
+            }
+          } catch (error) {
+            console.error("Failed to delete pages:", error);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to delete pages:", error);
+      }
+    }
+  };
 
   return (
     <div className="h-screen flex font-[inter] w-screen">
@@ -980,11 +1052,11 @@ const FinalPreview: React.FC = () => {
             <div className="px-5 py-4 w-full flex flex-col justify-center">
               <div className="flex items-center justify-between pb-2.5">
                 <h1 className="text-xl font-semibold">Website Preview</h1>
-                <Link to={"/custom-design"}>
-                  <button className="bg-button-bg-secondary hover:bg-palatinate-blue-600 hover:text-white px-4 font-medium py-2 rounded-md text-sm cursor-pointer">
+                {/* <Link to={"/custom-design"}> */}
+                  <button className="bg-button-bg-secondary hover:bg-palatinate-blue-600 hover:text-white px-4 font-medium py-2 rounded-md text-sm cursor-pointer" onClick={() => {setresetPopup(true)}}>
                     Back
                   </button>
-                </Link>
+                {/* </Link> */}
               </div>
               <span className="text-base text-[#88898A] font-normal">
                 Preview your website’s potential with our interactive
@@ -998,6 +1070,7 @@ const FinalPreview: React.FC = () => {
               togglePage={togglePage}
               handleNext={handleNext}
               handleSkipPage={handleSkipPage}
+              handleAddPage={handleAddPage}
               setShowPopup={setShowPopup}
               previousClicked={previousClicked}
               handlePrevious={handlePrevious}
@@ -1110,6 +1183,14 @@ const FinalPreview: React.FC = () => {
         </main>
       </div>
       <ToastContainer />
+      {resetPopup && (
+        <CustomizePopup
+          onClose={() => setresetPopup(false)}
+          alertType="websiteCreation"
+          onContinue={handleContinue}
+          onCreateFromScratch={handleCustomize}
+        />
+      )}
     </div>
   );
 };

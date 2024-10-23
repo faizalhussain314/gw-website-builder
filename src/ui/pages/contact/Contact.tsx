@@ -24,7 +24,11 @@ function Contact() {
     phoneNumber: "",
     address: "",
   });
-
+  const [formError, setFormError] = useState({
+    email: "",
+    phoneNumber: "",
+    address: "",
+  });
   const { getDomainFromEndpoint } = useDomainEndpoint();
 
   const navigate = useNavigate();
@@ -41,12 +45,51 @@ function Contact() {
     }
   }, [ContactFormRedux]);
 
+  const validatePhoneNumber = () => {
+    if(formData.phoneNumber?.length < 10 || formData.phoneNumber?.length > 10){
+      setFormError((prevData) => ({
+        ...prevData,
+        phoneNumber: "Enter valid phone number",
+      }));
+  }
+  else{
+    setFormError((prevData) => ({
+      ...prevData,
+      phoneNumber: "",
+    }));
+  }
+  }
+  const validateEmail = () => {
+    let validEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)
+    if (!validEmail) {
+      setFormError((prevData) => ({
+        ...prevData,
+        email: "Enter valid email address",
+      }));
+    }
+    else {
+      setFormError((prevData) => ({
+        ...prevData,
+        email: "",
+      }));
+    }
+  }
+
   const handleChange = (e) => {
     const { name, value } = e.target;
+    let validInput = false;
+    if(name == "phoneNumber"){
+      validInput = /^[0-9]+$/.test(value)
+    }
+    else {
+      validInput = true
+    }
+    if(validInput === true){
     setFormData((prevData) => ({
       ...prevData,
       [name]: value,
     }));
+    }
   };
 
   useEffect(() => {
@@ -55,6 +98,7 @@ function Contact() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if(formData.email && formData.phoneNumber && !formError.email && !formError.phoneNumber){
     dispatch(
       updateContactForm({
         email: formData.email,
@@ -81,10 +125,12 @@ function Contact() {
       navigate("/design");
       return null;
     }
+  }
   };
 
   return (
     <MainLayout>
+      <form onSubmit={handleSubmit}>
       <div className="bg-[#F9FCFF] w-full p-10">
         <h1 className="text-txt-black-600 font-semibold text-3xl font-[inter] mb-2.5">
           How can people get in touch with {businessName} {category}
@@ -112,8 +158,10 @@ function Contact() {
                   placeholder="Enter your email"
                   onChange={handleChange}
                   value={formData.email}
-                  className="block w-full rounded-lg bg-white px-4 py-2.5 border border-[rgba(205, 212, 219, 1)] w-[720px]  focus:border-palatinate-blue-500 active:border-palatinate-blue-500 active:outline-palatinate-blue-500 focus:outline-palatinate-blue-500"
+                  onBlur={() => {validateEmail()}}
+                  className={`block w-full rounded-lg bg-white px-4 py-2.5 w-[720px] ${formError.email !== '' ? "border border-[red]" : "border border-[rgba(205, 212, 219, 1)] focus:border-palatinate-blue-500 active:border-palatinate-blue-500 active:outline-palatinate-blue-500 focus:outline-palatinate-blue-500"}`}
                 />
+                <span className="mt-2 text-red-600">{formError?.email}</span>
               </div>
             </div>
             <div className="sm:col-span-2">
@@ -133,8 +181,10 @@ function Contact() {
                   placeholder="Enter your Phone number"
                   onChange={handleChange}
                   value={formData.phoneNumber}
-                  className="block w-full rounded-lg bg-white px-4 py-2.5 border border-[rgba(205, 212, 219, 1)] w-[720px]  focus:border-palatinate-blue-500 active:border-palatinate-blue-500 active:outline-palatinate-blue-500 focus:outline-palatinate-blue-500"
+                  onBlur={() => {validatePhoneNumber()}}
+                  className={`block w-full rounded-lg bg-white px-4 py-2.5 w-[720px] ${formError.phoneNumber !== '' ? "border border-[red]" : "border border-[rgba(205, 212, 219, 1)] focus:border-palatinate-blue-500 active:border-palatinate-blue-500 active:outline-palatinate-blue-500 focus:outline-palatinate-blue-500"}`}
                 />
+                <span className="mt-2 text-red-600">{formError?.phoneNumber}</span>
               </div>
             </div>
           </div>
@@ -170,7 +220,7 @@ function Contact() {
             {/* <Link to={"/design"}> */}
             <button
               className="tertiary px-[30px] py-[15px] text-base text-white sm:mt-2 font-medium rounded-md w-[150px] "
-              onClick={handleSubmit}
+              type="submit"
             >
               Continue
             </button>
@@ -185,6 +235,7 @@ function Contact() {
           </Link>
         </div>
       </div>
+      </form>
     </MainLayout>
   );
 }
