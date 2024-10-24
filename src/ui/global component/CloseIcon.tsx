@@ -1,5 +1,7 @@
 function CloseIcon() {
-  const handleClose = () => {};
+  const handleClose = () => {
+    window.location.href = "/wp-admin/admin.php?page=gravitywrite_settings";
+  };
   return (
     <div
       onClick={handleClose}

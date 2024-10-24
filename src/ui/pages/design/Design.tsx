@@ -15,8 +15,12 @@ import {
   setTemplatename,
   setTemplateList,
   setStyle,
+  setColor,
+  setFont,
 } from "../../../Slice/activeStepSlice";
 import Popup from "../../component/dialogs/Popup";
+import StyleRemoveWarning from "../../component/dialogs/StyleRemoveWarning";
+import useStoreContent from "../../../hooks/useStoreContent ";
 
 const API_URL = import.meta.env.VITE_API_BACKEND_URL;
 
@@ -57,12 +61,28 @@ function Design() {
   const dispatch = useDispatch();
   const { getDomainFromEndpoint } = useDomainEndpoint();
   const [hasFetched, setHasFetched] = useState(false);
+  const [warning, setWarning] = useState(false);
+  const [templateChange, setTemplateChange] = useState(false);
+  const [warnLoader, setWarnLoader] = useState(false);
+  const previousTemplate = useSelector(
+    (state: RootState) => state.userData.templateList
+  );
+  const [newTemplate, setNewTemplate] = useState(null);
+  const storeContent = useStoreContent();
 
   const handlePopupClose = () => {
     setshowValidationError(true);
     setShowPopup(false);
   };
 
+  const previousSelectedTemplate = useSelector(
+    (state: RootState) => state?.userData?.templateList
+  );
+  const previousFont = useSelector((state: RootState) => state?.userData?.font);
+  const previousColor = useSelector(
+    (state: RootState) => state?.userData?.color
+  );
+  const [isLoading, setIsLoading] = useState(false);
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
     setText(e.target.value); // Set the input text for debounce
@@ -120,6 +140,27 @@ function Design() {
   //   fetchTemplates();
   //   // }
   // }, [debouncedValue, dispatch]);
+  const applyTemplateSelection = async (index: number, template: any) => {
+    setSelectedTemplateId(template.id);
+    dispatch(setTemplateId(template.id));
+    dispatch(setTemplatename(template.name));
+    dispatch(setTemplateList(template));
+    dispatch(setStyle(template.styles)); // Apply new style
+
+    // Save the selected template via API call
+    const endpoint = getDomainFromEndpoint(
+      "wp-json/custom/v1/update-form-details"
+    );
+    try {
+      await saveSelectedTemplate(template, endpoint);
+      console.log("Template saved successfully to the backend.", template);
+    } catch (error) {
+      console.error("Error saving template to backend:", error);
+    }
+
+    // Call handleBoxClick to ensure the state is properly updated
+    handleBoxClick(index, template, template.id); // Restore handleBoxClick usage
+  };
 
   const fetchSelectedTemplate = async () => {
     if (!hasFetched) {
@@ -140,7 +181,7 @@ function Design() {
         if (parsedTemplate.name) {
           setshowValidationError(true);
         }
-        setSelectedTemplateId(parsedTemplate.id); // Save the ID for highlighting
+        setSelectedTemplateId(parsedTemplate.id);
 
         dispatch(setTemplateId(parsedTemplate.id)); // Update Redux state
         dispatch(setTemplatename(parsedTemplate.name)); // Update Redux state
@@ -212,44 +253,30 @@ function Design() {
     }
   };
 
-  // Fetch the template list from API on component mount
   useEffect(() => {
     if (!hasFetched) {
-      fetchTemplateList(); // Fetch only if not already fetched
-      setHasFetched(true); // Prevent multiple fetches
+      fetchTemplateList();
+      setHasFetched(true);
     }
   }, [hasFetched]);
 
   const handleTemplateSelection = async (index: number, template: any) => {
-    setShowPopup(false); // Close any popups
+    setShowPopup(false);
     setshowValidationError(true);
-
-    // Handle template selection logic
     handleBoxClick(index, template, template.id);
 
-    try {
-      const endpoint = getDomainFromEndpoint(
-        "wp-json/custom/v1/update-form-details"
-      );
-      await saveSelectedTemplate(template, endpoint);
-      console.log("Template saved successfully to the backend.", template);
-
-      const { styles } = template;
-      if (styles) {
-        const styleData = {
-          defaultColor: styles.defaultColor,
-          defaultFont: styles.defaultFont,
-          color: styles.color,
-          fonts: styles.fonts,
-        };
-        dispatch(setStyle(styleData));
-      }
-    } catch (error) {
-      console.error("Error saving template to backend:", error);
+    if (
+      template.id !== previousTemplate.id &&
+      (previousFont.primary || previousColor.primary)
+    ) {
+      setWarning(true);
+      setNewTemplate({ index, template });
+      return;
     }
+
+    await applyTemplateSelection(index, template);
   };
 
-  // Fetch selected template from the API if not found in Redux state
   useEffect(() => {
     fetchSelectedTemplate();
   }, [hasFetched, getDomainFromEndpoint, templateList, handleBoxClick]);
@@ -260,6 +287,10 @@ function Design() {
   //   console.log("Selected Template:", template); // You can use this state later
   // };
   const handleContinue = () => {
+    if (templateChange) {
+      setWarning(true);
+      return;
+    }
     if (!activeTemplate?.name) {
       setshowValidationError(true);
     } else {
@@ -267,6 +298,31 @@ function Design() {
       setShowPopup(true);
     }
   };
+
+  const handleWarningContinue = async () => {
+    setIsLoading(true);
+    try {
+      dispatch(setColor({ primary: "", secondary: "" }));
+      dispatch(setFont({ primary: "", secondary: "" }));
+      await storeContent({ color: { primary: "", secondary: "" } });
+      await storeContent({ font: { primary: "", secondary: "" } });
+
+      if (newTemplate) {
+        await applyTemplateSelection(newTemplate.index, newTemplate.template);
+      }
+
+      setWarning(false);
+    } catch (error) {
+      console.error("Error while changing template:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleWarningClose = () => {
+    setWarning(false);
+  };
+
   return (
     <MainLayout>
       {showPopup && (
@@ -275,6 +331,13 @@ function Design() {
           description={description}
           onClose={handlePopupClose}
           secondDescription={description2}
+        />
+      )}
+      {warning && (
+        <StyleRemoveWarning
+          onClose={handleWarningClose}
+          onContinue={handleWarningContinue}
+          isLoading={isLoading}
         />
       )}
 

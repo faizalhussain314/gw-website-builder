@@ -231,6 +231,9 @@ const ProcessingScreen: React.FC = () => {
           100
       );
     }
+    // Applying changing the contact details
+    setStatus("changing the contact details");
+    await postData("/wp-json/custom/v1/replace-user-content", {});
 
     // Applying color, font, and logo changes
     setStatus("Applying color, font, and logo changes");

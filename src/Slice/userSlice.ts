@@ -4,12 +4,18 @@ interface UserState {
   username: string;
   plan: string;
   websiteGenerationLimit: number;
+  gravator: string;
+  email: string;
+  generatedSite: number;
 }
 
 const initialState: UserState = {
   username: "",
   plan: "Free",
-  websiteGenerationLimit: 2, // Assuming the default limit for free plan
+  websiteGenerationLimit: 0,
+  gravator: "",
+  email: "",
+  generatedSite: 0,
 };
 
 export const userSlice = createSlice({

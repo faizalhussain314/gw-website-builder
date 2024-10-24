@@ -21,31 +21,40 @@ function CustomDesign() {
       for (let i = 0; i < iframes.length; i++) {
         const iframe = iframes[i];
 
-        if (type == "changeGlobalColors") {
-          const iframes = document.getElementsByTagName("iframe");
-          if (payload.primary || payload.secondary) {
-            for (let i = 0; i < iframes.length; i++) {
-              const iframe = iframes[i];
-              iframe?.contentWindow?.postMessage(
-                {
-                  type: "changeGlobalColors",
-                  primaryColor: payload.primary,
-                  secondaryColor: payload.secondary,
-                },
-                "*"
-              );
-            }
-          }
+        // Check the type and send the appropriate post message only if the values are not empty
+        if (
+          type === "changeGlobalColors" &&
+          (payload.primary || payload.secondary)
+        ) {
+          iframe?.contentWindow?.postMessage(
+            {
+              type: "changeGlobalColors",
+              primaryColor: payload.primary,
+              secondaryColor: payload.secondary,
+            },
+            "*"
+          );
         }
 
-        iframe?.contentWindow?.postMessage(
-          {
-            type: "changeGlobalColors",
-            primaryColor: payload.primary,
-            secondaryColor: payload.secondary,
-          },
-          "*"
-        );
+        if (type === "changeFont" && payload.font) {
+          iframe?.contentWindow?.postMessage(
+            {
+              type: "changeFont",
+              font: payload.font,
+            },
+            "*"
+          );
+        }
+
+        if (type === "changeLogo" && payload.logoUrl) {
+          iframe?.contentWindow?.postMessage(
+            {
+              type: "changeLogo",
+              logoUrl: payload.logoUrl,
+            },
+            "*"
+          );
+        }
       }
     } else {
       console.log("No iframes found");
@@ -65,29 +74,20 @@ function CustomDesign() {
       const result = await response.json();
 
       if (result) {
+        // If color data exists, parse it and send to iframe
         if (result.color) {
           const colors = JSON.parse(result.color);
           sendMessageToIframes("changeGlobalColors", colors);
         }
+
+        // If font data exists, send it to the iframe
         if (result.font) {
-          iframe.contentWindow?.postMessage(
-            {
-              type: "changeFont",
-              font: result.font,
-            },
-            "*"
-          );
+          sendMessageToIframes("changeFont", { font: result.font });
         }
+
+        // If logo data exists, send it to the iframe
         if (result.logo) {
-          const logoUrl = result?.logo;
-          const iframes = document.getElementsByTagName("iframe");
-          for (let i = 0; i < iframes.length; i++) {
-            const iframe = iframes[i];
-            iframe?.contentWindow?.postMessage(
-              { type: "changeLogo", logoUrl },
-              "*"
-            );
-          }
+          sendMessageToIframes("changeLogo", { logoUrl: result.logo });
         }
       }
     } catch (error) {
