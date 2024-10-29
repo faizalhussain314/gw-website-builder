@@ -103,7 +103,7 @@ function StyleRemoveWarning({
               disabled={isLoading}
             >
               {isLoading ? (
-                <div>
+                <div className="flex">
                   {" "}
                   <svg
                     className="animate-spin h-5 w-5 text-white"

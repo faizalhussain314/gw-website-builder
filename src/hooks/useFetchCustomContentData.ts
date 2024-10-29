@@ -20,7 +20,6 @@ const useFetchCustomContentData = () => {
   const dispatch = useDispatch();
   const { getDomainFromEndpoint } = useDomainEndpoint();
 
-  // The hook function that accepts specific fields as an argument
   const fetchCustomContent = useCallback(
     async (fields: string[]) => {
       const url = getDomainFromEndpoint("wp-json/custom/v1/get-form-details");
@@ -31,13 +30,12 @@ const useFetchCustomContentData = () => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            fields, // Dynamically pass the fields you need
+            fields,
           }),
         });
 
         const data = await response.json();
         if (data) {
-          // Conditionally dispatch the fetched data based on the fields
           if (fields.includes("businessName")) {
             dispatch(setBusinessName(data.businessName || ""));
           }
@@ -51,7 +49,7 @@ const useFetchCustomContentData = () => {
             dispatch(setCategory(data.category || null));
           }
           if (fields.includes("templateid")) {
-            dispatch(setTemplateId(data.templateid || 0));
+            dispatch(setTemplateId(parseInt(data.templateid) || 0));
           }
           if (fields.includes("templatename")) {
             dispatch(setTemplatename(data.templatename || ""));
@@ -78,7 +76,7 @@ const useFetchCustomContentData = () => {
           }
           if (fields.includes("contactform")) {
             try {
-              const contactForm = JSON.parse(data.contactform); // Parse the whole string first
+              const contactForm = JSON.parse(data.contactform);
               console.log(contactForm, "Parsed contact form");
 
               dispatch(

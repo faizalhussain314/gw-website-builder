@@ -7,11 +7,7 @@ import { setFont, setColor, setLogo } from "../../Slice/activeStepSlice";
 import { RootState } from "../../store/store";
 import useDomainEndpoint from "../../hooks/useDomainEndpoint";
 import useStoreContent from "../../hooks/useStoreContent ";
-import {
-  FontCombination,
-  SelectedColor,
-  SelectedFont,
-} from "../../types/customdesign.type";
+import { SelectedColor, SelectedFont } from "../../types/customdesign.type";
 import FontSelector from "../component/custom-design/FontSelector";
 import ColorSelector from "../component/custom-design//ColorSelector";
 import {
@@ -33,6 +29,9 @@ const CustomizeSidebar: React.FC = () => {
   const [selectedFont, setSelectedFont] = useState<Font>(previousFont);
   const colorCombinations = useSelector(
     (state: RootState) => state.userData?.style.color || []
+  );
+  const businessName = useSelector(
+    (state: RootState) => state.userData.businessName
   );
 
   const [loading, setLoading] = useState(false);
@@ -64,6 +63,79 @@ const CustomizeSidebar: React.FC = () => {
     );
   }, [dispatch, getDomainFromEndpoint]);
 
+  const generateBusinessLogo = (businessName: string) => {
+    const canvas = document.createElement("canvas");
+    canvas.width = 200;
+    canvas.height = 100;
+    const ctx = canvas.getContext("2d");
+
+    // Add background
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = "#000";
+    ctx.font = "bold 20px Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(businessName, canvas.width / 2, canvas.height / 2);
+
+    return canvas.toDataURL("image/png");
+  };
+
+  const dataURLtoBlob = (dataUrl: string) => {
+    const arr = dataUrl.split(",");
+    const mime = arr[0].match(/:(.*?);/)[1];
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) {
+      u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new Blob([u8arr], { type: mime });
+  };
+
+  const uploadGeneratedLogo = async (businessName: string) => {
+    const generatedLogo = generateBusinessLogo(businessName);
+    const logoBlob = dataURLtoBlob(generatedLogo);
+
+    const formData = new FormData();
+    formData.append("image", logoBlob, `${businessName}-logo.png`);
+
+    const url = getDomainFromEndpoint("/wp-json/custom/v1/upload-logo");
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to upload image");
+      }
+
+      const result = await response.json();
+      const newLogoUrl = result.url;
+
+      setLogoUrl(newLogoUrl);
+      dispatch(setLogo(newLogoUrl));
+      await storeContent({ logo: newLogoUrl });
+
+      sendMessageToIframes("changeLogo", { logoUrl: newLogoUrl });
+    } catch (err) {
+      setError("Error uploading generated logo. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (businessName) {
+      uploadGeneratedLogo(businessName);
+    }
+  }, [businessName]);
   const handleFontChange = async (fontCombination: SelectedFont) => {
     setSelectedFont(fontCombination);
     dispatch(setFont(fontCombination));
@@ -238,7 +310,7 @@ const CustomizeSidebar: React.FC = () => {
           onClick={nextPage}
           className="px-4 py-3 text-white rounded-md tertiary text-base sm:mt-2 w-full"
         >
-          Continue
+          Start Building
         </button>
       </div>
     </div>

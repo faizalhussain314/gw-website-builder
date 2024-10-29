@@ -136,7 +136,7 @@ const Popup: React.FC<PopupProps> = ({
             to={"/custom-design"}
             className="tertiary w-full text-white py-[15px] px-[30px] rounded-lg font-medium text-base flex justify-center items-center"
           >
-            <button className="">Start Building the website</button>
+            <button className="">Start Customizing</button>
           </Link>
           <button
             onClick={onClose}

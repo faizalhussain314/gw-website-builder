@@ -80,6 +80,9 @@ const FinalPreview: React.FC = () => {
   const [Loaded, setLoaded] = useState(false);
   const [contentForBackend, setContentForBackend] = useState<any[]>([]);
   const [findIndex, setfindIndex] = useState<number>();
+  const contactDetails = useSelector(
+    (state: RootState) => state.userData.contactform
+  );
   const currentUrl =
     useSelector(
       (state: RootState) => state.userData?.templateList?.pages[0]?.iframe_url
@@ -108,9 +111,7 @@ const FinalPreview: React.FC = () => {
     (state: RootState) => state.userData.isFormDetailsLoaded
   );
 
-  const currentPages = useSelector(
-    (state: RootState) => state.userData.pages
-  );
+  const currentPages = useSelector((state: RootState) => state.userData.pages);
 
   // const [pages, setPages] = useState<Page[]>([
   //   { name: "Home", status: "", slug: "homepage", selected: false },
@@ -509,6 +510,23 @@ const FinalPreview: React.FC = () => {
   //   fetchGeneratedPageStatus(); // Fetch the status when the component mounts
   // }, [fetchGeneratedPageStatus]);
 
+  const updateContactDetails = (email, phone, address) => {
+    if (iframeRef.current) {
+      iframeRef.current.contentWindow.postMessage(
+        {
+          type: "updateContactDetails",
+          email,
+          phone,
+          address,
+        },
+        "*"
+      );
+    }
+  };
+
+  // Example usage:
+  // Replace these values with the actual email, phone, and address to be updated
+
   const onLoadMsg = async () => {
     const iframe = iframeRef.current;
     const currentPage = pages.find((page) => page.name === selectedPage);
@@ -516,8 +534,12 @@ const FinalPreview: React.FC = () => {
       (page) => page.name === selectedPage
     );
     console.log(currentPageIndex);
-    
 
+    updateContactDetails(
+      contactDetails?.email,
+      contactDetails?.phoneNumber,
+      contactDetails?.address
+    );
     setfindIndex(currentPageIndex);
     sendNonClickable();
 
@@ -717,7 +739,10 @@ const FinalPreview: React.FC = () => {
     }
   };
 
-  const handlePageNavigation = (action: "next" | "skip" | "add",currentPage:any) => {
+  const handlePageNavigation = (
+    action: "next" | "skip" | "add",
+    currentPage: any
+  ) => {
     if (isContentGenerating) {
       showWarningToast();
       return;
@@ -742,30 +767,29 @@ const FinalPreview: React.FC = () => {
       } else if (action === "skip") {
         updatedPages[currentPageIndex].status = "Skipped";
         updatedPages[currentPageIndex].selected = false;
-      }
-      else if (action === "add") {
-        if(currentPages[currentPageIndex].status == ''){
-        updatedPages[currentPageIndex].status = "Added";
-        updatedPages[currentPageIndex].selected = true;
-        dispatch(
-          updateReduxPage({
-            name: updatedPages[currentPageIndex].name, // Page name
-            status: "Added", // Mark as Added
-            selected: true, // Set as selected
-          })
-        );
-      }
-      if(currentPages[currentPageIndex].status == 'Added'){
-        updatedPages[currentPageIndex].status = "";
-        updatedPages[currentPageIndex].selected = false;
-        dispatch(
-          updateReduxPage({
-            name: updatedPages[currentPageIndex].name, // Page name
-            status: "", // Mark as Added
-            selected: false, // Set as not selected
-          })
-        );
-      }
+      } else if (action === "add") {
+        if (currentPages[currentPageIndex].status == "") {
+          updatedPages[currentPageIndex].status = "Added";
+          updatedPages[currentPageIndex].selected = true;
+          dispatch(
+            updateReduxPage({
+              name: updatedPages[currentPageIndex].name, // Page name
+              status: "Added", // Mark as Added
+              selected: true, // Set as selected
+            })
+          );
+        }
+        if (currentPages[currentPageIndex].status == "Added") {
+          updatedPages[currentPageIndex].status = "";
+          updatedPages[currentPageIndex].selected = false;
+          dispatch(
+            updateReduxPage({
+              name: updatedPages[currentPageIndex].name, // Page name
+              status: "", // Mark as Added
+              selected: false, // Set as not selected
+            })
+          );
+        }
       }
       updatedPages[currentPageIndex].selected = true;
       setPages(updatedPages);
@@ -880,17 +904,17 @@ const FinalPreview: React.FC = () => {
     }
   };
 
-  const handleNext = (page:string) => {
-    handlePageNavigation("next",page);
+  const handleNext = (page: string) => {
+    handlePageNavigation("next", page);
     selectNextPage();
   };
 
-  const handleSkipPage = (page:string) => {
-    handlePageNavigation("skip",page);
+  const handleSkipPage = (page: string) => {
+    handlePageNavigation("skip", page);
   };
 
-  const handleAddPage = (page:string) => {
-    handlePageNavigation("add",page);
+  const handleAddPage = (page: string) => {
+    handlePageNavigation("add", page);
   };
 
   // Effect to handle iframe resizing based on view mode
@@ -987,11 +1011,15 @@ const FinalPreview: React.FC = () => {
   );
   useEffect(() => {
     // console.log(pages,findIndex);
-    
+
     const storePagesInDB = async () => {
       if (savePageEndPoint) {
         try {
-          await savePagesToDB(savePageEndPoint, pages, findIndex != -1 ? findIndex : 0); // Pass the endpoint and pages to savePagesToDB
+          await savePagesToDB(
+            savePageEndPoint,
+            pages,
+            findIndex != -1 ? findIndex : 0
+          ); // Pass the endpoint and pages to savePagesToDB
         } catch (error) {
           console.error("Failed to store pages:", error);
         }
@@ -1016,7 +1044,7 @@ const FinalPreview: React.FC = () => {
           try {
             let response = await deletePage(deletePageEndPoint); // delete generated file
             if (response) {
-              setButtonLoader(false)
+              setButtonLoader(false);
               navigate("/custom-design");
               setresetPopup(false);
             }
@@ -1053,9 +1081,14 @@ const FinalPreview: React.FC = () => {
               <div className="flex items-center justify-between pb-2.5">
                 <h1 className="text-xl font-semibold">Website Preview</h1>
                 {/* <Link to={"/custom-design"}> */}
-                  <button className="bg-button-bg-secondary hover:bg-palatinate-blue-600 hover:text-white px-4 font-medium py-2 rounded-md text-sm cursor-pointer" onClick={() => {setresetPopup(true)}}>
-                    Back
-                  </button>
+                <button
+                  className="bg-button-bg-secondary hover:bg-palatinate-blue-600 hover:text-white px-4 font-medium py-2 rounded-md text-sm cursor-pointer"
+                  onClick={() => {
+                    setresetPopup(true);
+                  }}
+                >
+                  Back
+                </button>
                 {/* </Link> */}
               </div>
               <span className="text-base text-[#88898A] font-normal">

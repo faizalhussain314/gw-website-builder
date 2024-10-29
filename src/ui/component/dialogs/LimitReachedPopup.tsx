@@ -4,12 +4,16 @@ import Crown from "../../../assets/crown.svg";
 
 type limitProps = {
   onClose: () => void;
+  limit: number;
 };
 
-function LimitReachedPopup({ onClose }: limitProps) {
+function LimitReachedPopup({ onClose, limit }: limitProps) {
+  const upgradePlan = () => {
+    window.open("https://gravitywrite.com/pricing", "_blank");
+  };
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-      <div className="bg-white rounded-lg shadow-lg text-center relative max-w-[350px] mx-auto px-8 py-9">
+    <div className="fixed top-0 inset-0 right-0  flex items-start justify-end bg-black bg-opacity-50 z-50">
+      <div className="bg-white rounded-lg shadow-lg text-center relative max-w-[350px] mx-auto px-8 py-9 mt-4 mr-4">
         <button
           className="absolute right-4 top-4"
           onClick={onClose}
@@ -23,11 +27,14 @@ function LimitReachedPopup({ onClose }: limitProps) {
           <h2 className="text-[22px] leading-7 font-semibold">Limit Reached</h2>
         </div>
         <p className="mt-6 text-black text-lg">
-          Your 2 free template is over , If you want to more template upgrade to
-          Pro!!!
+          Your plan's {limit} templates are over. If you want more templates,
+          upgrade to Pro!
         </p>
 
-        <button className="mt-8 text-base tertiary text-white flex items-center justify-center gap-2 px-6 py-3 rounded-lg mx-auto">
+        <button
+          className="mt-8 text-base tertiary text-white flex items-center justify-center gap-2 px-6 py-3 rounded-lg mx-auto"
+          onClick={upgradePlan}
+        >
           <img src={Crown} alt="Crown" /> Upgrade Plan
         </button>
       </div>
