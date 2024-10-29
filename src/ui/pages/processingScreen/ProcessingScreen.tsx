@@ -18,6 +18,7 @@ import {
   TemplateImportUrl,
   mapApiPageToReduxPage,
 } from "../../../types/processingpage.type";
+import useFetchCustomContentData from "../../../hooks/useFetchCustomContentData";
 
 const API_URL = import.meta.env.VITE_API_BACKEND_URL;
 
@@ -30,12 +31,12 @@ const ProcessingScreen: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { getDomainFromEndpoint } = useDomainEndpoint();
+  const fetchCustomContentData = useFetchCustomContentData();
   const logo = useSelector((state: RootState) => state.userData.logo);
   const template_id = useSelector(
     (state: RootState) => state.userData.templateid
   );
 
-  // Using Redux for selected pages
   const selectedPages = useSelector(
     (state: RootState) => state.userData.pages as ReduxPage[]
   );
@@ -46,16 +47,38 @@ const ProcessingScreen: React.FC = () => {
       const response = await fetch(
         `${API_URL}getTemplates?template_id=${template_id}`
       );
-      if (!response.ok) throw new Error("Failed to fetch templates");
       const data = await response.json();
-      return data.data; // Return actual data from the response
+
+      if (!response.ok) {
+        if (data.message === "Template not found.") {
+          console.warn("Template not found, attempting to fetch templateid.");
+
+          const tempid = await fetchCustomContentData(["templateid"]);
+          console.log("another", parseInt(tempid.templateid));
+
+          const retryResponse = await fetch(
+            `${API_URL}getTemplates?template_id=${parseInt(tempid.templateid)}`
+          );
+          const retryData = await retryResponse.json();
+          console.log("2nd response", retryData);
+
+          if (retryResponse.ok) {
+            return retryData.data;
+          } else {
+            throw new Error("Failed to fetch templates after retry.");
+          }
+        } else {
+          throw new Error(data.message || "Failed to fetch templates");
+        }
+      }
+
+      return data.data;
     } catch (error) {
       console.error("Error fetching templates:", error);
       return null;
     }
   };
 
-  // Post API calls
   const postData = async (
     endpoint: string,
     data: object,
@@ -78,7 +101,6 @@ const ProcessingScreen: React.FC = () => {
     }
   };
 
-  // Main processing logic
   const processAPIs = async () => {
     if (isProcessing) return;
     setIsProcessing(true);
@@ -91,12 +113,10 @@ const ProcessingScreen: React.FC = () => {
 
     const { plugins, pages, template_import_urls, site_logo } = templateData;
 
-    // Map API pages to Redux pages
     const reduxPages = pages.map((apiPage: ApiPage) =>
       mapApiPageToReduxPage(apiPage)
     );
 
-    // Dispatch the mapped pages to Redux
     dispatch(setPages(reduxPages));
 
     const apiSteps: ApiStep[] = [
@@ -125,22 +145,12 @@ const ProcessingScreen: React.FC = () => {
           )?.url,
         },
       },
-      // {
-      //   name: "Post",
-      //   endpoint: "/wp-json/custom/v1/install-posts",
-      //   body: {
-      //     fileurl: template_import_urls.find(
-      //       (url: TemplateImportUrl) => url.name === "Posts Data"
-      //     )?.url,
-      //   },
-      // },
     ];
 
     const isBlogSelected = selectedPages.some(
       (page: ReduxPage) => page.slug === "blog" && page.selected
     );
 
-    // Only add the "Post" step if Blog is selected
     if (isBlogSelected) {
       apiSteps.push({
         name: "Post",
@@ -160,14 +170,12 @@ const ProcessingScreen: React.FC = () => {
     const stepsCount = apiSteps.length + selectedPagesToInstall.length * 2 + 4;
     setTotalSteps(stepsCount);
 
-    // Execute API steps for plugins, theme, and forms
     for (let i = 0; i < apiSteps.length; i++) {
       setStatus(apiSteps[i].name);
       await postData(apiSteps[i].endpoint, apiSteps[i].body);
       setProgress(((i + 1) / stepsCount) * 100);
     }
 
-    // Install selected pages only
     for (let i = 0; i < selectedPagesToInstall.length; i++) {
       const page = selectedPagesToInstall[i];
       setStatus(`${page.name} page`);
@@ -187,15 +195,12 @@ const ProcessingScreen: React.FC = () => {
     console.log("this is site logo", logoToUse);
 
     if (logoToUse) {
-      // Import site logo if available
-      console.log("true executed");
       setStatus("Importing Site Logo");
       await postData("/wp-json/custom/v1/import-sitelogo", {
         fileurl: logoToUse,
       });
     }
 
-    // Install additional components
     await postData("/wp-json/custom/v1/install-elementor-kit", {
       fileurl: template_import_urls.find(
         (url: TemplateImportUrl) => url.name === "Templates Data"
@@ -207,7 +212,6 @@ const ProcessingScreen: React.FC = () => {
       )?.url,
     });
 
-    // Import menus and CSS
     setStatus("Importing Menus and CSS");
     await postData("/wp-json/custom/v1/import-menus-css", {
       fileurl: template_import_urls.find(
@@ -215,7 +219,6 @@ const ProcessingScreen: React.FC = () => {
       )?.url,
     });
 
-    // Update content for each selected page
     for (let i = 0; i < selectedPagesToInstall.length; i++) {
       const page = selectedPagesToInstall[i];
       if (page.slug === "blog" || page.slug === "contact-us") {
@@ -231,19 +234,16 @@ const ProcessingScreen: React.FC = () => {
           100
       );
     }
-    // Applying changing the contact details
-    setStatus("changing the contact details");
+
+    setStatus("Changing the contact details");
     await postData("/wp-json/custom/v1/replace-user-content", {});
 
-    // Applying color, font, and logo changes
     setStatus("Applying color, font, and logo changes");
     await postData("/wp-json/custom/v1/update-style-changes", {});
 
-    // Regenerating Global CSS
     setStatus("Regenerating Global CSS");
     await postData("/wp-json/custom/v1/regenerate-global-css", {});
 
-    // Emptying tables using DELETE method
     setStatus("Emptying tables");
     await postData("/wp-json/custom/v1/empty-tables", {}, "DELETE");
 

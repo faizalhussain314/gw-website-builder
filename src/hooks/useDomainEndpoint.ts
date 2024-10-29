@@ -10,7 +10,7 @@ const useDomainEndpoint = () => {
       return `${baseUrl}/${endpoint}`;
     } else {
       // console.error("Could not find wp-admin in the current URL.");
-      const tempurl = `https://automatic-abomb-bp3.zipwp.link/${endpoint}`;
+      const tempurl = `https://impassioned-invisible-5i.zipwp.link/${endpoint}`;
       // const tempurl = `https://plugin.mywpsite.org/${endpoint}`;
       return tempurl;
     }

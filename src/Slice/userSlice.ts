@@ -7,15 +7,18 @@ interface UserState {
   gravator: string;
   email: string;
   generatedSite: number;
+  max_genration: number;
 }
 
 const initialState: UserState = {
-  username: "",
+  username: "krishnapandian",
   plan: "Free",
   websiteGenerationLimit: 0,
-  gravator: "",
-  email: "",
-  generatedSite: 0,
+  gravator:
+    "https://www.gravatar.com/avatar/785b61c38ab6e8943260ae7d576b5957?s=80&d=identicon&r=g",
+  email: "krishnapandian@wl.team",
+  generatedSite: 2,
+  max_genration: 6,
 };
 
 export const userSlice = createSlice({

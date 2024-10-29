@@ -21,6 +21,7 @@ import {
 import Popup from "../../component/dialogs/Popup";
 import StyleRemoveWarning from "../../component/dialogs/StyleRemoveWarning";
 import useStoreContent from "../../../hooks/useStoreContent ";
+import UpgradePopup from "../../component/dialogs/UpgradePopup";
 
 const API_URL = import.meta.env.VITE_API_BACKEND_URL;
 
@@ -58,16 +59,17 @@ function Design() {
   const [showValidationError, setshowValidationError] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
   const [showError, setshowError] = useState(false);
+
   const dispatch = useDispatch();
   const { getDomainFromEndpoint } = useDomainEndpoint();
   const [hasFetched, setHasFetched] = useState(false);
   const [warning, setWarning] = useState(false);
   const [templateChange, setTemplateChange] = useState(false);
-  const [warnLoader, setWarnLoader] = useState(false);
   const previousTemplate = useSelector(
     (state: RootState) => state.userData.templateList
   );
   const [newTemplate, setNewTemplate] = useState(null);
+
   const storeContent = useStoreContent();
 
   const handlePopupClose = () => {
@@ -82,6 +84,8 @@ function Design() {
   const previousColor = useSelector(
     (state: RootState) => state?.userData?.color
   );
+  const userDetails = useSelector((state: RootState) => state.user);
+  const [upgradePopup, setUpgradepopup] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
@@ -145,7 +149,7 @@ function Design() {
     dispatch(setTemplateId(template.id));
     dispatch(setTemplatename(template.name));
     dispatch(setTemplateList(template));
-    dispatch(setStyle(template.styles)); // Apply new style
+    dispatch(setStyle(template.styles));
 
     // Save the selected template via API call
     const endpoint = getDomainFromEndpoint(
@@ -176,18 +180,16 @@ function Design() {
 
         console.log("API response data:", data);
 
-        // Parse the templateList and set the selected template ID
         const parsedTemplate = JSON.parse(data.templateList);
         if (parsedTemplate.name) {
           setshowValidationError(true);
         }
         setSelectedTemplateId(parsedTemplate.id);
 
-        dispatch(setTemplateId(parsedTemplate.id)); // Update Redux state
-        dispatch(setTemplatename(parsedTemplate.name)); // Update Redux state
-        dispatch(setTemplateList(parsedTemplate)); // Update Redux state
+        dispatch(setTemplateId(parsedTemplate.id));
+        dispatch(setTemplatename(parsedTemplate.name));
+        dispatch(setTemplateList(parsedTemplate));
 
-        // Highlight selected template
         handleBoxClick(parsedTemplate.id, parsedTemplate, parsedTemplate.id);
       } catch (error) {
         console.error("Error fetching selected template:", error);
@@ -261,6 +263,10 @@ function Design() {
   }, [hasFetched]);
 
   const handleTemplateSelection = async (index: number, template: any) => {
+    if (userDetails.plan == "Free" && template.is_premium) {
+      setUpgradepopup(true);
+      return;
+    }
     setShowPopup(false);
     setshowValidationError(true);
     handleBoxClick(index, template, template.id);
@@ -340,6 +346,12 @@ function Design() {
           isLoading={isLoading}
         />
       )}
+      {upgradePopup && (
+        <UpgradePopup
+          alertType="upgradeTemp"
+          onClose={() => setUpgradepopup(false)}
+        />
+      )}
 
       <div className="flex flex-col justify-between h-full p-10">
         <div className="flex flex-col w-full h-full mx-auto overflow-x-hidden">
@@ -412,12 +424,12 @@ function Design() {
                           src={list?.pages?.[0]?.iframe_url} // Use the iframe URL from the first page in the template
                         ></iframe>
                       </div>
-
                       {/* Premium Label */}
-                      {/* <div className="absolute top-3 right-3 text-[10px] font-medium py-0.5 text-white flex items-center justify-center rounded-3xl bg-[#FE8E01] px-2.5 pointer-events-none">
-                        Premium
-                      </div> */}
-
+                      {list.is_premium && (
+                        <div className="absolute top-3 right-3 text-[10px] font-medium py-0.5 text-white flex items-center justify-center rounded-3xl bg-[#FE8E01] px-2.5 pointer-events-none">
+                          Premium
+                        </div>
+                      )}
                       {/* Overlay */}
                       <div className="absolute inset-0 w-full h-full bg-transparent cursor-pointer"></div>
                     </div>

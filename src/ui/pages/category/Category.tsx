@@ -9,6 +9,7 @@ import { CategoryList } from "../../../types/Category.type";
 import useDomainEndpoint from "../../../hooks/useDomainEndpoint";
 import { getCategoryDetails } from "../../../infrastructure/api/wordpress-api/category/getCategoryDetails.api";
 import { updateCategoryDetails } from "../../../infrastructure/api/wordpress-api/category/updateCategoryDetails.api.ts";
+import LimitReachedPopup from "../../component/dialogs/LimitReachedPopup.tsx";
 
 function Category() {
   const dispatch = useDispatch();
@@ -23,6 +24,8 @@ function Category() {
   const [inputValue, setInputValue] = useState<string>(selectedCategory || "");
   const [showDropdown, setShowDropdown] = useState<boolean>(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const userDetails = useSelector((state: RootState) => state.user);
+  const [limitReached, setLimitReached] = useState(false);
 
   useEffect(() => {
     const fetchInitialCategory = async () => {
@@ -116,8 +119,28 @@ function Category() {
   //   }
   // };
 
+  const handleClose = () => {
+    if (userDetails.generatedSite >= userDetails.max_genration) {
+      return;
+    } else {
+      setLimitReached(false);
+    }
+  };
+
+  useEffect(() => {
+    if (userDetails.generatedSite >= userDetails.max_genration) {
+      setLimitReached(true);
+    }
+  }, [userDetails]);
+
   return (
     <MainLayout>
+      {limitReached && (
+        <LimitReachedPopup
+          onClose={handleClose}
+          limit={userDetails.generatedSite}
+        />
+      )}
       <div className="bg-[#F9FCFF] min-h-screen p-10">
         <h1 className="text-txt-black-600 font-semibold leading-[38px] tracking-[-0.9px] text-3xl mb-2.5">
           I am creating a website for
