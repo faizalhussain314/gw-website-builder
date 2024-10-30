@@ -96,18 +96,19 @@ const PageSelector: React.FC<Props> = ({
     // Always keep Home page selected
     if (currentPage?.name === "Home") {
       const updatedPages = pages.map((page) =>
-        page.slug === slug ? { ...page, selected: true } : page
+        page.slug === slug ? { ...page, selected: true, status:"Generated" } : page
       );
       setPages(updatedPages);
       return;
     }
-
+    else {
     // Allow other pages to be selected or deselected
     const updatedPages = pages.map((page) =>
       page.slug === slug ? { ...page, selected: newSelectedValue } : page
     );
-
     setPages(updatedPages);
+    }
+
     dispatch(
       updateReduxPage({
         name: currentPage.name,
@@ -153,8 +154,9 @@ const PageSelector: React.FC<Props> = ({
                     id={`checkbox-${page.slug}`}
                     type="checkbox"
                     className="mr-4 flex items-center w-4 h-4"
-                    checked={page.name === "Home" ? true : page.selected === true ? true : page.status ? true : false}
-                    onChange={() => handlePageChange(page.slug, !page.selected)} // Make sure the slug is passed to toggle selection
+                    checked={page.name === "Home" ? true : page.status ? true : false}
+                    onClick={(e:any) => {handlePageChange(page.slug, e?.target?.checked); }
+                    } // Make sure the slug is passed to toggle selection
                   />
                 </div>
                 <span className="font-medium text-base">{page.name}</span>
@@ -163,7 +165,7 @@ const PageSelector: React.FC<Props> = ({
                 {page.status && (
                   <span
                     className={`ml-2 text-xs font-medium rounded-full px-2.5 py-1 text-[#1E2022] ${
-                      page.status === "Generated"
+                      page.status === "Generated" || page.name == "Home"
                         ? "bg-[#CDF9CD]"
                         : page.status === "Skipped"
                         ? "bg-[#FFDCD5]"
@@ -172,7 +174,7 @@ const PageSelector: React.FC<Props> = ({
                         : "bg-[#d1d5db]"
                     }`}
                   >
-                    {page.name == "Home" ? "Generated" : page.status}
+                    {page.status}
                   </span>
                 )}
                 {/* {(page.status === "Generated" || selectedPage === page.name) &&
@@ -285,7 +287,7 @@ const PageSelector: React.FC<Props> = ({
                       onClick={handleGeneratePage}
                       disabled={isLoading}
                     >
-                      Generate page
+                      Generate Page
                     </button>
                     <button
                       className="bg-white text-palatinate-blue-600 hover:bg-palatinate-blue-600 hover:text-white rounded px-3 py-1.5 w-full text-sm font-medium"

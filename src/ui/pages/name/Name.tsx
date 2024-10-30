@@ -78,10 +78,12 @@ function Name() {
               <input
                 type="text"
                 value={name}
+                autoFocus
                 onChange={handleChange}
-                className={`bg-white px-[15px] py-[10px] border ${
+                className={`bg-white px-[15px] py-[10px] border placeholder:text-[#A9B0B7] placeholder:!font-normal ${
                   error ? "border-red-500" : "border-[rgba(205, 212, 219, 1)]"
                 } rounded-md w-full mt-[35px]  focus:border-palatinate-blue-500 active:border-palatinate-blue-500 active:outline-palatinate-blue-500 focus:outline-palatinate-blue-500 placeholder:text-[#1e2022] placeholder:font-normal`}
+                placeholder={`Enter name of your ${category}`}
               />
               {error && <div className="mt-2 text-red-600">{error}</div>}
               <div className="flex items-center gap-4 mt-6">

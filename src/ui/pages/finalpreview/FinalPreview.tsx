@@ -353,23 +353,23 @@ const FinalPreview: React.FC = () => {
           version_name: "5.5",
           page_name: pageName, // Use the current pageName instead of selectedPage
           template_name: templateName,
-          json_content: jsonContent,
+          json_content: (pageName == "Home" || pageName == "About" || pageName == "Service") ? jsonContent : "",
         });
-        // console.log(
-        //   "page name",
-        //   pageName,
-        //   "this is current page from state",
-        //   selectedPage // This is fine for logging the current selectedPage
-        // );
+        console.log(
+          "page name",
+          pageName,
+          "this is current page from state",
+          selectedPage // This is fine for logging the current selectedPage
+        );
 
-        // if (response.status === 200) {
-        //   console.log(
-        //     "Old and new content stored successfully:",
-        //     response.data
-        //   );
-        // } else {
-        //   console.error("Failed to store old and new content:", response);
-        // }
+        if (response.status === 200) {
+          console.log(
+            "Old and new content stored successfully:",
+            response.data
+          );
+        } else {
+          console.error("Failed to store old and new content:", response);
+        }
       } catch (error) {
         // console.error("Error storing old and new content:", error);
       }
@@ -795,8 +795,8 @@ const FinalPreview: React.FC = () => {
       setPages(updatedPages);
 
       const nextPageIndex = currentPageIndex + 1;
-      if (nextPageIndex < updatedPages.length) {
-        // setSelectedPage(updatedPages[nextPageIndex].name);
+      if (nextPageIndex < updatedPages.length && currentPage != updatedPages[currentPageIndex]?.name) {
+        setSelectedPage(updatedPages[nextPageIndex].name);
 
         const nextPageContent = generatedPage[updatedPages[nextPageIndex].name];
         if (nextPageContent) {
@@ -1015,11 +1015,7 @@ const FinalPreview: React.FC = () => {
     const storePagesInDB = async () => {
       if (savePageEndPoint) {
         try {
-          await savePagesToDB(
-            savePageEndPoint,
-            pages,
-            findIndex != -1 ? findIndex : 0
-          ); // Pass the endpoint and pages to savePagesToDB
+          await savePagesToDB(savePageEndPoint, pages, findIndex); // Pass the endpoint and pages to savePagesToDB
         } catch (error) {
           console.error("Failed to store pages:", error);
         }

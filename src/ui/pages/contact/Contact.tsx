@@ -77,6 +77,10 @@ function Contact() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    setFormError((prevData) => ({
+      ...prevData,
+      [name]: "",
+    }));
     let validInput = false;
     if(name == "phoneNumber"){
       validInput = /^[0-9]+$/.test(value)
@@ -98,6 +102,27 @@ function Contact() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if(!formData.email){
+      setFormError((prevData) => ({
+        ...prevData,
+        email:"Enter email address"
+      }));
+      return;
+    }
+    if(!formData.phoneNumber){
+      setFormError((prevData) => ({
+        ...prevData,
+        phoneNumber:"Enter phone number"
+      }));
+      return;
+    }
+    if(!formData.address){
+      setFormError((prevData) => ({
+        ...prevData,
+        address:"Enter address"
+      }));
+      return;
+    }
     if(formData.email && formData.phoneNumber && !formError.email && !formError.phoneNumber){
     dispatch(
       updateContactForm({
