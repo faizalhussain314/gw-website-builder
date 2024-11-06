@@ -107,9 +107,9 @@ const FinalPreview: React.FC = () => {
     Blog: false,
     Contact: false,
   });
-  const isFormDetailsLoaded = useSelector(
-    (state: RootState) => state.userData.isFormDetailsLoaded
-  );
+  // const isFormDetailsLoaded = useSelector(
+  //   (state: RootState) => state.userData.isFormDetailsLoaded
+  // );
 
   const currentPages = useSelector((state: RootState) => state.userData.pages);
 
@@ -460,7 +460,10 @@ const FinalPreview: React.FC = () => {
 
       if (response.status === 200) {
         const { data } = response;
-
+        console.log("--------------------------------------");
+        console.log(data);
+        console.log("--------------------------------------");
+        
         if (data && Array.isArray(data)) {
           setPages((prevPages) => {
             // Merge existing pages with API response data
@@ -501,10 +504,10 @@ const FinalPreview: React.FC = () => {
   }, [getDomainFromEndpoint, dispatch]); // Ensure dispatch is included in the dependencies
 
   useEffect(() => {
-    if (isFormDetailsLoaded) {
+    // if (isFormDetailsLoaded) {
       fetchGeneratedPageStatus(); // Call the API only when form details are loaded
-    }
-  }, [isFormDetailsLoaded]);
+    // }
+  }, []);
 
   // useEffect(() => {
   //   fetchGeneratedPageStatus(); // Fetch the status when the component mounts

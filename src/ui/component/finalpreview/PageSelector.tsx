@@ -136,7 +136,7 @@ const PageSelector: React.FC<Props> = ({
             key={page.name}
             className={`rounded-lg p-3 mb-2 cursor-pointer transition-all duration-200 ease-in ${
               selectedPage === page.name
-                ? "ring-palatinate-blue-600 ring-1 bg-[#F8FBFE]"
+                ? "ring-palatinate-blue-600 ring-1 bg-[#EBF4FF]"
                 : ""
             }`}
             onClick={() => {
@@ -153,6 +153,7 @@ const PageSelector: React.FC<Props> = ({
                   <input
                     id={`checkbox-${page.slug}`}
                     type="checkbox"
+                    disabled={page.name === "Home"}
                     className="mr-4 flex items-center w-4 h-4"
                     checked={page.name === "Home" ? true : page.status ? true : false}
                     onClick={(e:any) => {handlePageChange(page.slug, e?.target?.checked); }
@@ -227,7 +228,6 @@ const PageSelector: React.FC<Props> = ({
             {selectedPage === page.name && (
               <div className="mt-3 flex justify-evenly text-sm">
                 {page.status === "Generated" ||
-                page.status === "Added" ||
                 page.status === "Skipped" ||
                 page.name === "Blog" ||
                 page.name === "Contact" ||
@@ -235,7 +235,7 @@ const PageSelector: React.FC<Props> = ({
                 page.name === "Home" ? (
                   <div className="w-full flex items-center gap-4">
                     <button
-                      className={`bg-white text-palatinate-blue-600 hover:bg-palatinate-blue-600 hover:text-white rounded px-3 py-1.5 w-full text-sm font-medium ${
+                      className={`bg-white text-[#1E2022] hover:bg-palatinate-blue-600 hover:text-white rounded px-3 py-1.5 w-full text-[14px] font-[500] ${
                         isContentGenerating ? "opacity-50" : ""
                       }`}
                       onClick={() => {
@@ -249,11 +249,10 @@ const PageSelector: React.FC<Props> = ({
                     >
                       Keep & Next
                     </button>
-
                     {page.name === "Home" ? (
                       <Tooltip title="Home page can't skip" placement="top">
                         <button
-                          className={`bg-white rounded px-3 py-1.5 w-full text-palatinate-blue-600 hover:bg-palatinate-blue-600 hover:text-white ${
+                          className={`bg-[#FFFFFF] rounded px-3 py-1.5 w-full text-[#1E2022] hover:bg-palatinate-blue-600 hover:text-white text-[14px] font-[500] ${
                             isContentGenerating || page.name === "Home"
                               ? "opacity-50 cursor-not-allowed"
                               : ""
@@ -270,7 +269,7 @@ const PageSelector: React.FC<Props> = ({
                       </Tooltip>
                     ) : (
                       <button
-                        className={`bg-white text-palatinate-blue-600 hover:bg-palatinate-blue-600 hover:text-white rounded px-3 py-1.5 w-full text-sm font-medium ${
+                        className={`bg-white text-[#1E2022] hover:bg-palatinate-blue-600 hover:text-white rounded px-3 py-1.5 w-full text-[14px] font-[500] ${
                           isContentGenerating ? "opacity-50" : ""
                         }`}
                         onClick={() => handleSkipClick(page.name)}
@@ -283,14 +282,14 @@ const PageSelector: React.FC<Props> = ({
                 ) : (
                   <div className="w-full flex items-center gap-4">
                     <button
-                      className="bg-white text-palatinate-blue-600 hover:bg-palatinate-blue-600 hover:text-white rounded px-3 py-1.5 w-full text-sm font-medium"
+                      className="bg-white text-[#1E2022] hover:bg-palatinate-blue-600 hover:text-white rounded px-3 py-1.5 w-full text-[14px] font-[500]"
                       onClick={handleGeneratePage}
                       disabled={isLoading}
                     >
                       Generate Page
                     </button>
                     <button
-                      className="bg-white text-palatinate-blue-600 hover:bg-palatinate-blue-600 hover:text-white rounded px-3 py-1.5 w-full text-sm font-medium"
+                      className="bg-white text-[#1E2022] hover:bg-palatinate-blue-600 hover:text-white rounded px-3 py-1.5 w-full text-[14px] font-[500]"
                       onClick={() => handleSkipClick(page.name)}
                     >
                       Skip Page
