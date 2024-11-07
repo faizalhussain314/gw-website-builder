@@ -11,14 +11,13 @@ interface UserState {
 }
 
 const initialState: UserState = {
-  username: "krishnapandian",
-  plan: "Free",
+  username: "",
+  plan: "",
   websiteGenerationLimit: 0,
-  gravator:
-    "https://www.gravatar.com/avatar/785b61c38ab6e8943260ae7d576b5957?s=80&d=identicon&r=g",
-  email: "krishnapandian@wl.team",
-  generatedSite: 2,
-  max_genration: 6,
+  gravator: "",
+  email: "",
+  generatedSite: 0,
+  max_genration: 0,
 };
 
 export const userSlice = createSlice({
@@ -34,6 +33,18 @@ export const userSlice = createSlice({
     setWebsiteGenerationLimit: (state, action: PayloadAction<number>) => {
       state.websiteGenerationLimit = action.payload;
     },
+    setGravator: (state, action: PayloadAction<string>) => {
+      state.gravator = action.payload;
+    },
+    setEmail: (state, action: PayloadAction<string>) => {
+      state.email = action.payload;
+    },
+    setGeneratedSite: (state, action: PayloadAction<number>) => {
+      state.generatedSite = action.payload;
+    },
+    setMaxGeneration: (state, action: PayloadAction<number>) => {
+      state.max_genration = action.payload;
+    },
     resetUserState: (state) => {
       state.username = "";
       state.plan = "Free";
@@ -47,6 +58,10 @@ export const {
   setPlan,
   setWebsiteGenerationLimit,
   resetUserState,
+  setGravator,
+  setEmail,
+  setGeneratedSite,
+  setMaxGeneration,
 } = userSlice.actions;
 
 export default userSlice.reducer;

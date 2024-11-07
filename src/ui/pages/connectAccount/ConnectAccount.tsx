@@ -2,13 +2,20 @@
 // import { Link } from "react-router-dom";
 import illustration from "../../../assets/Illustration.png";
 import { useNavigate } from "react-router-dom";
+import { getDomainFromEndpoint } from "../../../core/utils/getDomainFromEndpoint.utils";
 
 function ConnectAccount() {
   const navigate = useNavigate();
   const onContinue = () => {
-    console.log("hi");
+    // const domainLink = getDomainFromEndpoint("");
+    // const callbackUrl = `${domainLink}/wp-admin/admin.php?page=gw-website-builder#/category`;
+    // const redirectUrl = `https://app.gravitywrite.com/login?callbackurl=${encodeURIComponent(
+    //   callbackUrl
+    // )}&source=ai-website-builder`;
+
+    // window.location.href = redirectUrl;
+
     navigate("/category");
-    // window.location.href = "/category";
   };
   return (
     // <div className="bg-gl-gray-400 w-full min-h-[90vh] flex items-center  font-['inter'] flex-1 p-6 align-middle justify-center">

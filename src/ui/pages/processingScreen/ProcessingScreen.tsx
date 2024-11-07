@@ -221,9 +221,9 @@ const ProcessingScreen: React.FC = () => {
 
     for (let i = 0; i < selectedPagesToInstall.length; i++) {
       const page = selectedPagesToInstall[i];
-      if (page.slug === "blog" || page.slug === "contact-us") {
-        continue;
-      }
+      // if (page.slug === "blog" || page.slug === "contact-us") {
+      //   continue;
+      // }
       setStatus(`Updating content for page: ${page.name}`);
       await postData("/wp-json/custom/v1/update-content", {
         page_name: page.name,
