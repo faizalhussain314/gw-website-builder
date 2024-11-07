@@ -1,8 +1,23 @@
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import aibuilder from "../../../assets/aibuilder.svg";
 import IntroLayout from "../../Layouts/IntroLayout";
+import { useSelector } from "react-redux";
+import { RootState } from "../../../store/store";
 
 function Welcome() {
+  const userDetails = useSelector((state: RootState) => state?.user);
+  const navigate = useNavigate();
+
+  const handleRedirection = () => {
+    if (userDetails.username || userDetails.username.trim().length > 0) {
+      console.log("Redirection to /category");
+      navigate("/category");
+    } else {
+      console.log("Redirection to /connect-account");
+      navigate("/connect-account");
+    }
+  };
+
   return (
     <IntroLayout>
       <div className="bg-[#F9FCFF] w-full h-full flex items-center justify-between max-w-[1144px] mx-auto">
@@ -24,12 +39,12 @@ function Welcome() {
                 <li>Launch.</li>
               </ol>
             </div>
-            <Link
+            <button
               className="px-[35px] w-fit not-italic py-[15px] tertiary text-lg sm:text-sm text-white mt-[35px] sm:mt-2 rounded-[10px] capitalize tracking-[-0.36px] font-medium"
-              to={"/connect-account"}
+              onClick={handleRedirection}
             >
               Let's get started
-            </Link>
+            </button>
           </div>
         </div>
         {/* 2 */}

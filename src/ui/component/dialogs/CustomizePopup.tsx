@@ -8,6 +8,7 @@ type CustomizePopup = {
   alertType: "regenerate" | "websiteCreation";
   onContinue: () => void;
   onCreateFromScratch: () => void;
+  buttonLoader: boolean;
 };
 
 const CustomizePopup: React.FC<CustomizePopup> = ({
@@ -15,13 +16,14 @@ const CustomizePopup: React.FC<CustomizePopup> = ({
   alertType,
   onContinue,
   onCreateFromScratch,
+  buttonLoader,
 }) => {
   let message = "";
   if (alertType === "regenerate") {
     message = "If you want to regenerate more <br /> upgrade to Pro!!!";
   } else if (alertType === "websiteCreation") {
     message =
-      "Your generated content will be lost. Do you want to proceed?";
+      "You have already some customization. Do you want to continue or change customization?";
   }
 
   return (
@@ -50,16 +52,42 @@ const CustomizePopup: React.FC<CustomizePopup> = ({
         ) : (
           <div className="mt-6 flex gap-4 w-full items-center">
             <button
-              className="bg-[#EBF4FF] w-full flex px-3 py-3.5 text-base font-[500] text-[#777F87] rounded-lg justify-center"
-              onClick={onContinue}
+              className="previous-btn w-full flex px-3 py-3.5 text-base font-medium text-white rounded-lg justify-center"
+              onClick={onCreateFromScratch}
             >
-              Cancel
+              {buttonLoader ? (
+                <div className="flex">
+                  {" "}
+                  <svg
+                    className="animate-spin h-5 w-5 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                    ></path>
+                  </svg>
+                </div>
+              ) : (
+                "Customize"
+              )}
             </button>
             <button
               className="bg-[#2E42FF] w-full px-6 py-3.5 text-base text-white font-[600] rounded-lg"
               onClick={onCreateFromScratch}
             >
-              Yes
+              Continue
             </button>
           </div>
         )}

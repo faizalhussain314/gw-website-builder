@@ -269,8 +269,6 @@ function Design() {
     }
     setShowPopup(false);
     setshowValidationError(true);
-    handleBoxClick(index, template, template.id);
-
     if (
       template.id !== previousTemplate.id &&
       (previousFont.primary || previousColor.primary)
@@ -279,6 +277,7 @@ function Design() {
       setNewTemplate({ index, template });
       return;
     }
+    handleBoxClick(index, template, template.id);
 
     await applyTemplateSelection(index, template);
   };
@@ -329,6 +328,9 @@ function Design() {
     setWarning(false);
   };
 
+  // const handlePopOverClose = () =>{
+
+  // }
   return (
     <MainLayout>
       {showPopup && (
