@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import CachedIcon from "@mui/icons-material/Cached";
 import { Page } from "../../../types/page.type";
 import { toast } from "react-toastify";
@@ -122,6 +122,27 @@ const PageSelector: React.FC<Props> = ({
     setShowPopup(true);
     lateloader(true);
   };
+  const offerButtonRef = useRef<HTMLButtonElement>(null);
+  let lastAnimation = "";
+  useEffect(() => {
+    function bouceAnimate() {
+      const offerBtn = offerButtonRef.current;
+      if (!offerBtn) return;
+
+      const currentAnimation = lastAnimation === "bounce" ? "shake" : "bounce";
+      offerBtn?.classList?.add(currentAnimation);
+      lastAnimation = currentAnimation;
+      setTimeout(() => {
+        offerBtn?.classList?.remove(currentAnimation);
+      }, 1500);
+    }
+
+    const timer = setInterval(() => {
+      bouceAnimate();
+    }, 3000);
+
+    return () => clearInterval(timer);
+  }, []);
 
   return (
     <div className="p-5">
@@ -155,7 +176,7 @@ const PageSelector: React.FC<Props> = ({
                     type="checkbox"
                     disabled={page.name === "Home"}
                     className="mr-4 flex items-center w-4 h-4"
-                    checked={page.name === "Home" ? true : page.status ? true : false}
+                    checked={page.name === "Home" ? true : page.status && page?.status != "Skipped" ? true : false}
                     onClick={(e:any) => {handlePageChange(page.slug, e?.target?.checked); }
                     } // Make sure the slug is passed to toggle selection
                   />
@@ -335,26 +356,21 @@ const PageSelector: React.FC<Props> = ({
             Next
           </button> */}
         </div>
+        
         <button
-          className={`tertiary w-full text-white py-3 px-8 rounded-md mb-4 ${
-            pages.every(
-              (page) => page.status === "Generated" || page.status === "Skipped"
-            ) ||
-            pages.every(
-              (page) => page.selected === true || page.selected === false
-            )
+        className={`tertiary w-full text-white py-3 px-8 rounded-md mb-4 flex items-center justify-center outline-none rounded-lg font-medium text-center tracking-tight transition duration-300 ease-in-out ${
+          !isContentGenerating 
               ? "opacity-100"
               : "opacity-50"
           }`}
-          onClick={handleImportSelectedPage}
-          disabled={
-            !pages.every(
-              (page) => page.selected === true || page.selected === false
-            )
-          }
-        >
-          Import Selected Page
-        </button>
+              ref={offerButtonRef}
+              onClick={() => {!isContentGenerating ? handleImportSelectedPage : ""}}
+              >
+                <span className="flex items-center gap-1.5 w-[80%] mx-auto justify-center">
+                  Import Selected Page
+                </span>
+              
+            </button>
       </div>
     </div>
   );

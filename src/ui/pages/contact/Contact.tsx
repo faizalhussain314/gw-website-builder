@@ -46,18 +46,10 @@ function Contact() {
   }, [ContactFormRedux]);
 
   const validatePhoneNumber = () => {
-    if(formData.phoneNumber?.length < 10 || formData.phoneNumber?.length > 10){
-      setFormError((prevData) => ({
-        ...prevData,
-        phoneNumber: "Enter valid phone number",
-      }));
-  }
-  else{
     setFormError((prevData) => ({
       ...prevData,
       phoneNumber: "",
     }));
-  }
   }
   const validateEmail = () => {
     let validEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)
