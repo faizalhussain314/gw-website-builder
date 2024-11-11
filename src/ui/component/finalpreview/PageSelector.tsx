@@ -127,7 +127,7 @@ const PageSelector: React.FC<Props> = ({
   useEffect(() => {
     function bouceAnimate() {
       const offerBtn = offerButtonRef.current;
-      if (!offerBtn) return;
+      if (!offerBtn || isContentGenerating !== false) return;
 
       const currentAnimation = lastAnimation === "bounce" ? "shake" : "bounce";
       offerBtn?.classList?.add(currentAnimation);
@@ -363,7 +363,7 @@ const PageSelector: React.FC<Props> = ({
               ? "opacity-100"
               : "opacity-50"
           }`}
-              ref={isContentGenerating ? "" : offerButtonRef}
+              ref={offerButtonRef}
               onClick={() => {isContentGenerating === false ? handleImportSelectedPage() : ""}}
               >
                 <span className="flex items-center gap-1.5 w-[80%] mx-auto justify-center">
