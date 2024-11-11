@@ -25,6 +25,7 @@ function Description() {
 
   const [description1, setDescription1] = useState<string>("");
   const [description2, setDescription2] = useState<string>("");
+  const [loading, setLoading] = useState(false);
   const [loader1, setLoader1] = useState<boolean>(false);
   const [loader2, setLoader2] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -162,8 +163,10 @@ function Description() {
     if (!description1 || !description2) {
       setError("Both descriptions are required.");
     } else {
+      setLoading(true);
       dispatch(setDescriptionOne(description1));
       dispatch(setDescriptionTwo(description2));
+      setLoading(false);
       navigate("/contact");
     }
   };
@@ -365,7 +368,33 @@ function Description() {
             onClick={setReduxValue}
             className="tertiary px-[30px] py-[15px] text-base text-white sm:mt-2 font-medium rounded-md w-[150px]"
           >
-            Continue
+            {loading ? (
+              <div className="flex">
+                {" "}
+                <svg
+                  className="animate-spin h-5 w-5 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                  ></path>
+                </svg>
+              </div>
+            ) : (
+              "Continue"
+            )}
           </button>
         </div>
       </div>

@@ -26,7 +26,11 @@ import GwLoader from "../../component/loader/gwLoader";
 import useDomainEndpoint from "../../../hooks/useDomainEndpoint";
 // import usePageData from "../../../hooks/usePageData";
 import { savePagesToDB } from "../../../infrastructure/api/wordpress-api/final-preview/savePagesApi.api";
-import { updateReduxPage } from "../../../Slice/activeStepSlice";
+import {
+  setColor,
+  setFont,
+  updateReduxPage,
+} from "../../../Slice/activeStepSlice";
 import CustomizePopup from "../../component/dialogs/CustomizePopup";
 import { deletePage } from "../../../infrastructure/api/wordpress-api/final-preview/deletePage.api";
 import { deleteStyle } from "../../../infrastructure/api/wordpress-api/final-preview/deleteStyle.api";
@@ -353,7 +357,10 @@ const FinalPreview: React.FC = () => {
           version_name: "5.5",
           page_name: pageName, // Use the current pageName instead of selectedPage
           template_name: templateName,
-          json_content: (pageName == "Home" || pageName == "About" || pageName == "Service") ? jsonContent : "",
+          json_content:
+            pageName == "Home" || pageName == "About" || pageName == "Service"
+              ? jsonContent
+              : "",
         });
         console.log(
           "page name",
@@ -463,7 +470,7 @@ const FinalPreview: React.FC = () => {
         console.log("--------------------------------------");
         console.log(data);
         console.log("--------------------------------------");
-        
+
         if (data && Array.isArray(data)) {
           setPages((prevPages) => {
             // Merge existing pages with API response data
@@ -505,7 +512,7 @@ const FinalPreview: React.FC = () => {
 
   useEffect(() => {
     // if (isFormDetailsLoaded) {
-      fetchGeneratedPageStatus(); // Call the API only when form details are loaded
+    fetchGeneratedPageStatus(); // Call the API only when form details are loaded
     // }
   }, []);
 
@@ -798,7 +805,10 @@ const FinalPreview: React.FC = () => {
       setPages(updatedPages);
 
       const nextPageIndex = currentPageIndex + 1;
-      if (nextPageIndex < updatedPages.length && currentPage != updatedPages[currentPageIndex]?.name) {
+      if (
+        nextPageIndex < updatedPages.length &&
+        currentPage != updatedPages[currentPageIndex]?.name
+      ) {
         setSelectedPage(updatedPages[nextPageIndex].name);
 
         const nextPageContent = generatedPage[updatedPages[nextPageIndex].name];
@@ -974,11 +984,24 @@ const FinalPreview: React.FC = () => {
         }
       } else if (event.data.type === "oldNewContent") {
         const pageName = event.data.pageName || selectedPage || "";
+        console.log("oldnewcontent", event.data.content);
+        calculateWordCount(event.data.content);
         handleOldNewContent(pageName, event.data.content);
         // console.log("log from event handler", pageName);
       }
     };
+    function calculateWordCount(contentObject: object) {
+      let totalWordCount = 0;
 
+      Object.values(contentObject).forEach((value) => {
+        // Split the value string by spaces and count the words
+        const wordCount = value.split(/\s+/).filter((word) => word).length;
+        totalWordCount += wordCount;
+      });
+
+      console.log("Total Word Count:", totalWordCount);
+      return totalWordCount;
+    }
     window.addEventListener("message", receiveMessage);
     return () => {
       window.removeEventListener("message", receiveMessage);
@@ -1036,12 +1059,15 @@ const FinalPreview: React.FC = () => {
 
   const deleteGeneratedPage = async () => {
     setButtonLoader(true);
+
+    dispatch(setColor({ primary: "", secondary: "" }));
+    dispatch(setFont({ primary: "", secondary: "" }));
     if (deleteStyleEndPoint) {
       try {
         await deleteStyle(deleteStyleEndPoint); // delete style
         if (deletePageEndPoint) {
           try {
-            let response = await deletePage(deletePageEndPoint); // delete generated file
+            const response = await deletePage(deletePageEndPoint); // delete generated file
             if (response) {
               setButtonLoader(false);
               navigate("/custom-design");
@@ -1220,6 +1246,7 @@ const FinalPreview: React.FC = () => {
           onClose={() => setresetPopup(false)}
           alertType="websiteCreation"
           onContinue={handleContinue}
+          buttonLoader={buttonLoader}
           onCreateFromScratch={handleCustomize}
         />
       )}

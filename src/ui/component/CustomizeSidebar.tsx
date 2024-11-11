@@ -65,16 +65,16 @@ const CustomizeSidebar: React.FC = () => {
 
   const generateBusinessLogo = (businessName: string) => {
     const canvas = document.createElement("canvas");
-    canvas.width = 200;
+    canvas.width = 100;
     canvas.height = 100;
     const ctx = canvas.getContext("2d");
 
     // Add background
-    ctx.fillStyle = "#fff";
+    ctx.fillStyle = "rgba(255, 255, 255, 0)";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     ctx.fillStyle = "#000";
-    ctx.font = "bold 20px Arial";
+    ctx.font = "bold 24px Arial";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText(businessName, canvas.width / 2, canvas.height / 2);

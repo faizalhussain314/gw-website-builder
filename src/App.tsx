@@ -8,6 +8,16 @@ import useLastStepUpdate from "./hooks/useLastStepUpdate";
 import { clearUserData, setlastStep } from "./Slice/activeStepSlice";
 import AppRoutes from "./routes/AppRoutes";
 import CloseIcon from "./ui/global component/CloseIcon";
+import {
+  setUsername,
+  setPlan,
+  setWebsiteGenerationLimit,
+  setEmail,
+  setGravator,
+  setGeneratedSite,
+  setMaxGeneration,
+} from "./Slice/userSlice";
+import useDomainEndpoint from "./hooks/useDomainEndpoint";
 
 const App = () => {
   const navigate = useNavigate();
@@ -23,6 +33,34 @@ const App = () => {
   const [isRefresh, setIsRefresh] = useState(false);
 
   const { fetchContent, emptyTable } = useFetchContentData();
+  const { getDomainFromEndpoint } = useDomainEndpoint();
+
+  const fetchUserDetails = async () => {
+    try {
+      const url = getDomainFromEndpoint(
+        "/wp-json/custom/v1/get-gwuser-details"
+      );
+      const response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fields: ["id", "name", "email", "gravator", "plan_detail"],
+        }),
+      });
+      const result = await response.json();
+      if (result) {
+        dispatch(setUsername(result[0]?.name));
+        dispatch(setPlan(result[0]?.plan_detail));
+        dispatch(setWebsiteGenerationLimit(result[0]?.websiteGenerationLimit));
+        dispatch(setEmail(result?.email));
+        dispatch(setGravator(result?.gravator));
+        dispatch(setGeneratedSite(result?.generatedsite || 1));
+        dispatch(setMaxGeneration(result?.setMaxGeneration || 6));
+      }
+    } catch (error) {
+      console.error("Error fetching user details:", error);
+    }
+  };
 
   useEffect(() => {
     if (performance.navigation.type === 1) {
@@ -31,14 +69,17 @@ const App = () => {
   }, []);
 
   useEffect(() => {
-    const getData = async () => {
+    const fetchData = async () => {
       try {
+        // Fetch user details first
+        await fetchUserDetails();
+
+        // Then proceed with fetching content data
         const data = await fetchContent();
         setFetchedData(data);
 
         const hasData =
           data?.category || data?.bussinessName || data?.description1;
-        console.log("hasData", hasData);
 
         if (
           hasData &&
@@ -46,7 +87,6 @@ const App = () => {
           !isRefresh &&
           location.pathname === "/"
         ) {
-          console.log("hasData", hasData);
           setShowPopup(true);
         }
 
@@ -64,7 +104,7 @@ const App = () => {
     };
 
     if (firstLoad) {
-      getData();
+      fetchData();
     }
   }, [
     fetchContent,
