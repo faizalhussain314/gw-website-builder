@@ -139,7 +139,7 @@ const PageSelector: React.FC<Props> = ({
 
     const timer = setInterval(() => {
       bouceAnimate();
-    }, 3000);
+    }, 5000);
 
     return () => clearInterval(timer);
   }, []);
@@ -363,8 +363,8 @@ const PageSelector: React.FC<Props> = ({
               ? "opacity-100"
               : "opacity-50"
           }`}
-              ref={offerButtonRef}
-              onClick={() => {!isContentGenerating ? handleImportSelectedPage : ""}}
+              ref={isContentGenerating ? "" : offerButtonRef}
+              onClick={() => {isContentGenerating === false ? handleImportSelectedPage() : ""}}
               >
                 <span className="flex items-center gap-1.5 w-[80%] mx-auto justify-center">
                   Import Selected Page

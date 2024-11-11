@@ -226,10 +226,10 @@ function Description() {
             />
             {/* AI Write Button for Description 1 */}
             <div className="mt-2 flex items-center gap-2 text-app-secondary hover:text-app-accent-hover cursor-pointer ml-[50px]">
-              <div className="flex justify-between w-full">
+              <div className={`flex justify-between w-full ${loader2 || loader1 ? "cursor-progress" : ""}`}>
                 <div
                   className="flex gap-2 text-palatinate-blue-600 hover:text-palatinate-blue-800"
-                  onClick={() => handleAIWrite(1)}
+                  onClick={() => {loader2 || loader1 ? "" : handleAIWrite(1)}}
                 >
                   <img
                     src="https://tours.mywpsite.org/wp-content/uploads/2024/08/sparkle.svg"
@@ -309,10 +309,10 @@ function Description() {
             />
             {/* AI Write Button for Description 2 */}
             <div className="mt-2 flex items-center gap-2 text-app-secondary hover:text-app-accent-hover cursor-pointer ml-[50px]">
-              <div className="flex justify-between w-full">
+              <div className={`flex justify-between w-full ${loader2 || loader1 ? "cursor-progress" : ""}`}>
                 <div
                   className="flex gap-2 text-palatinate-blue-600 hover:text-palatinate-blue-800"
-                  onClick={() => handleAIWrite(2)}
+                  onClick={() => {loader2 || loader1 ? "" : handleAIWrite(2)}}
                 >
                   <img
                     src="https://tours.mywpsite.org/wp-content/uploads/2024/08/sparkle.svg"

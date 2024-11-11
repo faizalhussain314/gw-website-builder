@@ -9,7 +9,7 @@ function Welcome() {
   const navigate = useNavigate();
 
   const handleRedirection = () => {
-    if (userDetails.username || userDetails.username.trim().length > 0) {
+    if (userDetails?.username || userDetails?.username?.trim().length > 0) {
       console.log("Redirection to /category");
       navigate("/category");
     } else {

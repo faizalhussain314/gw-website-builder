@@ -1009,6 +1009,8 @@ const FinalPreview: React.FC = () => {
   }, [Color, fontFamily, selectedPage, storeHtmlContent, handleOldNewContent]);
 
   const handleImportSelectedPage = () => {
+    console.log(selectedPage);
+    
     navigate("/processing", { state: { pageName: selectedPage } });
   };
 
