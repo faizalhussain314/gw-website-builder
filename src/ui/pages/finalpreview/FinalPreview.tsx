@@ -467,10 +467,6 @@ const FinalPreview: React.FC = () => {
 
       if (response.status === 200) {
         const { data } = response;
-        console.log("--------------------------------------");
-        console.log(data);
-        console.log("--------------------------------------");
-
         if (data && Array.isArray(data)) {
           setPages((prevPages) => {
             // Merge existing pages with API response data
@@ -763,7 +759,7 @@ const FinalPreview: React.FC = () => {
     );
     if (currentPageIndex !== -1) {
       const updatedPages = [...pages];
-      if (action === "next") {
+      if (action === "next" && currentPage !== "Contact Us" && currentPage !== "Blog") {
         updatedPages[currentPageIndex].status = "Generated";
         updatedPages[currentPageIndex].selected = true;
 
@@ -777,7 +773,7 @@ const FinalPreview: React.FC = () => {
       } else if (action === "skip") {
         updatedPages[currentPageIndex].status = "Skipped";
         updatedPages[currentPageIndex].selected = false;
-      } else if (action === "add") {
+      } else if (action === "add" || currentPage !== "Contact Us" || currentPage !== "Blog") {
         if (currentPages[currentPageIndex].status == "") {
           updatedPages[currentPageIndex].status = "Added";
           updatedPages[currentPageIndex].selected = true;
@@ -1010,7 +1006,7 @@ const FinalPreview: React.FC = () => {
 
   const handleImportSelectedPage = () => {
     console.log(selectedPage);
-    
+
     navigate("/processing", { state: { pageName: selectedPage } });
   };
 
@@ -1150,7 +1146,7 @@ const FinalPreview: React.FC = () => {
           {showPopup &&
             selectedPage !== "Blog" &&
             pages.find((p) => p.name === selectedPage)?.status !==
-              "Generated" &&
+            "Generated" &&
             Loaded &&
             selectedPage !== "Contact" && (
               <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
@@ -1214,11 +1210,10 @@ const FinalPreview: React.FC = () => {
                 title="website"
                 id="myIframe"
                 onLoad={onLoadMsg}
-                className={`h-full w-full transition-fade shadow-lg rounded-lg z-10 absolute top-0  ${
-                  isLoading && !isContentGenerating
+                className={`h-full w-full transition-fade shadow-lg rounded-lg z-10 absolute top-0  ${isLoading && !isContentGenerating
                     ? "opacity-0"
                     : "opacity-100"
-                }`}
+                  }`}
               />
             )}
 
@@ -1226,17 +1221,15 @@ const FinalPreview: React.FC = () => {
             {(!generatedPage[selectedPage!] || !isPageGenerated) && (
               <iframe
                 ref={iframeRef}
-                src={`${currentUrl}/${
-                  pages.find((page) => page.name === selectedPage)?.slug
-                }`}
+                src={`${currentUrl}/${pages.find((page) => page.name === selectedPage)?.slug
+                  }`}
                 title="website"
                 id="myIframe"
                 onLoad={onLoadMsg}
-                className={`h-full w-full transition-fade shadow-lg rounded-lg z-10 absolute top-0 ${
-                  isLoading && !isContentGenerating
+                className={`h-full w-full transition-fade shadow-lg rounded-lg z-10 absolute top-0 ${isLoading && !isContentGenerating
                     ? "opacity-0"
                     : "opacity-100"
-                }`}
+                  }`}
               />
             )}
           </div>

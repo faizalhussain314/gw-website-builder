@@ -85,7 +85,13 @@ const PageSelector: React.FC<Props> = ({
 
       // Set the updated pages array
       setPages(updatedPages);
-
+      dispatch(
+        updateReduxPage({
+          name: pageName,
+          status: "Skipped",
+          selected: false,
+        })
+      );
       // Proceed to the next page
       handleSkipPage(pageName);
     }
