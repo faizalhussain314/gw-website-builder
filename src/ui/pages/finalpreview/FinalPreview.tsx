@@ -773,8 +773,38 @@ const FinalPreview: React.FC = () => {
       } else if (action === "skip") {
         updatedPages[currentPageIndex].status = "Skipped";
         updatedPages[currentPageIndex].selected = false;
-      } else if (action === "add" || currentPage !== "Contact Us" || currentPage !== "Blog") {
-        if (currentPages[currentPageIndex].status == "") {
+        dispatch(
+          updateReduxPage({
+            name: updatedPages[currentPageIndex].name, // Page name
+            status: "Skipped", // Mark as Added
+            selected: false, 
+          })
+        );
+      } else if (action === "add" || currentPage == "Contact Us" || currentPage == "Blog") {
+        if(updatedPages[currentPageIndex].status == "Generated" && updatedPages[currentPageIndex].name != "Home"){
+          updatedPages[currentPageIndex].status = "Not Selected";
+          updatedPages[currentPageIndex].selected = false;
+  
+          dispatch(
+            updateReduxPage({
+              name: updatedPages[currentPageIndex].name, // Page name
+              status: "Generated", // Mark as generated
+              selected: true, // Set as selected
+            })
+          );
+        }
+        else if(updatedPages[currentPageIndex].status == "Not Selected"){
+          updatedPages[currentPageIndex].status = "Generated";
+          updatedPages[currentPageIndex].selected = true;
+          dispatch(
+            updateReduxPage({
+              name: updatedPages[currentPageIndex].name, // Page name
+              status: "Generated", // Mark as Added
+              selected: true, // Set as not selected
+            })
+          );
+        }
+        else if (currentPages[currentPageIndex].status == "" || currentPages[currentPageIndex].status == "Skipped") {
           updatedPages[currentPageIndex].status = "Added";
           updatedPages[currentPageIndex].selected = true;
           dispatch(
@@ -785,7 +815,7 @@ const FinalPreview: React.FC = () => {
             })
           );
         }
-        if (currentPages[currentPageIndex].status == "Added") {
+       else if (currentPages[currentPageIndex].status == "Added" && currentPage !== "Contact Us" && currentPage !== "Blog") {
           updatedPages[currentPageIndex].status = "";
           updatedPages[currentPageIndex].selected = false;
           dispatch(
@@ -797,7 +827,6 @@ const FinalPreview: React.FC = () => {
           );
         }
       }
-      updatedPages[currentPageIndex].selected = true;
       setPages(updatedPages);
 
       const nextPageIndex = currentPageIndex + 1;
@@ -1034,8 +1063,6 @@ const FinalPreview: React.FC = () => {
     "/wp-json/custom/v1/delete-all-styles"
   );
   useEffect(() => {
-    // console.log(pages,findIndex);
-
     const storePagesInDB = async () => {
       if (savePageEndPoint) {
         try {

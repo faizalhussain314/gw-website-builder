@@ -75,7 +75,6 @@ const PageSelector: React.FC<Props> = ({
       return;
     } else {
       // Update page status to 'Skipped' and set selected to false
-      console.log("skip event triggered", pages);
       updatePageStatus(pageName, "Skipped", false);
 
       // Directly update pages without using an updater function
@@ -182,7 +181,7 @@ const PageSelector: React.FC<Props> = ({
                     type="checkbox"
                     disabled={page.name === "Home"}
                     className="mr-4 flex items-center w-4 h-4"
-                    checked={page.name === "Home" ? true : page.status && page?.status != "Skipped" ? true : false}
+                    checked={page.name === "Home" ? true : page.status && (page?.status != "Skipped" && page?.status != "Not Selected") ? true : false}
                     onClick={(e:any) => {handlePageChange(page.slug, e?.target?.checked); }
                     } // Make sure the slug is passed to toggle selection
                   />
@@ -195,7 +194,7 @@ const PageSelector: React.FC<Props> = ({
                     className={`ml-2 text-xs font-medium rounded-full px-2.5 py-1 text-[#1E2022] ${
                       page.status === "Generated" || page.name == "Home"
                         ? "bg-[#CDF9CD]"
-                        : page.status === "Skipped"
+                        : page.status === "Skipped" || page.status === "Not Selected"
                         ? "bg-[#FFDCD5]"
                         : page.status === "Added"
                         ? "bg-[#E4C9FF]"
@@ -256,6 +255,7 @@ const PageSelector: React.FC<Props> = ({
               <div className="mt-3 flex justify-evenly text-sm">
                 {page.status === "Generated" ||
                 page.status === "Skipped" ||
+                page.status === "Not Selected" ||
                 page.name === "Blog" ||
                 page.name === "Contact" ||
                 page.name === "Contact Us" ||
