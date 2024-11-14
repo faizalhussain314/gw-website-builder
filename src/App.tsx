@@ -52,10 +52,10 @@ const App = () => {
         dispatch(setUsername(result[0]?.name));
         dispatch(setPlan(result[0]?.plan_detail));
         dispatch(setWebsiteGenerationLimit(result[0]?.websiteGenerationLimit));
-        dispatch(setEmail(result?.email));
-        dispatch(setGravator(result?.gravator));
-        dispatch(setGeneratedSite(result?.generatedsite || 1));
-        dispatch(setMaxGeneration(result?.setMaxGeneration || 6));
+        dispatch(setEmail(result[0]?.email));
+        dispatch(setGravator(result[0]?.gravator));
+        dispatch(setGeneratedSite(result[0]?.generatedsite || 1));
+        dispatch(setMaxGeneration(result[0]?.setMaxGeneration || 6));
       }
     } catch (error) {
       console.error("Error fetching user details:", error);
@@ -71,10 +71,8 @@ const App = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch user details first
         await fetchUserDetails();
 
-        // Then proceed with fetching content data
         const data = await fetchContent();
         setFetchedData(data);
 

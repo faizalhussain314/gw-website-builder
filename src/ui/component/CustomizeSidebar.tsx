@@ -74,10 +74,53 @@ const CustomizeSidebar: React.FC = () => {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     ctx.fillStyle = "#000";
-    ctx.font = "bold 24px Arial";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText(businessName, canvas.width / 2, canvas.height / 2);
+
+    // Define a function to adjust font size and split text into lines if necessary
+    const fitTextToCanvas = (text, maxWidth) => {
+      let fontSize = 24;
+      ctx.font = `bold ${fontSize}px Arial`;
+
+      // Reduce font size if text is too wide
+      while (ctx.measureText(text).width > maxWidth && fontSize > 8) {
+        fontSize -= 1;
+        ctx.font = `bold ${fontSize}px Arial`;
+      }
+
+      // Split text if it is still too wide
+      const words = text.split(" ");
+      const lines = [];
+      let line = "";
+
+      for (let i = 0; i < words.length; i++) {
+        const testLine = line + (line ? " " : "") + words[i];
+        if (ctx.measureText(testLine).width > maxWidth) {
+          lines.push(line);
+          line = words[i];
+        } else {
+          line = testLine;
+        }
+      }
+      lines.push(line);
+
+      return { fontSize, lines };
+    };
+
+    // Fit the business name to the canvas width and get lines
+    const maxWidth = canvas.width - 10; // Padding
+    const { fontSize, lines } = fitTextToCanvas(businessName, maxWidth);
+
+    // Set the final font size
+    ctx.font = `bold ${fontSize}px Arial`;
+
+    // Draw each line on the canvas
+    const lineHeight = fontSize + 4;
+    const yOffset = (canvas.height - lineHeight * lines.length) / 2;
+
+    lines.forEach((line, index) => {
+      ctx.fillText(line, canvas.width / 2, yOffset + index * lineHeight);
+    });
 
     return canvas.toDataURL("image/png");
   };
@@ -133,7 +176,11 @@ const CustomizeSidebar: React.FC = () => {
 
   useEffect(() => {
     if (businessName) {
-      uploadGeneratedLogo(businessName);
+      console.log("event started");
+      window.parent.postMessage(
+        { type: "businessName", text: businessName },
+        "*"
+      );
     }
   }, [businessName]);
   const handleFontChange = async (fontCombination: SelectedFont) => {
@@ -142,7 +189,7 @@ const CustomizeSidebar: React.FC = () => {
     setIsDropdownOpen(false);
 
     await storeContent({ font: fontCombination });
-    console.log("fontCombinationn", fontCombination);
+
     sendMessageToIframes("changeFont", { font: fontCombination });
   };
 
@@ -165,9 +212,6 @@ const CustomizeSidebar: React.FC = () => {
       formData.append("image", file);
       const url = getDomainFromEndpoint("/wp-json/custom/v1/upload-logo");
 
-      setLoading(true);
-      setError(null);
-
       try {
         const response = await fetch(url, {
           method: "POST",
@@ -185,11 +229,14 @@ const CustomizeSidebar: React.FC = () => {
         dispatch(setLogo(newLogoUrl));
         await storeContent({ logo: newLogoUrl });
 
+        // Send the logo URL to the iframe
+        // window.parent.postMessage(
+        //   { type: "changeLogo", logoUrl: newLogoUrl },
+        //   "*"
+        // );
         sendMessageToIframes("changeLogo", { logoUrl: newLogoUrl });
       } catch (err) {
-        setError("Error uploading image. Please try again.");
-      } finally {
-        setLoading(false);
+        console.error("Error uploading image:", err);
       }
     }
   };
@@ -308,7 +355,7 @@ const CustomizeSidebar: React.FC = () => {
         </Link>
         <button
           onClick={nextPage}
-          className="px-4 py-3 text-white rounded-md tertiary text-base sm:mt-2 w-full"
+          className="px-4 py-3.5 text-white rounded-md tertiary text-base sm:mt-2 w-full"
         >
           Start Building
         </button>

@@ -16,8 +16,8 @@ const initialState: UserState = {
   websiteGenerationLimit: 0,
   gravator: "",
   email: "",
-  generatedSite: 0,
-  max_genration: 0,
+  generatedSite: 2,
+  max_genration: 6,
 };
 
 export const userSlice = createSlice({
