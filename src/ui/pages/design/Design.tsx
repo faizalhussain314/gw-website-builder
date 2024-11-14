@@ -479,16 +479,14 @@ function Design() {
               </button>
             </Link>
             <button
-              className={` tertiary px-[30px] py-[10px] text-base text-white sm:mt-2 rounded-md w-[150px] ${
+              className={` tertiary px-[30px] py-3.5 text-base text-white sm:mt-2 rounded-md w-[150px] ${
                 !showValidationError && "opacity-50"
               }`}
               // onClick={() => setShowPopup(true)}
               onClick={handleContinue}
               disabled={!showValidationError}
             >
-              <div className="flex items-center justify-center font-medium gap-x-2">
-                <div>Continue</div>
-              </div>
+              Continue
             </button>
           </div>
         </div>

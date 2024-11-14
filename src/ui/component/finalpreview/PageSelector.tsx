@@ -15,7 +15,7 @@ type Props = {
   togglePage: (page: string) => void;
   handleNext: (page: string) => void;
   handleSkipPage: (page: string) => void;
-  handleAddPage: (page:string) => void;
+  handleAddPage: (page: string) => void;
   setShowPopup: (show: boolean) => void;
   previousClicked: boolean;
   handlePageUpdate: (
@@ -61,9 +61,7 @@ const PageSelector: React.FC<Props> = ({
 
   const dispatch = useDispatch();
 
-  const currentPages = useSelector(
-    (state: RootState) => state.userData.pages
-  );
+  const currentPages = useSelector((state: RootState) => state.userData.pages);
 
   const handlePageClick = (pageName: string) => {
     togglePage(pageName);
@@ -101,23 +99,32 @@ const PageSelector: React.FC<Props> = ({
     // Always keep Home page selected
     if (currentPage?.name === "Home") {
       const updatedPages = pages.map((page) =>
-        page.slug === slug ? { ...page, selected: true, status:"Generated" } : page
+        page.slug === slug
+          ? { ...page, selected: true, status: "Generated" }
+          : page
       );
       setPages(updatedPages);
       return;
     }
-    else {
-    // Allow other pages to be selected or deselected
-    const updatedPages = pages.map((page) =>
-      page.slug === slug ? { ...page, selected: newSelectedValue } : page
-    );
-    setPages(updatedPages);
-    }
 
+    // For other pages, update selection and reset status if deselected
+    const updatedPages = pages.map((page) =>
+      page.slug === slug
+        ? {
+            ...page,
+            selected: newSelectedValue,
+            status: newSelectedValue ? page.status : "",
+          }
+        : page
+    );
+
+    setPages(updatedPages);
+
+    // Update Redux state
     dispatch(
       updateReduxPage({
         name: currentPage.name,
-        status: currentPage.status,
+        status: newSelectedValue ? currentPage.status : "",
         selected: newSelectedValue,
       })
     );
@@ -175,15 +182,29 @@ const PageSelector: React.FC<Props> = ({
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center">
-                <div className="custom-checkbox" onClick={() => {handleAddPage(page.name);}}>
+                <div
+                  className="custom-checkbox"
+                  onClick={() => {
+                    handleAddPage(page.name);
+                  }}
+                >
                   <input
                     id={`checkbox-${page.slug}`}
                     type="checkbox"
                     disabled={page.name === "Home"}
                     className="mr-4 flex items-center w-4 h-4"
-                    checked={page.name === "Home" ? true : page.status && (page?.status != "Skipped" && page?.status != "Not Selected") ? true : false}
-                    onClick={(e:any) => {handlePageChange(page.slug, e?.target?.checked); }
-                    } // Make sure the slug is passed to toggle selection
+                    checked={
+                      page.name === "Home"
+                        ? true
+                        : page.status &&
+                          page?.status != "Skipped" &&
+                          page?.status != "Not Selected"
+                        ? true
+                        : false
+                    }
+                    onClick={(e: any) => {
+                      handlePageChange(page.slug, e?.target?.checked);
+                    }} // Make sure the slug is passed to toggle selection
                   />
                 </div>
                 <span className="font-medium text-base">{page.name}</span>
@@ -194,7 +215,8 @@ const PageSelector: React.FC<Props> = ({
                     className={`ml-2 text-xs font-medium rounded-full px-2.5 py-1 text-[#1E2022] ${
                       page.status === "Generated" || page.name == "Home"
                         ? "bg-[#CDF9CD]"
-                        : page.status === "Skipped" || page.status === "Not Selected"
+                        : page.status === "Skipped" ||
+                          page.status === "Not Selected"
                         ? "bg-[#FFDCD5]"
                         : page.status === "Added"
                         ? "bg-[#E4C9FF]"
@@ -261,21 +283,31 @@ const PageSelector: React.FC<Props> = ({
                 page.name === "Contact Us" ||
                 page.name === "Home" ? (
                   <div className="w-full flex items-center gap-4">
-                    <button
-                      className={`bg-white text-[#1E2022] hover:bg-palatinate-blue-600 hover:text-white rounded px-3 py-1.5 w-full text-[14px] font-[500] ${
-                        isContentGenerating ? "opacity-50" : ""
-                      }`}
-                      onClick={() => {
-                        if (isContentGenerating) {
-                          showWarningToast();
-                        } else {
-                          handleNext(page.name);
-                        }
-                      }}
-                      disabled={isContentGenerating || isLoading}
-                    >
-                      Keep & Next
-                    </button>
+                    {page.status === "Generated" ? (
+                      <button
+                        className={`bg-white text-[#1E2022] hover:bg-palatinate-blue-600 hover:text-white rounded px-3 py-1.5 w-full text-[14px] font-[500] ${
+                          isContentGenerating ? "opacity-50" : ""
+                        }`}
+                        onClick={() => {
+                          if (isContentGenerating) {
+                            showWarningToast();
+                          } else {
+                            handleNext(page.name);
+                          }
+                        }}
+                        disabled={isContentGenerating || isLoading}
+                      >
+                        Keep & Next
+                      </button>
+                    ) : (
+                      <button
+                        className="bg-white text-[#1E2022] hover:bg-palatinate-blue-600 hover:text-white rounded px-3 py-1.5 w-full text-[14px] font-[500]"
+                        onClick={handleGeneratePage}
+                        disabled={isLoading}
+                      >
+                        Generate Page
+                      </button>
+                    )}
                     {page.name === "Home" ? (
                       <Tooltip title="Home page can't skip" placement="top">
                         <button
@@ -362,21 +394,20 @@ const PageSelector: React.FC<Props> = ({
             Next
           </button> */}
         </div>
-        
+
         <button
-        className={`tertiary w-full text-white py-3 px-8 rounded-md mb-4 flex items-center justify-center outline-none rounded-lg font-medium text-center tracking-tight transition duration-300 ease-in-out ${
-          !isContentGenerating 
-              ? "opacity-100"
-              : "opacity-50"
+          className={`tertiary w-full text-white py-3 px-8 rounded-md mb-4 flex items-center justify-center outline-none rounded-lg font-medium text-center tracking-tight transition duration-300 ease-in-out ${
+            !isContentGenerating ? "opacity-100" : "opacity-50"
           }`}
-              ref={offerButtonRef}
-              onClick={() => {isContentGenerating === false ? handleImportSelectedPage() : ""}}
-              >
-                <span className="flex items-center gap-1.5 w-[80%] mx-auto justify-center">
-                  Import Selected Page
-                </span>
-              
-            </button>
+          ref={offerButtonRef}
+          onClick={() => {
+            isContentGenerating === false ? handleImportSelectedPage() : "";
+          }}
+        >
+          <span className="flex items-center gap-1.5 w-[80%] mx-auto justify-center">
+            Import Selected Page
+          </span>
+        </button>
       </div>
     </div>
   );

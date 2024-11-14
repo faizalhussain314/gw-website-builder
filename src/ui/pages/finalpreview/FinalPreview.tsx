@@ -34,6 +34,7 @@ import {
 import CustomizePopup from "../../component/dialogs/CustomizePopup";
 import { deletePage } from "../../../infrastructure/api/wordpress-api/final-preview/deletePage.api";
 import { deleteStyle } from "../../../infrastructure/api/wordpress-api/final-preview/deleteStyle.api";
+import { sendIframeMessage } from "../../../core/utils/sendIframeMessage.utils.ts";
 
 const FinalPreview: React.FC = () => {
   const reduxPages =
@@ -93,7 +94,7 @@ const FinalPreview: React.FC = () => {
     ) || "";
 
   const businessName = useSelector(
-    (state: RootState) => state.userData.businessName
+    (state: RootState) => state.userData?.businessName
   );
   const Description = useSelector(
     (state: RootState) => state.userData.description1
@@ -589,6 +590,8 @@ const FinalPreview: React.FC = () => {
 
     if (logoUrl) {
       changeLogo(logoUrl);
+    } else if (businessName) {
+      sendIframeMessage("bussinessName", businessName);
     }
 
     if (selectedPage && generatedPage[selectedPage]) {
@@ -759,7 +762,11 @@ const FinalPreview: React.FC = () => {
     );
     if (currentPageIndex !== -1) {
       const updatedPages = [...pages];
-      if (action === "next" && currentPage !== "Contact Us" && currentPage !== "Blog") {
+      if (
+        action === "next" &&
+        currentPage !== "Contact Us" &&
+        currentPage !== "Blog"
+      ) {
         updatedPages[currentPageIndex].status = "Generated";
         updatedPages[currentPageIndex].selected = true;
 
@@ -773,38 +780,12 @@ const FinalPreview: React.FC = () => {
       } else if (action === "skip") {
         updatedPages[currentPageIndex].status = "Skipped";
         updatedPages[currentPageIndex].selected = false;
-        dispatch(
-          updateReduxPage({
-            name: updatedPages[currentPageIndex].name, // Page name
-            status: "Skipped", // Mark as Added
-            selected: false, 
-          })
-        );
-      } else if (action === "add" || currentPage == "Contact Us" || currentPage == "Blog") {
-        if(updatedPages[currentPageIndex].status == "Generated" && updatedPages[currentPageIndex].name != "Home"){
-          updatedPages[currentPageIndex].status = "Not Selected";
-          updatedPages[currentPageIndex].selected = false;
-  
-          dispatch(
-            updateReduxPage({
-              name: updatedPages[currentPageIndex].name, // Page name
-              status: "Generated", // Mark as generated
-              selected: true, // Set as selected
-            })
-          );
-        }
-        else if(updatedPages[currentPageIndex].status == "Not Selected"){
-          updatedPages[currentPageIndex].status = "Generated";
-          updatedPages[currentPageIndex].selected = true;
-          dispatch(
-            updateReduxPage({
-              name: updatedPages[currentPageIndex].name, // Page name
-              status: "Generated", // Mark as Added
-              selected: true, // Set as not selected
-            })
-          );
-        }
-        else if (currentPages[currentPageIndex].status == "" || currentPages[currentPageIndex].status == "Skipped") {
+      } else if (
+        action === "add" ||
+        currentPage !== "Contact Us" ||
+        currentPage !== "Blog"
+      ) {
+        if (currentPages[currentPageIndex].status == "") {
           updatedPages[currentPageIndex].status = "Added";
           updatedPages[currentPageIndex].selected = true;
           dispatch(
@@ -814,8 +795,11 @@ const FinalPreview: React.FC = () => {
               selected: true, // Set as selected
             })
           );
-        }
-       else if (currentPages[currentPageIndex].status == "Added" && currentPage !== "Contact Us" && currentPage !== "Blog") {
+        } else if (
+          currentPages[currentPageIndex].status == "Added" &&
+          currentPage !== "Contact Us" &&
+          currentPage !== "Blog"
+        ) {
           updatedPages[currentPageIndex].status = "";
           updatedPages[currentPageIndex].selected = false;
           dispatch(
@@ -1000,6 +984,15 @@ const FinalPreview: React.FC = () => {
           };
           return updatedPages;
         });
+        if (pageName === "Home") {
+          dispatch(
+            updateReduxPage({
+              name: "Home",
+              status: "Generated",
+              selected: true,
+            })
+          );
+        }
 
         // Store the HTML content
         storeHtmlContent(pageName, htmlContent);
@@ -1173,7 +1166,7 @@ const FinalPreview: React.FC = () => {
           {showPopup &&
             selectedPage !== "Blog" &&
             pages.find((p) => p.name === selectedPage)?.status !==
-            "Generated" &&
+              "Generated" &&
             Loaded &&
             selectedPage !== "Contact" && (
               <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
@@ -1237,10 +1230,11 @@ const FinalPreview: React.FC = () => {
                 title="website"
                 id="myIframe"
                 onLoad={onLoadMsg}
-                className={`h-full w-full transition-fade shadow-lg rounded-lg z-10 absolute top-0  ${isLoading && !isContentGenerating
+                className={`h-full w-full transition-fade shadow-lg rounded-lg z-10 absolute top-0  ${
+                  isLoading && !isContentGenerating
                     ? "opacity-0"
                     : "opacity-100"
-                  }`}
+                }`}
               />
             )}
 
@@ -1248,15 +1242,17 @@ const FinalPreview: React.FC = () => {
             {(!generatedPage[selectedPage!] || !isPageGenerated) && (
               <iframe
                 ref={iframeRef}
-                src={`${currentUrl}/${pages.find((page) => page.name === selectedPage)?.slug
-                  }`}
+                src={`${currentUrl}/${
+                  pages.find((page) => page.name === selectedPage)?.slug
+                }`}
                 title="website"
                 id="myIframe"
                 onLoad={onLoadMsg}
-                className={`h-full w-full transition-fade shadow-lg rounded-lg z-10 absolute top-0 ${isLoading && !isContentGenerating
+                className={`h-full w-full transition-fade shadow-lg rounded-lg z-10 absolute top-0 ${
+                  isLoading && !isContentGenerating
                     ? "opacity-0"
                     : "opacity-100"
-                  }`}
+                }`}
               />
             )}
           </div>

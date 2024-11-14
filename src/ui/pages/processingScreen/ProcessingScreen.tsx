@@ -40,6 +40,9 @@ const ProcessingScreen: React.FC = () => {
   const selectedPages = useSelector(
     (state: RootState) => state.userData.pages as ReduxPage[]
   );
+  const bussinessName = useSelector(
+    (state: RootState) => state.userData.businessName
+  );
 
   // Fetch template details
   const fetchTemplates = async (): Promise<TemplateData | null> => {
@@ -191,13 +194,22 @@ const ProcessingScreen: React.FC = () => {
       setProgress(((apiSteps.length + i + 1) / stepsCount) * 100);
     }
 
-    const logoToUse = logo || site_logo;
+    let logoToUse = logo;
+    let logoType = "";
     console.log("this is site logo", logoToUse);
+
+    if (logoToUse) {
+      logoType = "url";
+    } else {
+      logoToUse = bussinessName;
+      logoType = "string";
+    }
 
     if (logoToUse) {
       setStatus("Importing Site Logo");
       await postData("/wp-json/custom/v1/import-sitelogo", {
         fileurl: logoToUse,
+        type: logoType,
       });
     }
 

@@ -1,65 +1,22 @@
 import React, { useEffect, useState } from "react";
 import CustomizeLayout from "../../Layouts/CustomizeLayout";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import useDomainEndpoint from "../../../hooks/useDomainEndpoint";
 import { setTemplateList } from "../../../Slice/activeStepSlice";
 import PlumberPageSkeleton from "../../component/PlumberPageSkeleton ";
+import { RootState } from "../../../store/store";
+import { sendIframeMessage } from "../../../core/utils/sendIframeMessage.utils";
 
 function CustomDesign() {
   const [parsedTemplateList, setParsedTemplateList] = useState(null);
 
   const dispatch = useDispatch();
   const { getDomainFromEndpoint } = useDomainEndpoint();
+  const businessName = useSelector(
+    (state: RootState) => state.userData.businessName
+  );
 
-  // Local variable for the iframe URL
   const currentUrl = parsedTemplateList?.pages?.[0]?.iframe_url;
-
-  const sendMessageToIframes = (type: string, payload) => {
-    const iframes = document.getElementsByTagName("iframe");
-
-    if (iframes.length > 0) {
-      for (let i = 0; i < iframes.length; i++) {
-        const iframe = iframes[i];
-
-        // Check the type and send the appropriate post message only if the values are not empty
-        if (
-          type === "changeGlobalColors" &&
-          (payload.primary || payload.secondary)
-        ) {
-          iframe?.contentWindow?.postMessage(
-            {
-              type: "changeGlobalColors",
-              primaryColor: payload.primary,
-              secondaryColor: payload.secondary,
-            },
-            "*"
-          );
-        }
-
-        if (type === "changeFont" && payload.font) {
-          iframe?.contentWindow?.postMessage(
-            {
-              type: "changeFont",
-              font: payload.font,
-            },
-            "*"
-          );
-        }
-
-        if (type === "changeLogo" && payload.logoUrl) {
-          iframe?.contentWindow?.postMessage(
-            {
-              type: "changeLogo",
-              logoUrl: payload.logoUrl,
-            },
-            "*"
-          );
-        }
-      }
-    } else {
-      console.log("No iframes found");
-    }
-  };
 
   const fetchInitialData = async () => {
     const url = getDomainFromEndpoint("/wp-json/custom/v1/get-form-details");
@@ -74,22 +31,21 @@ function CustomDesign() {
       const result = await response.json();
 
       if (result) {
-        // If color data exists, parse it and send to iframe
         if (result.color) {
           const colors = JSON.parse(result.color);
-          sendMessageToIframes("changeGlobalColors", colors);
+          sendIframeMessage("changeGlobalColors", colors);
         }
 
-        // If font data exists, send it to the iframe
         if (result.font) {
-          sendMessageToIframes("changeFont", { font: result.font });
+          sendIframeMessage("changeFont", { font: result.font });
         }
 
-        // If logo data exists, send it to the iframe
         if (result.logo) {
-          sendMessageToIframes("changeLogo", { logoUrl: result.logo });
+          sendIframeMessage("changeLogo", { logoUrl: result.logo });
         }
       }
+
+      sendIframeMessage("bussinessName", businessName);
     } catch (error) {
       console.error("Error fetching initial data:", error);
     }
@@ -135,6 +91,8 @@ function CustomDesign() {
   const onLoadmsg = () => {
     sendNonClickable();
     fetchInitialData();
+
+    console.log("event from react");
   };
   return (
     <CustomizeLayout>

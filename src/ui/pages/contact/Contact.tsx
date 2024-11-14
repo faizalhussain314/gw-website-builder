@@ -87,6 +87,40 @@ function Contact() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    let valid = true;
+
+    if (!formData.email) {
+      setFormError((prevData) => ({
+        ...prevData,
+        email: "Email is required",
+      }));
+      valid = false;
+    }
+
+    if (!formData.phoneNumber) {
+      setFormError((prevData) => ({
+        ...prevData,
+        phoneNumber: "Phone number is required",
+      }));
+      valid = false;
+    }
+
+    if (!formData.address) {
+      setFormError((prevData) => ({
+        ...prevData,
+        address: "Address is required",
+      }));
+      valid = false;
+    }
+
+    // If any field is invalid, stop the submission
+    if (!valid) {
+      return;
+    }
+
+    // Proceed with form submission
+    setLoading(true);
+
     if (
       formData.email &&
       formData.phoneNumber &&
@@ -214,6 +248,9 @@ function Contact() {
                   onChange={handleChange}
                   value={formData.address}
                 />
+                {formError.address && (
+                  <span className="mt-2 text-red-600">{formError.address}</span>
+                )}
               </div>
             </div>
           </form>
