@@ -6,6 +6,6 @@ export const getDomainFromEndpoint = (endpoint: string): string => {
     const baseUrl = currentUrl.substring(0, wpAdminIndex);
     return `${baseUrl}/${endpoint}`;
   } else {
-    return `https://top-taillon-nov7.zipwp.dev/${endpoint}`;
+    return `https://saintly-surette-rbl.zipwp.top/${endpoint}`;
   }
 };

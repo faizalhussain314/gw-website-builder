@@ -34,6 +34,7 @@ type Props = {
   setPages: (pages: Page[]) => void;
   handleGeneratePage: () => void;
   isLoading: boolean;
+  importLoad: boolean;
 };
 
 const PageSelector: React.FC<Props> = ({
@@ -54,6 +55,7 @@ const PageSelector: React.FC<Props> = ({
   setPages,
   handleGeneratePage,
   isLoading,
+  importLoad,
 }) => {
   const showWarningToast = () => {
     toast.warn("Please wait while content is being generated.");
@@ -275,39 +277,35 @@ const PageSelector: React.FC<Props> = ({
             </div>
             {selectedPage === page.name && (
               <div className="mt-3 flex justify-evenly text-sm">
-                {page.status === "Generated" ||
-                page.status === "Skipped" ||
-                page.status === "Not Selected" ||
+                {[
+                  "Generated",
+                  "Skipped",
+                  "Not Selected",
+                  "Blog",
+                  "Contact",
+                  "Contact Us",
+                  "Home",
+                ].includes(page.status) ||
+                page.name === "Home" ||
                 page.name === "Blog" ||
                 page.name === "Contact" ||
-                page.name === "Contact Us" ||
-                page.name === "Home" ? (
+                page.name === "Contact Us" ? (
                   <div className="w-full flex items-center gap-4">
-                    {page.status === "Generated" ? (
-                      <button
-                        className={`bg-white text-[#1E2022] hover:bg-palatinate-blue-600 hover:text-white rounded px-3 py-1.5 w-full text-[14px] font-[500] ${
-                          isContentGenerating ? "opacity-50" : ""
-                        }`}
-                        onClick={() => {
-                          if (isContentGenerating) {
-                            showWarningToast();
-                          } else {
-                            handleNext(page.name);
-                          }
-                        }}
-                        disabled={isContentGenerating || isLoading}
-                      >
-                        Keep & Next
-                      </button>
-                    ) : (
-                      <button
-                        className="bg-white text-[#1E2022] hover:bg-palatinate-blue-600 hover:text-white rounded px-3 py-1.5 w-full text-[14px] font-[500]"
-                        onClick={handleGeneratePage}
-                        disabled={isLoading}
-                      >
-                        Generate Page
-                      </button>
-                    )}
+                    <button
+                      className={`bg-white text-[#1E2022] hover:bg-palatinate-blue-600 hover:text-white rounded px-3 py-1.5 w-full text-[14px] font-[500] ${
+                        isContentGenerating ? "opacity-50" : ""
+                      }`}
+                      onClick={() => {
+                        if (isContentGenerating) {
+                          showWarningToast();
+                        } else {
+                          handleNext(page.name);
+                        }
+                      }}
+                      disabled={isContentGenerating || isLoading}
+                    >
+                      Keep & Next
+                    </button>
                     {page.name === "Home" ? (
                       <Tooltip title="Home page can't skip" placement="top">
                         <button
@@ -407,6 +405,31 @@ const PageSelector: React.FC<Props> = ({
           <span className="flex items-center gap-1.5 w-[80%] mx-auto justify-center">
             Import Selected Page
           </span>
+          {importLoad && (
+            <div className="flex">
+              {" "}
+              <svg
+                className="animate-spin h-5 w-5 text-white"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                ></path>
+              </svg>
+            </div>
+          )}
         </button>
       </div>
     </div>

@@ -85,6 +85,7 @@ const FinalPreview: React.FC = () => {
   const [Loaded, setLoaded] = useState(false);
   const [contentForBackend, setContentForBackend] = useState<any[]>([]);
   const [findIndex, setfindIndex] = useState<number>();
+  const [importLoad, setImportLoad] = useState(false);
   const contactDetails = useSelector(
     (state: RootState) => state.userData.contactform
   );
@@ -344,7 +345,11 @@ const FinalPreview: React.FC = () => {
   // }, [fetchGeneratedPages]);
 
   const storeOldNewContent = useCallback(
-    async (pageName: string, jsonContent: Record<string, any>) => {
+    async (
+      pageName: string,
+      jsonContent: Record<string, any>,
+      wordCount: number
+    ) => {
       try {
         const endpoint = getDomainFromEndpoint(
           "/wp-json/custom/v1/save-generated-data"
@@ -386,7 +391,7 @@ const FinalPreview: React.FC = () => {
   );
 
   const handleOldNewContent = useCallback(
-    (pageName: string, content: Record<string, any>) => {
+    (pageName: string, content: Record<string, any>, wordCount: number) => {
       // Store old and new content for the selected page
       setOldNewContent((prevContent) => ({
         ...prevContent,
@@ -395,7 +400,7 @@ const FinalPreview: React.FC = () => {
       // console.log("page name", pageName);
 
       // Store the old and new content in the backend
-      storeOldNewContent(pageName, content);
+      storeOldNewContent(pageName, content, wordCount);
     },
     [storeOldNewContent]
   );
@@ -874,7 +879,7 @@ const FinalPreview: React.FC = () => {
       "*"
     );
   };
-  const handleGeneratePage = () => {
+  const handleGeneratePage = async () => {
     if (isContentGenerating) {
       // showWarningToast();
       return;
@@ -883,6 +888,40 @@ const FinalPreview: React.FC = () => {
     setIsLoading(true);
     setShowGwLoader(true);
     setIsContentGenerating(true);
+
+    // try {
+    //   const endpoint = getDomainFromEndpoint(
+    //     "/wp-json/custom/v1/get-generated-page-status"
+    //   );
+    //   if (!endpoint) {
+    //     console.error("Endpoint is not available.");
+    //     return;
+    //   }
+
+    //   const response = await axios.get(endpoint);
+    //   const {data} = response?.status;
+
+    //   if(data)
+    //   {
+    //     const iframe = iframeRef.current;
+    //     const currentPage = pages.find((page) => page.name === selectedPage);
+    //     if (currentPage && currentPage.status !== "Generated") {
+    //       iframe.contentWindow.postMessage(
+    //         {
+    //           type: "start",
+    //           templateName: templateName,
+    //           pageName: currentPage?.slug,
+    //           bussinessname: businessName,
+    //           description: Description,
+    //         },
+    //         "*"
+    //       );
+    //     }
+    //   }
+
+    // } catch (error) {
+    //   console.error("error on");
+    // }
 
     const iframe = iframeRef.current;
     const currentPage = pages.find((page) => page.name === selectedPage);
@@ -984,15 +1023,6 @@ const FinalPreview: React.FC = () => {
           };
           return updatedPages;
         });
-        if (pageName === "Home") {
-          dispatch(
-            updateReduxPage({
-              name: "Home",
-              status: "Generated",
-              selected: true,
-            })
-          );
-        }
 
         // Store the HTML content
         storeHtmlContent(pageName, htmlContent);
@@ -1003,8 +1033,9 @@ const FinalPreview: React.FC = () => {
       } else if (event.data.type === "oldNewContent") {
         const pageName = event.data.pageName || selectedPage || "";
         console.log("oldnewcontent", event.data.content);
-        calculateWordCount(event.data.content);
-        handleOldNewContent(pageName, event.data.content);
+        const wordCount = calculateWordCount(event.data.content);
+        console.log("word count", wordCount);
+        handleOldNewContent(pageName, event.data.content, wordCount);
         // console.log("log from event handler", pageName);
       }
     };
@@ -1012,12 +1043,11 @@ const FinalPreview: React.FC = () => {
       let totalWordCount = 0;
 
       Object.values(contentObject).forEach((value) => {
-        // Split the value string by spaces and count the words
         const wordCount = value.split(/\s+/).filter((word) => word).length;
         totalWordCount += wordCount;
       });
 
-      console.log("Total Word Count:", totalWordCount);
+      // console.log("Total Word Count:", totalWordCount);
       return totalWordCount;
     }
     window.addEventListener("message", receiveMessage);
@@ -1026,8 +1056,28 @@ const FinalPreview: React.FC = () => {
     };
   }, [Color, fontFamily, selectedPage, storeHtmlContent, handleOldNewContent]);
 
-  const handleImportSelectedPage = () => {
+  const handleImportSelectedPage = async () => {
+    setImportLoad(true);
     console.log(selectedPage);
+    // try {
+    //   const endpoint = getDomainFromEndpoint(
+    //     "/wp-json/custom/v1/get-generated-page-status"
+    //   );
+    //   if (!endpoint) {
+    //     console.error("Endpoint is not available.");
+    //     return;
+    //   }
+
+    //   const response = await axios.post(endpoint);
+
+    //   if (response.status === 200) {
+    //     setImportLoad(false);
+    //     navigate("/processing", { state: { pageName: selectedPage } });
+    //   }
+    // } catch (error) {
+    //   console.error("error while calling the import tempalte avaiablity api");
+    //   setImportLoad(false);
+    // }
 
     navigate("/processing", { state: { pageName: selectedPage } });
   };
@@ -1157,6 +1207,7 @@ const FinalPreview: React.FC = () => {
               setPages={setPages}
               handleGeneratePage={handleGeneratePage}
               isLoading={isLoading}
+              importLoad={importLoad}
             />
           </div>
         </aside>
