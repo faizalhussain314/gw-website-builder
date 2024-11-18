@@ -322,7 +322,6 @@ const FinalPreview: React.FC = () => {
               setShowIframe(false);
               setIsPageGenerated(true);
             }
-            // console.log("api triggered");
 
             return updatedPages;
           });
@@ -368,21 +367,13 @@ const FinalPreview: React.FC = () => {
               ? jsonContent
               : "",
         });
-        console.log(
-          "page name",
-          pageName,
-          "this is current page from state",
-          selectedPage // This is fine for logging the current selectedPage
-        );
 
         if (response.status === 200) {
           console.log(
             "Old and new content stored successfully:",
             response.data
           );
-        } else {
-          console.error("Failed to store old and new content:", response);
-        }
+        } 
       } catch (error) {
         // console.error("Error storing old and new content:", error);
       }
@@ -397,7 +388,6 @@ const FinalPreview: React.FC = () => {
         ...prevContent,
         [pageName]: content,
       }));
-      // console.log("page name", pageName);
 
       // Store the old and new content in the backend
       storeOldNewContent(pageName, content, wordCount);
@@ -447,13 +437,20 @@ const FinalPreview: React.FC = () => {
     }
   };
 
-  const selectNextPage = () => {
-    const nextPage = pages.find(
-      (page) => page.status !== "Generated" && page.status !== "Skipped"
+  const selectNextPage = (currentPage:any) => {
+    const currentPageIndex = pages.findIndex(
+      (page) => page.name === currentPage
     );
+    let arrayVal = rearrangeArray(pages, currentPageIndex);
+
+    if(arrayVal?.length > 0){
+    const nextPage = arrayVal.find(
+      (page) => page.status !== "Generated" && page.status !== "Skipped" && page.status !== "Added"
+    );    
     if (nextPage) {
       setSelectedPage(nextPage.name);
     }
+  }
   };
 
   // Example usage
@@ -545,7 +542,6 @@ const FinalPreview: React.FC = () => {
     const currentPageIndex = pages.findIndex(
       (page) => page.name === selectedPage
     );
-    console.log(currentPageIndex);
 
     updateContactDetails(
       contactDetails?.email,
@@ -571,7 +567,6 @@ const FinalPreview: React.FC = () => {
     setLoaded(true);
 
     if (fontFamily) {
-      // console.log(`Applying font: ${fontFamily}`);
 
       iframe.contentWindow.postMessage(
         { type: "changeFont", font: fontFamily },
@@ -579,10 +574,8 @@ const FinalPreview: React.FC = () => {
       );
     }
 
-    // console.log("color", Color.primary, Color.secondary);
 
     if (Color.primary && Color.secondary) {
-      // console.log("this error not shown");
       iframe.contentWindow.postMessage(
         {
           type: "changeGlobalColors",
@@ -603,7 +596,6 @@ const FinalPreview: React.FC = () => {
       const existingContent = generatedPage[selectedPage][0];
       updateIframeSrc(existingContent);
       setShowIframe(false);
-      // console.log("first block executed");
     } else if (selectedPage && !generatedPage[selectedPage]) {
       const fetchresult = await fetchAndStorePageData(
         selectedPage,
@@ -648,7 +640,6 @@ const FinalPreview: React.FC = () => {
         // }
       }
     } else {
-      // console.log("third block executed");
       if (selectedPage && generatedPage[selectedPage] && isPageGenerated) {
         const existingContent = generatedPage[selectedPage][0];
         updateIframeSrc(existingContent);
@@ -964,10 +955,21 @@ const FinalPreview: React.FC = () => {
       setIsPageGenerated(false);
     }
   };
+  const rearrangeArray = (array, startIndex) => {
+    if (startIndex < 0 || startIndex >= array.length) {
+        throw new Error("Index out of bounds");
+    }
+
+    // Rearrange the array
+    const part1 = array.slice(startIndex); // From startIndex to the end
+    const part2 = array.slice(0, startIndex); // From the beginning to startIndex
+    return part1.concat(part2); // Combine the two parts
+}
+
 
   const handleNext = (page: string) => {
     handlePageNavigation("next", page);
-    selectNextPage();
+    selectNextPage(page);
   };
 
   const handleSkipPage = (page: string) => {
@@ -1032,11 +1034,8 @@ const FinalPreview: React.FC = () => {
         }
       } else if (event.data.type === "oldNewContent") {
         const pageName = event.data.pageName || selectedPage || "";
-        console.log("oldnewcontent", event.data.content);
         const wordCount = calculateWordCount(event.data.content);
-        console.log("word count", wordCount);
         handleOldNewContent(pageName, event.data.content, wordCount);
-        // console.log("log from event handler", pageName);
       }
     };
     function calculateWordCount(contentObject: object) {
@@ -1047,7 +1046,6 @@ const FinalPreview: React.FC = () => {
         totalWordCount += wordCount;
       });
 
-      // console.log("Total Word Count:", totalWordCount);
       return totalWordCount;
     }
     window.addEventListener("message", receiveMessage);
@@ -1058,7 +1056,6 @@ const FinalPreview: React.FC = () => {
 
   const handleImportSelectedPage = async () => {
     setImportLoad(true);
-    console.log(selectedPage);
     // try {
     //   const endpoint = getDomainFromEndpoint(
     //     "/wp-json/custom/v1/get-generated-page-status"

@@ -243,7 +243,11 @@ function Contact() {
                   id="address"
                   rows={4}
                   placeholder="Enter your address"
-                  className="block w-full rounded-lg bg-white px-4 py-2.5 border border-[rgba(205, 212, 219, 1)] w-[720px] focus:border-palatinate-blue-500 active:border-palatinate-blue-500 active:outline-palatinate-blue-500 focus:outline-palatinate-blue-500"
+                  className={`block w-full rounded-lg bg-white px-4 py-2.5 w-[720px] ${
+                    formError.address !== ""
+                      ? "border border-[red]"
+                      : "border border-[rgba(205, 212, 219, 1)] focus:border-palatinate-blue-500 active:border-palatinate-blue-500 active:outline-palatinate-blue-500 focus:outline-palatinate-blue-500"
+                  }`}
                   defaultValue={""}
                   onChange={handleChange}
                   value={formData.address}
