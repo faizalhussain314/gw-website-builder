@@ -86,6 +86,7 @@ const FinalPreview: React.FC = () => {
   const [contentForBackend, setContentForBackend] = useState<any[]>([]);
   const [findIndex, setfindIndex] = useState<number>();
   const [importLoad, setImportLoad] = useState(false);
+  const [afterContact, setAfterContact] = useState(false);
   const contactDetails = useSelector(
     (state: RootState) => state.userData.contactform
   );
@@ -118,14 +119,6 @@ const FinalPreview: React.FC = () => {
   // );
 
   const currentPages = useSelector((state: RootState) => state.userData.pages);
-
-  // const [pages, setPages] = useState<Page[]>([
-  //   { name: "Home", status: "", slug: "homepage", selected: false },
-  //   { name: "About Us", status: "", slug: "about", selected: false },
-  //   { name: "Services", status: "", slug: "service", selected: false },
-  //   { name: "Blog", status: "", slug: "blog", selected: false },
-  //   { name: "Contact", status: "", slug: "contact", selected: false },
-  // ]);
 
   const navigate = useNavigate();
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -442,8 +435,12 @@ const FinalPreview: React.FC = () => {
       (page) => page.name === currentPage
     );
     let arrayVal = rearrangeArray(pages, currentPageIndex);
-
-    if(arrayVal?.length > 0){
+    if(currentPageIndex === 4){
+      setAfterContact(true);
+      return;
+    }
+    else if(arrayVal?.length > 0){
+      setAfterContact(false);
     const nextPage = arrayVal.find(
       (page) => page.status !== "Generated" && page.status !== "Skipped" && page.status !== "Added"
     );    
@@ -477,7 +474,6 @@ const FinalPreview: React.FC = () => {
               const matchingPage = data.find(
                 (apiPage: any) => apiPage.page_name === page.name
               );
-
               if (matchingPage) {
                 // Dispatch the Redux action to update the status and selection in the store
                 dispatch(
@@ -717,7 +713,7 @@ const FinalPreview: React.FC = () => {
 
   const togglePage = (page: string) => {
     if (page === selectedPage) return; // Prevent reselecting the same page
-
+    setAfterContact(false);
     setSelectedPage(page);
 
     const existingContent = generatedPage[page];
@@ -752,7 +748,12 @@ const FinalPreview: React.FC = () => {
       showWarningToast();
       return;
     }
-
+    if(action == "next" && currentPage == "Contact Us"){
+      setAfterContact(true)
+    }
+    else{
+      setAfterContact(false)
+    }
     const currentPageIndex = pages.findIndex(
       (page) => page.name === currentPage
     );
@@ -773,15 +774,58 @@ const FinalPreview: React.FC = () => {
             selected: true, // Set as selected
           })
         );
-      } else if (action === "skip") {
+      }
+      else if (
+        action === "next" &&
+        (currentPage == "Contact Us" ||
+        currentPage == "Blog")
+      ) {
+        updatedPages[currentPageIndex].status = "Added";
+        updatedPages[currentPageIndex].selected = true;
+
+        dispatch(
+          updateReduxPage({
+            name: updatedPages[currentPageIndex].name, // Page name
+            status: "Added", // Mark as generated
+            selected: true, // Set as selected
+          })
+        );
+      }
+       else if (action === "skip") {
         updatedPages[currentPageIndex].status = "Skipped";
         updatedPages[currentPageIndex].selected = false;
-      } else if (
-        action === "add" ||
-        currentPage !== "Contact Us" ||
-        currentPage !== "Blog"
-      ) {
-        if (currentPages[currentPageIndex].status == "") {
+        dispatch(
+          updateReduxPage({
+            name: updatedPages[currentPageIndex].name, // Page name
+            status: "Skipped", // Mark as Added
+            selected: false, 
+          })
+        );
+      } else if (action === "add" || currentPage == "Contact Us" || currentPage == "Blog") {
+        if(updatedPages[currentPageIndex].status == "Generated" && updatedPages[currentPageIndex].name != "Home"){
+          updatedPages[currentPageIndex].status = "Not Selected";
+          updatedPages[currentPageIndex].selected = false;
+
+          dispatch(
+            updateReduxPage({
+              name: updatedPages[currentPageIndex].name, // Page name
+              status: "Generated", // Mark as generated
+              selected: true, // Set as selected
+            })
+          );
+        }
+        else if(updatedPages[currentPageIndex].status == "Not Selected"){
+          updatedPages[currentPageIndex].status = "Generated";
+          updatedPages[currentPageIndex].selected = true;
+          dispatch(
+            updateReduxPage({
+              name: updatedPages[currentPageIndex].name, // Page name
+              status: "Generated", // Mark as Added
+              selected: true, // Set as not selected
+            })
+          );
+        }
+        else if (currentPages[currentPageIndex].status == "" || currentPages[currentPageIndex].status == "Skipped") {
           updatedPages[currentPageIndex].status = "Added";
           updatedPages[currentPageIndex].selected = true;
           dispatch(
@@ -792,9 +836,7 @@ const FinalPreview: React.FC = () => {
             })
           );
         } else if (
-          currentPages[currentPageIndex].status == "Added" &&
-          currentPage !== "Contact Us" &&
-          currentPage !== "Blog"
+          currentPages[currentPageIndex].status == "Added" 
         ) {
           updatedPages[currentPageIndex].status = "";
           updatedPages[currentPageIndex].selected = false;
@@ -1205,6 +1247,7 @@ const FinalPreview: React.FC = () => {
               handleGeneratePage={handleGeneratePage}
               isLoading={isLoading}
               importLoad={importLoad}
+              afterContact={afterContact}
             />
           </div>
         </aside>

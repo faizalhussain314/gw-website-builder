@@ -35,6 +35,7 @@ type Props = {
   handleGeneratePage: () => void;
   isLoading: boolean;
   importLoad: boolean;
+  afterContact:boolean;
 };
 
 const PageSelector: React.FC<Props> = ({
@@ -56,6 +57,7 @@ const PageSelector: React.FC<Props> = ({
   handleGeneratePage,
   isLoading,
   importLoad,
+  afterContact
 }) => {
   const showWarningToast = () => {
     toast.warn("Please wait while content is being generated.");
@@ -97,7 +99,6 @@ const PageSelector: React.FC<Props> = ({
   };
   const handlePageChange = (slug: string, newSelectedValue: boolean) => {
     const currentPage = pages.find((page) => page.slug === slug);
-
     // Always keep Home page selected
     if (currentPage?.name === "Home") {
       const updatedPages = pages.map((page) =>
@@ -115,7 +116,7 @@ const PageSelector: React.FC<Props> = ({
         ? {
             ...page,
             selected: newSelectedValue,
-            status: newSelectedValue ? page.status : "",
+            status: newSelectedValue === true ? page.status : "",
           }
         : page
     );
@@ -126,7 +127,7 @@ const PageSelector: React.FC<Props> = ({
     dispatch(
       updateReduxPage({
         name: currentPage.name,
-        status: newSelectedValue ? currentPage.status : "",
+        status: newSelectedValue === true ? currentPage.status : "",
         selected: newSelectedValue,
       })
     );
@@ -170,6 +171,7 @@ const PageSelector: React.FC<Props> = ({
           <div
             key={page.name}
             className={`rounded-lg p-3 mb-2 cursor-pointer transition-all duration-200 ease-in ${
+              afterContact === true ? "" :
               selectedPage === page.name
                 ? "ring-palatinate-blue-600 ring-1 bg-[#EBF4FF]"
                 : ""
@@ -261,7 +263,9 @@ const PageSelector: React.FC<Props> = ({
                     viewBox="0 0 12 12"
                     fill="none"
                     className={`${
-                      selectedPage === page.name ? "rotate-180 " : "-rotate-0"
+                      afterContact === true ? "" :
+              selectedPage === page.name
+                ? "rotate-180 " : "-rotate-0"
                     } transition-all duration-200 ease-in ml-2.5`}
                   >
                     <path
@@ -275,7 +279,9 @@ const PageSelector: React.FC<Props> = ({
                 </div>
               </div>
             </div>
-            {selectedPage === page.name && (
+            {afterContact === true ? "" :
+              selectedPage === page.name
+                 && (
               <div className="mt-3 flex justify-evenly text-sm">
                 {[
                   "Generated",
