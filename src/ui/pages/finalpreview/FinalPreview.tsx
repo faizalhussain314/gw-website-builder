@@ -62,7 +62,13 @@ const FinalPreview: React.FC = () => {
   const dispatch = useDispatch();
 
   // Use reduxPages if it's not empty; otherwise, fallback to defaultPages
-  const [pages, setPages] = useState<Page[]>([]);
+  const [pages, setPages] = useState<Page[]>([
+        { name: "Home", status: "", slug: "home", selected: false },
+        { name: "About", status: "", slug: "about", selected: false },
+        { name: "Service", status: "", slug: "service", selected: false },
+        { name: "Blog", status: "", slug: "blog", selected: false },
+        { name: "Contact Us", status: "", slug: "contact-us", selected: false },
+      ]);
   const [isOpen, setIsOpen] = useState(false);
   const [viewMode, setViewMode] = useState("desktop");
   const [isLoading, setIsLoading] = useState(true);
@@ -505,11 +511,11 @@ const FinalPreview: React.FC = () => {
     }
   }, [getDomainFromEndpoint, dispatch]); // Ensure dispatch is included in the dependencies
 
-  useEffect(() => {
-    // if (isFormDetailsLoaded) {
-    fetchGeneratedPageStatus(); // Call the API only when form details are loaded
-    // }
-  }, []);
+  // useEffect(() => {
+  //   // if (isFormDetailsLoaded) {
+  //   fetchGeneratedPageStatus(); // Call the API only when form details are loaded
+  //   // }
+  // }, []);
 
   // useEffect(() => {
   //   fetchGeneratedPageStatus(); // Fetch the status when the component mounts
@@ -1161,6 +1167,9 @@ const FinalPreview: React.FC = () => {
   useEffect(() => {
     if (validReduxPages.length > 0) {
       setPages(validReduxPages); // Always take validReduxPages when available
+      if(validReduxPages?.every((page)=> {return page?.status == ""})){
+        fetchGeneratedPageStatus()
+      }
     }
   }, [validReduxPages]);
 
