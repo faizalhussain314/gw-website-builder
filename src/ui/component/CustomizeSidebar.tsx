@@ -15,6 +15,7 @@ import {
   sendMessageToIframes,
 } from "../../core/utils/design.utils";
 import { Font } from "../../types/activeStepSlice.type";
+import { Slider } from "@mui/material";
 
 const CustomizeSidebar: React.FC = () => {
   const [selectedColor, setSelectedColor] = useState<SelectedColor>({
@@ -51,6 +52,14 @@ const CustomizeSidebar: React.FC = () => {
     primaryFont: state.userData.style.defaultFont.primary,
     secondaryFont: state.userData.style.defaultFont.secondary,
   }));
+
+  // slider
+
+  const [value, setValue] = React.useState<number>(30);
+
+  const handleChange = (event: Event, newValue: number | number[]) => {
+    setValue(newValue as number);
+  };
 
   useEffect(() => {
     fetchInitialCustomizationData(
@@ -321,11 +330,20 @@ const CustomizeSidebar: React.FC = () => {
           )}
           {error && <p className="text-sm text-red-500 mt-2">{error}</p>}
           {logoUrl && (
-            <img
-              src={logoUrl}
-              alt="Uploaded Logo"
-              className="mt-2 h-10 cursor-pointer"
-            />
+            <div className="bg-white p-2.5 mt-2.5 border border-[#DFEAF6] rounded-md shadow-lg">
+              <img
+                src={logoUrl}
+                alt="Uploaded Logo"
+                className="mt-2 h-6 cursor-pointer"
+              />
+              <div className="h-8 mt-4 custom-slider">
+                <Slider
+                  aria-label="Volume"
+                  value={value}
+                  onChange={handleChange}
+                />
+              </div>
+            </div>
           )}
         </div>
 
