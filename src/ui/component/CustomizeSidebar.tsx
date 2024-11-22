@@ -367,13 +367,25 @@ const CustomizeSidebar: React.FC = () => {
 
       <div className="w-full flex items-center gap-4 p-4">
         <Link to="/design" className="w-full">
-          <button className="border previous-btn flex px-4 py-3 text-base text-white sm:mt-2 rounded-md gap-2.5 justify-center w-full">
-            <ArrowBackIcon fontSize="small" /> Previous
+          <button className="border previous-btn flex px-2 py-3 text-sm text-white sm:mt-2 rounded-md gap-2.5 justify-center w-full">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="14"
+              viewBox="0 0 20 14"
+              fill="none"
+            >
+              <path
+                d="M0.863604 6.3636C0.512132 6.71508 0.512132 7.28492 0.863604 7.6364L6.59117 13.364C6.94264 13.7154 7.51249 13.7154 7.86396 13.364C8.21543 13.0125 8.21543 12.4426 7.86396 12.0912L2.77279 7L7.86396 1.90883C8.21543 1.55736 8.21543 0.987511 7.86396 0.636039C7.51249 0.284567 6.94264 0.284567 6.59117 0.636039L0.863604 6.3636ZM19.5 6.1H1.5V7.9H19.5V6.1Z"
+                fill="#1E2022"
+              />
+            </svg>
+            Previous
           </button>
         </Link>
         <button
           onClick={nextPage}
-          className="px-4 py-3.5 text-white rounded-md tertiary text-base sm:mt-2 w-full"
+          className="px-2 py-3 text-white rounded-md tertiary text-sm sm:mt-2 w-full"
         >
           Start Building
         </button>
