@@ -345,3 +345,27 @@ iframe {
     transform: translateX(3px);
   }
 }
+
+/**
+ slider styles for custom design sidebar
+*/
+
+.custom-slider .MuiSlider-rail {
+  background-image: linear-gradient(
+    92deg,
+    #963fff 19.05%,
+    #2e42ff 47.23%
+  ) !important;
+  opacity: 0.1 !important;
+  height: 10px !important;
+}
+
+.custom-slider .MuiSlider-track {
+  background-image: linear-gradient(94deg, #963fff -2.63%, #2e42ff 68.32%);
+  height: 10px !important;
+}
+.custom-slider .MuiSlider-thumb {
+  /* background-image: linear-gradient(94deg, #963fff -2.63%, #2e42ff 68.32%); */
+  border: 3px solid black !important;
+  background-color: white !important;
+}
