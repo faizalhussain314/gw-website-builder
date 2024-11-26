@@ -12,6 +12,9 @@ import { fetchDescriptionStream } from "../../../infrastructure/api/laraval-api/
 import useDomainEndpoint from "../../../hooks/useDomainEndpoint";
 import { getDescriptions } from "../../../infrastructure/api/wordpress-api/description/getDescriptions.api";
 import { updateDescriptions } from "../../../infrastructure/api/wordpress-api/description/updateDescriptions.api";
+import axios from "axios";
+import WordLimit from "../../component/dialogs/WordLimit";
+import UpgradePopup from "../../component/dialogs/UpgradePopup";
 
 function Description() {
   const dispatch = useDispatch();
@@ -33,8 +36,11 @@ function Description() {
     1: false,
     2: false,
   });
+  const templateList = useSelector(
+    (state: RootState) => state.userData.templateList
+  );
+  const [wordLimitError, setwordLimitError] = useState(false);
 
-  // Fetch content from the database on component mount
   useEffect(() => {
     const fetchInitialDescriptions = async () => {
       const result = await getDescriptions(getDomainFromEndpoint);
@@ -71,6 +77,26 @@ function Description() {
       return;
     }
 
+    try {
+      const endpoint = getDomainFromEndpoint(
+        "wp-json/custom/v1/check-word-count"
+      );
+      if (!endpoint) {
+        console.error("Word count check endpoint is not available.");
+        return;
+      }
+
+      const response = await axios.get(endpoint);
+      if (!response?.data?.status) {
+        setwordLimitError(true);
+        return;
+      }
+    } catch (error) {
+      console.error("Error checking word count:", error);
+
+      return;
+    }
+
     setIsAIWriting((prev) => ({ ...prev, [type]: true }));
 
     if (type === 1) {
@@ -84,6 +110,8 @@ function Description() {
 
     try {
       const reader = await fetchDescriptionStream(
+        dispatch, // Add dispatch
+        getDomainFromEndpoint, // Add getDomainFromEndpoint
         businessName,
         category,
         type,
@@ -107,19 +135,8 @@ function Description() {
           if (line.trim()) {
             try {
               if (line === "data: [DONE]") {
-                if (type === 1) {
-                  updateDescriptions(
-                    "description1",
-                    completeDescription,
-                    getDomainFromEndpoint
-                  );
-                } else {
-                  updateDescriptions(
-                    "description2",
-                    completeDescription,
-                    getDomainFromEndpoint
-                  );
-                }
+                const wordCount = completeDescription.split(/\s+/).length;
+                await updateWordCountAPI(completeDescription, type, wordCount);
 
                 setIsAIWriting((prev) => ({ ...prev, [type]: false }));
                 setLoader1(false);
@@ -159,6 +176,39 @@ function Description() {
     }
   };
 
+  const updateWordCountAPI = async (
+    description: string,
+    type: 1 | 2,
+    wordCount: number
+  ) => {
+    try {
+      const updateCountEndpoint = getDomainFromEndpoint(
+        "/wp-json/custom/v1/update-count"
+      );
+      if (!updateCountEndpoint) {
+        console.error("Update count endpoint is not available.");
+        return;
+      }
+
+      const updateResponse = await axios.post(updateCountEndpoint, {
+        words: wordCount,
+        page_title: "Business Description",
+        template_id: templateList?.id || "",
+        sitecount: 283940,
+        is_type: "words",
+      });
+
+      if (updateResponse.status !== 200) {
+        console.error("Failed to update word count:", updateResponse.data);
+        return;
+      }
+
+      console.log("Word count updated successfully:", updateResponse.data);
+    } catch (error) {
+      console.error("Error updating word count:", error);
+    }
+  };
+
   const setReduxValue = async () => {
     if (!description1 || !description2) {
       setError("Both descriptions are required.");
@@ -173,6 +223,12 @@ function Description() {
 
   return (
     <MainLayout>
+      {wordLimitError && (
+        <UpgradePopup
+          alertType={"wordLimit"}
+          onClose={() => setwordLimitError(false)}
+        />
+      )}
       <div className="bg-[#F9FCFF] h-full flex flex-col justify-between overflow-hidden ">
         <div className="h-full overflow-x-hidden overflow-y-auto px-10 pt-10">
           <div className="flex flex-col">
@@ -226,13 +282,19 @@ function Description() {
             />
             {/* AI Write Button for Description 1 */}
             <div className="mt-2 flex items-center gap-2 text-app-secondary hover:text-app-accent-hover cursor-pointer ml-[50px]">
-              <div className={`flex justify-between w-full ${loader2 || loader1 ? "cursor-progress" : ""}`}>
+              <div
+                className={`flex justify-between w-full ${
+                  loader2 || loader1 ? "cursor-progress" : ""
+                }`}
+              >
                 <div
                   className="flex gap-2 text-palatinate-blue-600 hover:text-palatinate-blue-800"
-                  onClick={() => {loader2 || loader1 ? "" : handleAIWrite(1)}}
+                  onClick={() => {
+                    loader2 || loader1 ? "" : handleAIWrite(1);
+                  }}
                 >
                   <img
-                    src="https://tours.mywpsite.org/wp-content/uploads/2024/08/sparkle.svg"
+                    src="https://plugin.mywpsite.org/sparkles.svg"
                     alt="sparkle"
                   />
                   <span className="text-sm font-normal transition duration-150 ease-in-out">
@@ -309,13 +371,19 @@ function Description() {
             />
             {/* AI Write Button for Description 2 */}
             <div className="mt-2 flex items-center gap-2 text-app-secondary hover:text-app-accent-hover cursor-pointer ml-[50px]">
-              <div className={`flex justify-between w-full ${loader2 || loader1 ? "cursor-progress" : ""}`}>
+              <div
+                className={`flex justify-between w-full ${
+                  loader2 || loader1 ? "cursor-progress" : ""
+                }`}
+              >
                 <div
                   className="flex gap-2 text-palatinate-blue-600 hover:text-palatinate-blue-800"
-                  onClick={() => {loader2 || loader1 ? "" : handleAIWrite(2)}}
+                  onClick={() => {
+                    loader2 || loader1 ? "" : handleAIWrite(2);
+                  }}
                 >
                   <img
-                    src="https://tours.mywpsite.org/wp-content/uploads/2024/08/sparkle.svg"
+                    src="https://plugin.mywpsite.org/sparkles.svg"
                     alt="sparkle"
                   />
                   <span className="text-sm font-normal transition duration-150 ease-in-out">
@@ -369,7 +437,7 @@ function Description() {
             className="tertiary px-[30px] py-[15px] text-base text-white sm:mt-2 font-medium rounded-md w-[150px]"
           >
             {loading ? (
-              <div className="flex">
+              <div className="flex min-w-[65px] justify-center items-center">
                 {" "}
                 <svg
                   className="animate-spin h-5 w-5 text-white"

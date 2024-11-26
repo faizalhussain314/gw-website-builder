@@ -16,7 +16,7 @@ const Header: React.FC<HeaderProps> = ({ active }) => {
                   {!active && <div className="h-[25px] w-1"></div>}
                   {active && (
                     <img
-                      src="https://tours.mywpsite.org/wp-content/uploads/2024/08/logo.svg"
+                      src="https://plugin.mywpsite.org/logo.svg"
                       alt="gravity write logo"
                       className="h-10 p-2 rounded-md cursor-pointer hover:bg-palatinate-blue-50"
                     />

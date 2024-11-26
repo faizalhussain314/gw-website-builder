@@ -22,6 +22,7 @@ import Popup from "../../component/dialogs/Popup";
 import StyleRemoveWarning from "../../component/dialogs/StyleRemoveWarning";
 import useStoreContent from "../../../hooks/useStoreContent ";
 import UpgradePopup from "../../component/dialogs/UpgradePopup";
+import { fetchWpToken } from "../../../core/utils/fetchWpToken";
 
 const API_URL = import.meta.env.VITE_API_BACKEND_URL;
 
@@ -68,6 +69,7 @@ function Design() {
   const previousTemplate = useSelector(
     (state: RootState) => state.userData.templateList
   );
+  const [token, setToken] = useState("");
   const [newTemplate, setNewTemplate] = useState(null);
 
   const storeContent = useStoreContent();
@@ -81,6 +83,7 @@ function Design() {
     (state: RootState) => state?.userData?.templateList
   );
   const previousFont = useSelector((state: RootState) => state?.userData?.font);
+  const wp_token = useSelector((state: RootState) => state.user.wp_token);
   const previousColor = useSelector(
     (state: RootState) => state?.userData?.color
   );
@@ -93,15 +96,27 @@ function Design() {
   };
 
   const fetchTemplateList = async () => {
+    // Ensure wp_token exists before making the API call
+    if (!wp_token) {
+      console.error("Token is not available, skipping API call.");
+      return;
+    }
+
     try {
-      const response = await axios.get(`${API_URL}getTemplates`);
-      const templates = response.data?.data || []; // Extract data
+      const response = await axios.get(`${API_URL}getTemplates`, {
+        headers: {
+          Authorization: `Bearer ${wp_token}`,
+        },
+      });
+      const templates = response.data?.data || [];
       setshowError(false);
-      settemplateList(templates); // Store template list in state
+      settemplateList(templates);
     } catch (error) {
       console.error("Error fetching templates:", error);
+      setshowError(true); // Show error if the API call fails
     }
   };
+
   // API call to fetch templates based on category (debounced)
   // useLayoutEffect(() => {
   //   if (debouncedValue.length <= 0) {
@@ -256,11 +271,8 @@ function Design() {
   };
 
   useEffect(() => {
-    if (!hasFetched) {
-      fetchTemplateList();
-      setHasFetched(true);
-    }
-  }, [hasFetched]);
+    fetchTemplateList();
+  }, []);
 
   const handleTemplateSelection = async (index: number, template: any) => {
     if (userDetails.plan == "Free" && template.is_premium) {
@@ -327,6 +339,14 @@ function Design() {
   const handleWarningClose = () => {
     setWarning(false);
   };
+
+  useEffect(() => {
+    if (wp_token) {
+      fetchTemplateList();
+    } else {
+      console.error("Token not available, waiting for Redux update.");
+    }
+  }, [wp_token]); // Depend on wp_token from Redux
 
   // const handlePopOverClose = () =>{
 

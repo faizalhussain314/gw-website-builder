@@ -51,6 +51,7 @@ If you wanna remove scrollbar please use this class called "no-scrollbar"
   gap: 10px;
   align-items: center;
   justify-content: center;
+  min-width: 80px;
 }
 
 .tertiary:hover {
@@ -344,6 +345,10 @@ iframe {
   80% {
     transform: translateX(3px);
   }
+}
+
+#phone-number {
+  outline: none;
 }
 
 /**

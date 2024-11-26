@@ -18,6 +18,11 @@ import {
   setMaxGeneration,
 } from "./Slice/userSlice";
 import useDomainEndpoint from "./hooks/useDomainEndpoint";
+import axios from "axios";
+// import useFetchWpToken from "./hooks/useFetchContentData";
+import { useSelector } from "react-redux";
+import { RootState } from "./store/store";
+import { fetchWpToken } from "./core/utils/fetchWpToken";
 
 const App = () => {
   const navigate = useNavigate();
@@ -31,6 +36,7 @@ const App = () => {
   const [fetchedData, setFetchedData] = useState<any>(null);
   const [firstLoad, setFirstLoad] = useState(true);
   const [isRefresh, setIsRefresh] = useState(false);
+  const username = useSelector((state: RootState) => state.user.username);
 
   const { fetchContent, emptyTable } = useFetchContentData();
   const { getDomainFromEndpoint } = useDomainEndpoint();
@@ -40,25 +46,54 @@ const App = () => {
       const url = getDomainFromEndpoint(
         "/wp-json/custom/v1/get-gwuser-details"
       );
-      const response = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          fields: ["id", "name", "email", "gravator", "plan_detail"],
-        }),
-      });
-      const result = await response.json();
+      const response = await axios.post(
+        url,
+        {
+          fields: [
+            "id",
+            "name",
+            "email",
+            "gravator",
+            "plan_detail",
+            "website_used",
+            "website_total",
+          ],
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      const result = response.data;
+
       if (result) {
         dispatch(setUsername(result[0]?.name));
         dispatch(setPlan(result[0]?.plan_detail));
         dispatch(setWebsiteGenerationLimit(result[0]?.websiteGenerationLimit));
         dispatch(setEmail(result[0]?.email));
         dispatch(setGravator(result[0]?.gravator));
-        dispatch(setGeneratedSite(result[0]?.generatedsite || 1));
-        dispatch(setMaxGeneration(result[0]?.setMaxGeneration || 6));
+        dispatch(setGeneratedSite(result[0]?.website_used || 1));
+        dispatch(setMaxGeneration(result[0]?.website_total || 6));
       }
     } catch (error) {
-      console.error("Error fetching user details:", error);
+      if (axios.isAxiosError(error)) {
+        const status = error.response?.status;
+        const message = error.response?.data?.message;
+
+        // if (
+        //   status === 404 &&
+        //   message === "No details found in the user details table." &&
+        //   location.pathname !== "/"
+        // ) {
+        //   console.error("User not logged in:", message);
+        //   navigate("/connect-account");
+        // } else {
+        //   console.error("Error fetching user details:", error.message);
+        // }
+      } else {
+        console.error("Unexpected error:", error);
+      }
     }
   };
 
@@ -134,6 +169,22 @@ const App = () => {
     setShowPopup(false);
   };
 
+  useEffect(() => {
+    const fetchData = async () => {
+      if (username) {
+        // Fetch token only if username exists
+        const token = await fetchWpToken(dispatch, getDomainFromEndpoint);
+        if (token) {
+          console.log("Token stored in Redux:", token);
+        }
+      } else {
+        console.log("Username is empty, skipping token fetch.");
+      }
+    };
+
+    fetchData();
+  }, [username, dispatch, getDomainFromEndpoint]);
+
   return (
     <div className="relative">
       {showPopup && (
@@ -144,7 +195,7 @@ const App = () => {
           onCreateFromScratch={handleCreateFromScratch}
         />
       )}
-      <div className="absolute right-4 top-4 z-50">
+      <div className="absolute right-4 top-4 z-200">
         <CloseIcon />
       </div>
       <AppRoutes />

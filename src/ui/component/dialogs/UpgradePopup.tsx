@@ -5,7 +5,7 @@ import Crown from "../../../assets/crown.svg";
 
 type UpgradePopupProps = {
   onClose: () => void;
-  alertType: "regenerate" | "websiteCreation" | "upgradeTemp"; // Add a prop to specify the alert type
+  alertType: "regenerate" | "websiteCreation" | "upgradeTemp" | "wordLimit";
 };
 
 const UpgradePopup: React.FC<UpgradePopupProps> = ({ onClose, alertType }) => {
@@ -22,6 +22,11 @@ const UpgradePopup: React.FC<UpgradePopupProps> = ({ onClose, alertType }) => {
     title = "Upgrade Required";
     message =
       "This premium template is available for starter and pro users. Please upgrade your plan to access it.";
+  } else if (alertType === "wordLimit") {
+    title = "Limit Reached";
+    message = ` You've reached the word limit for your current plan. To unlock more
+          words and continue generating content, consider upgrading your word
+          limit`;
   }
 
   const upgradeRedirection = () => {
