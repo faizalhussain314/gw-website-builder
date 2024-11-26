@@ -10,6 +10,18 @@ import useDomainEndpoint from "../../../hooks/useDomainEndpoint";
 import { getCategoryDetails } from "../../../infrastructure/api/wordpress-api/category/getCategoryDetails.api";
 import { updateCategoryDetails } from "../../../infrastructure/api/wordpress-api/category/updateCategoryDetails.api.ts";
 import LimitReachedPopup from "../../component/dialogs/LimitReachedPopup.tsx";
+import axios from "axios";
+import {
+  setUsername,
+  setPlan,
+  setWebsiteGenerationLimit,
+  setEmail,
+  setGravator,
+  setGeneratedSite,
+  setMaxGeneration,
+} from "../../../Slice/userSlice";
+import ThreeDotLoader from "../../component/loader/ThreeDotLoader.tsx";
+import ApiErrorPopup from "../../component/dialogs/ApiErrorPopup.tsx";
 
 function Category() {
   const dispatch = useDispatch();
@@ -27,31 +39,31 @@ function Category() {
   const userDetails = useSelector((state: RootState) => state.user);
   const [limitReached, setLimitReached] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [mainLoader, setMainLoader] = useState(false);
+  const [apiError, setApiError] = useState(false);
+  const wp_token = useSelector((state: RootState) => state.user.wp_token);
 
   useEffect(() => {
-    const fetchInitialCategory = async () => {
-      const content = await getCategoryDetails(getDomainFromEndpoint);
-      if (content && content.category) {
-        console.log("content", content);
-        setInputValue(content.category);
-        dispatch(setCategory(content.category));
-      }
-    };
-
-    fetchInitialCategory();
-
-    const getCategoryList = async () => {
+    const fetchData = async () => {
       try {
-        const categories = await fetchCategoryList();
+        console.log("Fetching category list...");
+        const categories = await fetchCategoryList(
+          dispatch,
+          getDomainFromEndpoint
+        );
         setCategoryList(categories);
-      } catch (error) {
-        console.error("Failed to fetch categories:", error);
-        setError("Failed to load categories. Please try again later.");
+      } catch (err) {
+        console.error("Error fetching category list:", err);
+        setError("Failed to fetch category list. Please try again.");
       }
     };
 
-    getCategoryList();
-  }, [dispatch, getDomainFromEndpoint]);
+    if (wp_token) {
+      fetchData();
+    } else {
+      console.error("Token not available, waiting for Redux update.");
+    }
+  }, [wp_token, dispatch, getDomainFromEndpoint]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -135,6 +147,78 @@ function Category() {
       setLimitReached(true);
     }
   }, [userDetails]);
+  useEffect(() => {
+    if (location.hash.includes("/category")) {
+      const queryParams = new URLSearchParams(location.hash.split("?")[1]);
+      const wp_token = queryParams.get("wp_token");
+      const fe_token = queryParams.get("fe_token");
+      const email = queryParams.get("email");
+
+      if (wp_token && fe_token && email) {
+        setMainLoader(true);
+        sendTokenAndEmailToBackend(wp_token, fe_token, email);
+      } else {
+        console.error("Missing token or email in URL");
+      }
+    }
+  }, [location]);
+
+  const sendTokenAndEmailToBackend = async (
+    wp_token: string,
+    fe_token: string,
+    email: string
+  ) => {
+    try {
+      const endpoint = getDomainFromEndpoint(
+        "wp-json/custom/v1/user-details-react"
+      );
+
+      const response = await axios.post(endpoint, {
+        email: email,
+        wp_token: wp_token,
+        fe_token: fe_token,
+      });
+
+      console.log("Response from backend:", response.data);
+
+      await fetchUserDetails();
+    } catch (error) {
+      console.error("Error sending data to backend:", error);
+      setApiError(true);
+    }
+  };
+
+  // Function to fetch user details
+  const fetchUserDetails = async () => {
+    try {
+      const url = getDomainFromEndpoint(
+        "/wp-json/custom/v1/get-gwuser-details"
+      );
+
+      const response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fields: ["id", "name", "email", "gravator", "plan_detail"],
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result) {
+        dispatch(setUsername(result[0]?.name));
+        dispatch(setPlan(result[0]?.plan_detail));
+        dispatch(setWebsiteGenerationLimit(result[0]?.websiteGenerationLimit));
+        dispatch(setEmail(result[0]?.email));
+        dispatch(setGravator(result[0]?.gravator));
+        dispatch(setGeneratedSite(result[0]?.generatedsite || 1));
+        dispatch(setMaxGeneration(result[0]?.setMaxGeneration || 6));
+        setMainLoader(false);
+      }
+    } catch (error) {
+      console.error("Error fetching user details:", error);
+    }
+  };
 
   return (
     <MainLayout>
@@ -144,6 +228,9 @@ function Category() {
           limit={userDetails.generatedSite}
         />
       )}
+
+      {mainLoader && <ThreeDotLoader />}
+      {apiError && <ApiErrorPopup alertType="userDetails" />}
       <div className="bg-[#F9FCFF] min-h-screen p-10">
         <h1 className="text-txt-black-600 font-semibold leading-[38px] tracking-[-0.9px] text-3xl mb-2.5">
           I am creating a website for
@@ -214,10 +301,10 @@ function Category() {
           <button
             onClick={handleClick}
             type="submit"
-            className="tertiary px-[35px] py-[15px] text-base text-white mt-[25px] sm:mt-2 rounded-lg bg-blue-500 hover:bg-blue-600 tracking-[-0.32px] font-medium leading-[22px]"
+            className="tertiary px-[35px] py-[15px] text-base  text-white mt-[25px] sm:mt-2 rounded-lg bg-blue-500 hover:bg-blue-600 tracking-[-0.32px] font-medium leading-[22px]"
           >
             {loading ? (
-              <div className="flex">
+              <div className="flex min-w-[65px] justify-center items-center">
                 {" "}
                 <svg
                   className="animate-spin h-5 w-5 text-white"

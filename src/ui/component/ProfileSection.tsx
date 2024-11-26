@@ -6,9 +6,14 @@ import AiGenerate from "../../assets/icons/aigenerate.svg";
 import LogoutIcon from "../../assets/icons/logout.svg";
 import { useSelector } from "react-redux";
 import { RootState } from "../../store/store";
+import useDomainEndpoint from "../../hooks/useDomainEndpoint";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 const ProfileSection: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const { getDomainFromEndpoint } = useDomainEndpoint();
+  const navigate = useNavigate();
 
   const toggleMenu = () => {
     setIsOpen(!isOpen);
@@ -18,6 +23,30 @@ const ProfileSection: React.FC = () => {
     (userDetails.generatedSite / userDetails.max_genration) * 100,
     100
   );
+
+  const handleLogOut = async () => {
+    try {
+      const endpoint = getDomainFromEndpoint("/wp-json/custom/v1/disconnect");
+
+      const response = await axios.get(endpoint);
+      console.log("API call successful:", response?.data);
+
+      if (
+        response?.data?.success === true ||
+        response?.data?.data?.message ===
+          "Disconnection has already been completed."
+      ) {
+        console.log("True block executed, redirecting...");
+
+        window.location.href = "/wp-admin/admin.php?page=gravitywrite_settings";
+      } else {
+        console.error("Unexpected API response:", response?.data);
+      }
+    } catch (error) {
+      console.error("Error in logout API:", error);
+    }
+  };
+
   return (
     <div className="relative w-full rounded-lg">
       {/* Account Action Button Section */}
@@ -103,7 +132,7 @@ const ProfileSection: React.FC = () => {
             </div>
           </div>
           <button
-            onClick={toggleMenu}
+            onClick={handleLogOut}
             className="flex items-center gap-2.5 w-full px-4 py-2 text-left text-gray-700 hover:bg-palatinate-blue-50 cursor-pointer rounded-md"
           >
             <img src={LogoutIcon} className="flex-none" />

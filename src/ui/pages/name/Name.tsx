@@ -103,7 +103,7 @@ function Name() {
                   className="tertiary px-[35px] font-medium py-[15px] text-base sm:text-sm text-white  sm:mt-2 rounded-lg "
                 >
                   {loading ? (
-                    <div className="flex">
+                    <div className="flex min-w-[65px] justify-center items-center">
                       {" "}
                       <svg
                         className="animate-spin h-5 w-5 text-white"

@@ -1,14 +1,32 @@
-import illustration from "../../../assets/Illustration.png";
 import { useNavigate } from "react-router-dom";
-import { getDomainFromEndpoint } from "../../../core/utils/getDomainFromEndpoint.utils";
-import CloseIcon from "../../global component/CloseIcon";
+
 import bgImage from "../../../assets/connectGWBg.png";
 import spaceShip from "../../../assets/Spaceship.gif";
+import useDomainEndpoint from "../../../hooks/useDomainEndpoint";
+import { useSelector } from "react-redux";
+import { RootState } from "../../../store/store";
 
 function ConnectAccount() {
   const navigate = useNavigate();
+  const { getDomainFromEndpoint } = useDomainEndpoint();
+  const userName = useSelector((state: RootState) => state.user.email);
+
   const onContinue = () => {
-    navigate("/category");
+    const callBackUrl = getDomainFromEndpoint(
+      "wp-admin/admin.php?page=gw-website-builder#/category"
+    );
+
+    // window.location.href = `https://staging.gravitywrite.com/login?domain=wordpress&callback_url=${callBackUrl}`;
+
+    // const callBackUrl =
+    //   "http://localhost:5173/wp-content/plugins/gw-website-builder-main/API/dist/#/category";
+
+    if (userName) {
+      navigate("/category");
+    } else {
+      window.location.href = `https://staging.gravitywrite.com/login?domain=wordpress-react&callback_url=${callBackUrl}`;
+    }
+    // navigate("/category");
   };
   return (
     <div className="w-full h-screen relative isolate overflow-hidden pt-[100px] pb-[360px]">
@@ -30,11 +48,11 @@ function ConnectAccount() {
       />
 
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
-        <div className="mx-auto max-w-4xl">
-          <div className="">
-            <p className="text-center text-2xl mac:text-5xl font-bold mb-11 mx-w-[900px]">
-              Connect your account with GravityWrite to maximize the potential
-              of our AI-powered website builder.
+        <div className="mx-auto max-w-7xl">
+          <div className="grid justify-center">
+            <p className="text-center text-[52px] mac:text-[44px] leading-[56px] tracking-tighter	 font-bold mb-11 max-w-[800px]">
+              Create stunning websites by linking GravityWrite and the AI
+              Website Builder.
             </p>
             <button
               className="flex items-center justify-center px-6 py-4 text-white text-base font-medium rounded-lg tertiary w-full max-w-[280px] mx-auto"

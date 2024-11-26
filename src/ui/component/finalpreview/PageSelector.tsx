@@ -35,7 +35,7 @@ type Props = {
   handleGeneratePage: () => void;
   isLoading: boolean;
   importLoad: boolean;
-  afterContact:boolean;
+  afterContact: boolean;
 };
 
 const PageSelector: React.FC<Props> = ({
@@ -57,7 +57,7 @@ const PageSelector: React.FC<Props> = ({
   handleGeneratePage,
   isLoading,
   importLoad,
-  afterContact
+  afterContact,
 }) => {
   const showWarningToast = () => {
     toast.warn("Please wait while content is being generated.");
@@ -72,7 +72,7 @@ const PageSelector: React.FC<Props> = ({
   };
 
   const handleSkipClick = (pageName: string) => {
-    if (isContentGenerating) {
+    if (isContentGenerating || isLoading) {
       showWarningToast();
       return;
     } else {
@@ -171,13 +171,14 @@ const PageSelector: React.FC<Props> = ({
           <div
             key={page.name}
             className={`rounded-lg p-3 mb-2 cursor-pointer transition-all duration-200 ease-in ${
-              afterContact === true ? "" :
-              selectedPage === page.name
+              afterContact === true
+                ? ""
+                : selectedPage === page.name
                 ? "ring-palatinate-blue-600 ring-1 bg-[#EBF4FF]"
                 : ""
             }`}
             onClick={() => {
-              if (isContentGenerating) {
+              if (isContentGenerating || isLoading) {
                 showWarningToast();
               } else {
                 handlePageClick(page.name);
@@ -263,9 +264,11 @@ const PageSelector: React.FC<Props> = ({
                     viewBox="0 0 12 12"
                     fill="none"
                     className={`${
-                      afterContact === true ? "" :
-              selectedPage === page.name
-                ? "rotate-180 " : "-rotate-0"
+                      afterContact === true
+                        ? ""
+                        : selectedPage === page.name
+                        ? "rotate-180 "
+                        : "-rotate-0"
                     } transition-all duration-200 ease-in ml-2.5`}
                   >
                     <path
@@ -279,88 +282,88 @@ const PageSelector: React.FC<Props> = ({
                 </div>
               </div>
             </div>
-            {afterContact === true ? "" :
-              selectedPage === page.name
-                 && (
-              <div className="mt-3 flex justify-evenly text-sm">
-                {[
-                  "Generated",
-                  "Skipped",
-                  "Not Selected",
-                  "Blog",
-                  "Contact",
-                  "Contact Us",
-                  "Home",
-                ].includes(page.status) ||
-                page.name === "Home" ||
-                page.name === "Blog" ||
-                page.name === "Contact" ||
-                page.name === "Contact Us" ? (
-                  <div className="w-full flex items-center gap-4">
-                    <button
-                      className={`bg-white text-[#1E2022] hover:bg-palatinate-blue-600 hover:text-white rounded px-3 py-1.5 w-full text-[14px] font-[500] ${
-                        isContentGenerating ? "opacity-50" : ""
-                      }`}
-                      onClick={() => {
-                        if (isContentGenerating) {
-                          showWarningToast();
-                        } else {
-                          handleNext(page.name);
-                        }
-                      }}
-                      disabled={isContentGenerating || isLoading}
-                    >
-                      Keep & Next
-                    </button>
-                    {page.name === "Home" ? (
-                      <Tooltip title="Home page can't skip" placement="top">
+            {afterContact === true
+              ? ""
+              : selectedPage === page.name && (
+                  <div className="mt-3 flex justify-evenly text-sm">
+                    {[
+                      "Generated",
+                      "Skipped",
+                      "Not Selected",
+                      "Blog",
+                      "Contact",
+                      "Contact Us",
+                      "Home",
+                    ].includes(page.status) ||
+                    page.name === "Home" ||
+                    page.name === "Blog" ||
+                    page.name === "Contact" ||
+                    page.name === "Contact Us" ? (
+                      <div className="w-full flex items-center gap-4">
                         <button
-                          className={`bg-[#FFFFFF] rounded px-3 py-1.5 w-full text-[#1E2022] hover:bg-palatinate-blue-600 hover:text-white text-[14px] font-[500] ${
-                            isContentGenerating || page.name === "Home"
-                              ? "opacity-50 cursor-not-allowed"
-                              : ""
+                          className={`bg-white text-[#1E2022] hover:bg-palatinate-blue-600 hover:text-white rounded px-3 py-1.5 w-full text-[14px] font-[500] ${
+                            isContentGenerating ? "opacity-50" : ""
                           }`}
-                          disabled={
-                            isContentGenerating ||
-                            page.name === "Home" ||
-                            isLoading
-                          }
+                          onClick={() => {
+                            if (isContentGenerating || isLoading) {
+                              showWarningToast();
+                            } else {
+                              handleNext(page.name);
+                            }
+                          }}
+                          disabled={isContentGenerating || isLoading}
+                        >
+                          Keep & Next
+                        </button>
+                        {page.name === "Home" ? (
+                          <Tooltip title="Home page can't skip" placement="top">
+                            <button
+                              className={`bg-[#FFFFFF] rounded px-3 py-1.5 w-full text-[#1E2022] hover:bg-palatinate-blue-600 hover:text-white text-[14px] font-[500] ${
+                                isContentGenerating || page.name === "Home"
+                                  ? "opacity-50 cursor-not-allowed"
+                                  : ""
+                              }`}
+                              disabled={
+                                isContentGenerating ||
+                                page.name === "Home" ||
+                                isLoading
+                              }
+                              onClick={() => handleSkipClick(page.name)}
+                            >
+                              Skip Page
+                            </button>
+                          </Tooltip>
+                        ) : (
+                          <button
+                            className={`bg-white text-[#1E2022] hover:bg-palatinate-blue-600 hover:text-white rounded px-3 py-1.5 w-full text-[14px] font-[500] ${
+                              isContentGenerating ? "opacity-50" : ""
+                            }`}
+                            onClick={() => handleSkipClick(page.name)}
+                            disabled={isContentGenerating || isLoading}
+                          >
+                            Skip Page
+                          </button>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="w-full flex items-center gap-4">
+                        <button
+                          className="bg-white text-[#1E2022] hover:bg-palatinate-blue-600 hover:text-white rounded px-3 py-1.5 w-full text-[14px] font-[500]"
+                          onClick={handleGeneratePage}
+                          disabled={isLoading}
+                        >
+                          Generate Page
+                        </button>
+                        <button
+                          className="bg-white text-[#1E2022] hover:bg-palatinate-blue-600 hover:text-white rounded px-3 py-1.5 w-full text-[14px] font-[500]"
                           onClick={() => handleSkipClick(page.name)}
                         >
                           Skip Page
                         </button>
-                      </Tooltip>
-                    ) : (
-                      <button
-                        className={`bg-white text-[#1E2022] hover:bg-palatinate-blue-600 hover:text-white rounded px-3 py-1.5 w-full text-[14px] font-[500] ${
-                          isContentGenerating ? "opacity-50" : ""
-                        }`}
-                        onClick={() => handleSkipClick(page.name)}
-                        disabled={isContentGenerating || isLoading}
-                      >
-                        Skip Page
-                      </button>
+                      </div>
                     )}
                   </div>
-                ) : (
-                  <div className="w-full flex items-center gap-4">
-                    <button
-                      className="bg-white text-[#1E2022] hover:bg-palatinate-blue-600 hover:text-white rounded px-3 py-1.5 w-full text-[14px] font-[500]"
-                      onClick={handleGeneratePage}
-                      disabled={isLoading}
-                    >
-                      Generate Page
-                    </button>
-                    <button
-                      className="bg-white text-[#1E2022] hover:bg-palatinate-blue-600 hover:text-white rounded px-3 py-1.5 w-full text-[14px] font-[500]"
-                      onClick={() => handleSkipClick(page.name)}
-                    >
-                      Skip Page
-                    </button>
-                  </div>
                 )}
-              </div>
-            )}
           </div>
         ))}
       </div>

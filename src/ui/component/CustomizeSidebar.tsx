@@ -51,6 +51,7 @@ const CustomizeSidebar: React.FC = () => {
     secondaryColor: state.userData.style.defaultColor.secondary,
     primaryFont: state.userData.style.defaultFont.primary,
     secondaryFont: state.userData.style.defaultFont.secondary,
+    logoUrl: state.userData.logo,
   }));
 
   // slider

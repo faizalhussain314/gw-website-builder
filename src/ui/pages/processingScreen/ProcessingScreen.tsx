@@ -8,7 +8,7 @@ import { setPages } from "../../../Slice/activeStepSlice";
 import "../../../index.css";
 import websitebg from "../../../assets/websiteloader-bg.svg";
 import useDomainEndpoint from "../../../hooks/useDomainEndpoint";
-import { RootState } from "../../../store/store";
+import store, { RootState } from "../../../store/store";
 import {
   ApiPage,
   Plugin,
@@ -19,6 +19,9 @@ import {
   mapApiPageToReduxPage,
 } from "../../../types/processingpage.type";
 import useFetchCustomContentData from "../../../hooks/useFetchCustomContentData";
+import ImportCountError from "../../component/dialogs/ImportCountError";
+import { setWpToken } from "../../../Slice/userSlice";
+import axios from "axios";
 
 const API_URL = import.meta.env.VITE_API_BACKEND_URL;
 
@@ -27,6 +30,7 @@ const ProcessingScreen: React.FC = () => {
   const [totalSteps, setTotalSteps] = useState(0);
   const [status, setStatus] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [importLimit, setImportLimit] = useState(false);
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -43,27 +47,70 @@ const ProcessingScreen: React.FC = () => {
   const bussinessName = useSelector(
     (state: RootState) => state.userData.businessName
   );
+  const templateName = useSelector(
+    (state: RootState) => state.userData.templatename
+  );
+  const wp_token = useSelector((state: RootState) => state.user.wp_token);
 
-  // Fetch template details
+  // const url = getDomainFromEndpoint("/wp-json/custom/v1/get-user-token");
+
   const fetchTemplates = async (): Promise<TemplateData | null> => {
     try {
+      let wp_token = store.getState().user.wp_token;
+
+      if (!wp_token) {
+        try {
+          const url = getDomainFromEndpoint(
+            "/wp-json/custom/v1/get-user-token"
+          );
+          const response = await axios.get(url);
+          const result = response.data;
+
+          if (result.status && result.token) {
+            wp_token = result.token;
+            dispatch(setWpToken(wp_token));
+          } else {
+            console.error("Failed to fetch token: Invalid response");
+            throw new Error("Unable to fetch Bearer token.");
+          }
+        } catch (error) {
+          console.error("Error fetching user token:", error);
+          throw new Error("Failed to retrieve Bearer token.");
+        }
+      }
+
       const response = await fetch(
-        `${API_URL}getTemplates?template_id=${template_id}`
+        `${API_URL}getTemplates?template_id=${template_id}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${wp_token}`,
+          },
+        }
       );
+
       const data = await response.json();
 
       if (!response.ok) {
         if (data.message === "Template not found.") {
-          console.warn("Template not found, attempting to fetch templateid.");
+          console.warn("Template not found, attempting to fetch template ID.");
 
           const tempid = await fetchCustomContentData(["templateid"]);
-          console.log("another", parseInt(tempid.templateid));
 
+          // Retry API Call with new template ID
           const retryResponse = await fetch(
-            `${API_URL}getTemplates?template_id=${parseInt(tempid.templateid)}`
+            `${API_URL}getTemplates?template_id=${parseInt(tempid.templateid)}`,
+            {
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${wp_token}`,
+              },
+            }
           );
+
           const retryData = await retryResponse.json();
-          console.log("2nd response", retryData);
 
           if (retryResponse.ok) {
             return retryData.data;
@@ -71,7 +118,7 @@ const ProcessingScreen: React.FC = () => {
             throw new Error("Failed to fetch templates after retry.");
           }
         } else {
-          throw new Error(data.message || "Failed to fetch templates");
+          throw new Error(data.message || "Failed to fetch templates.");
         }
       }
 
@@ -108,6 +155,31 @@ const ProcessingScreen: React.FC = () => {
     if (isProcessing) return;
     setIsProcessing(true);
 
+    const checkSiteCountEndpoint = getDomainFromEndpoint(
+      "/wp-json/custom/v1/check-site-count"
+    );
+
+    if (!checkSiteCountEndpoint) {
+      console.error("Check site count endpoint is not available.");
+      setIsProcessing(false);
+      return;
+    }
+
+    try {
+      const checkSiteCountResponse = await fetch(checkSiteCountEndpoint);
+      const checkSiteCountData = await checkSiteCountResponse.json();
+
+      if (!checkSiteCountResponse.ok || !checkSiteCountData?.status) {
+        setImportLimit(true);
+        setIsProcessing(false);
+        return;
+      }
+    } catch (error) {
+      console.error("Error checking site count:", error);
+      setIsProcessing(false);
+      return;
+    }
+
     const templateData = await fetchTemplates();
     if (!templateData) {
       console.error("Template has no data");
@@ -121,6 +193,31 @@ const ProcessingScreen: React.FC = () => {
     );
 
     dispatch(setPages(reduxPages));
+
+    const updateCountEndpoint = getDomainFromEndpoint(
+      "/wp-json/custom/v1/update-count"
+    );
+    if (!updateCountEndpoint) {
+      console.error("Update count endpoint is not available.");
+      setIsProcessing(false);
+      return;
+    }
+
+    const updateCountResponse = await postData(
+      "/wp-json/custom/v1/update-count",
+      {
+        words: 0,
+        template_id: template_id,
+        page_title: "",
+        sitecount: 1,
+        is_type: "sitecount",
+      }
+    );
+
+    if (updateCountResponse.status !== "success") {
+      console.error("Failed to update site count:", updateCountResponse);
+      setIsProcessing(false);
+    }
 
     const apiSteps: ApiStep[] = [
       {
@@ -196,7 +293,6 @@ const ProcessingScreen: React.FC = () => {
 
     let logoToUse = logo;
     let logoType = "";
-    console.log("this is site logo", logoToUse);
 
     if (logoToUse) {
       logoType = "url";
@@ -278,6 +374,7 @@ const ProcessingScreen: React.FC = () => {
   return (
     <MainLayout>
       <div className="flex flex-col items-center justify-center h-[90vh]">
+        {importLimit && <ImportCountError />}
         <div
           className="w-[340px] h-[340px] flex items-center justify-center"
           style={{
@@ -288,7 +385,7 @@ const ProcessingScreen: React.FC = () => {
           }}
         >
           <img
-            src="https://tours.mywpsite.org/wp-content/uploads/2024/08/loader-gif-final.gif"
+            src="https://plugin.mywpsite.org/loader-gif-final.gif"
             alt="Processing"
             className="w-[40%] max-w-full"
           />

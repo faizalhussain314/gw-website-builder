@@ -35,6 +35,8 @@ import CustomizePopup from "../../component/dialogs/CustomizePopup";
 import { deletePage } from "../../../infrastructure/api/wordpress-api/final-preview/deletePage.api";
 import { deleteStyle } from "../../../infrastructure/api/wordpress-api/final-preview/deleteStyle.api";
 import { sendIframeMessage } from "../../../core/utils/sendIframeMessage.utils.ts";
+import ApiErrorPopup from "../../component/dialogs/ApiErrorPopup.tsx";
+import WordLimit from "../../component/dialogs/WordLimit.tsx";
 
 const FinalPreview: React.FC = () => {
   const reduxPages =
@@ -63,12 +65,12 @@ const FinalPreview: React.FC = () => {
 
   // Use reduxPages if it's not empty; otherwise, fallback to defaultPages
   const [pages, setPages] = useState<Page[]>([
-        { name: "Home", status: "", slug: "home", selected: false },
-        { name: "About", status: "", slug: "about", selected: false },
-        { name: "Service", status: "", slug: "service", selected: false },
-        { name: "Blog", status: "", slug: "blog", selected: false },
-        { name: "Contact Us", status: "", slug: "contact-us", selected: false },
-      ]);
+    { name: "Home", status: "", slug: "home", selected: false },
+    { name: "About", status: "", slug: "about", selected: false },
+    { name: "Service", status: "", slug: "service", selected: false },
+    { name: "Blog", status: "", slug: "blog", selected: false },
+    { name: "Contact Us", status: "", slug: "contact-us", selected: false },
+  ]);
   const [isOpen, setIsOpen] = useState(false);
   const [viewMode, setViewMode] = useState("desktop");
   const [isLoading, setIsLoading] = useState(true);
@@ -92,6 +94,8 @@ const FinalPreview: React.FC = () => {
   const [contentForBackend, setContentForBackend] = useState<any[]>([]);
   const [findIndex, setfindIndex] = useState<number>();
   const [importLoad, setImportLoad] = useState(false);
+  const [apiIssue, setapiIssue] = useState(false);
+  const [wordCountAlert, setwordCountAlert] = useState(false);
   const [afterContact, setAfterContact] = useState(false);
   const contactDetails = useSelector(
     (state: RootState) => state.userData.contactform
@@ -116,6 +120,7 @@ const FinalPreview: React.FC = () => {
   const templateList = useSelector(
     (state: RootState) => state.userData.templateList
   );
+  const bearer_token = useSelector((state: RootState) => state.user.wp_token);
   const [loadedPages, setLoadedPages] = useState<{ [key: string]: boolean }>({
     Blog: false,
     Contact: false,
@@ -304,18 +309,16 @@ const FinalPreview: React.FC = () => {
             .replace(/\\t/g, "")
             .replace(/\\\\/g, "");
 
-          // Store the parsed HTML content in the state
           setGeneratedPage((prevPages: any) => {
             const updatedPages = {
               ...prevPages,
               spinner: false,
               [pageName]: {
-                0: cleanedHtmlContent, // Store the parsed HTML
+                0: cleanedHtmlContent,
               },
             };
             updatePageStatus(pageName, "Generated", true);
 
-            // If the fetched page matches the selected page, update the iframe source
             if (selectedPage === pageName) {
               updateIframeSrc(cleanedHtmlContent);
               setShowIframe(false);
@@ -325,7 +328,6 @@ const FinalPreview: React.FC = () => {
             return updatedPages;
           });
 
-          // Store the HTML content
           storeHtmlContent(pageName, cleanedHtmlContent);
         } else {
           console.error("Failed to store page data:", response);
@@ -349,32 +351,60 @@ const FinalPreview: React.FC = () => {
       wordCount: number
     ) => {
       try {
-        const endpoint = getDomainFromEndpoint(
-          "/wp-json/custom/v1/save-generated-data"
+        const updateCountEndpoint = getDomainFromEndpoint(
+          "/wp-json/custom/v1/update-count"
         );
-        if (!endpoint) {
-          console.error("Endpoint is not available.");
+        if (!updateCountEndpoint) {
+          console.error("Update count endpoint is not available.");
           return;
         }
 
-        const response = await axios.post(endpoint, {
+        const updateResponse = await axios.post(updateCountEndpoint, {
+          words: wordCount,
+          page_title: pageName,
+          template_id: templateList.id,
+          sitecount: 0,
+          is_type: "words",
+        });
+
+        if (updateResponse.status !== 200) {
+          console.error("Failed to update word count:", updateResponse.data);
+          return;
+        }
+
+        const saveContentEndpoint = getDomainFromEndpoint(
+          "/wp-json/custom/v1/save-generated-data"
+        );
+        if (!saveContentEndpoint) {
+          console.error("Save content endpoint is not available.");
+          return;
+        }
+
+        const saveResponse = await axios.post(saveContentEndpoint, {
           version_name: "5.5",
-          page_name: pageName, // Use the current pageName instead of selectedPage
+          page_name: pageName,
           template_name: templateName,
           json_content:
-            pageName == "Home" || pageName == "About" || pageName == "Service"
+            pageName === "Home" ||
+            pageName === "About" ||
+            pageName === "Service"
               ? jsonContent
               : "",
         });
 
-        if (response.status === 200) {
-          console.log(
-            "Old and new content stored successfully:",
-            response.data
+        if (saveResponse.status === 200) {
+          // console.log(
+          //   "Old and new content stored successfully:",
+          //   saveResponse.data
+          // );
+        } else {
+          console.error(
+            "Failed to store old and new content:",
+            saveResponse.data
           );
-        } 
+        }
       } catch (error) {
-        // console.error("Error storing old and new content:", error);
+        console.error("Error in storeOldNewContent function:", error);
       }
     },
     [getDomainFromEndpoint, templateName]
@@ -436,24 +466,38 @@ const FinalPreview: React.FC = () => {
     }
   };
 
-  const selectNextPage = (currentPage:any) => {
+  const selectNextPage = (currentPage: any) => {
     const currentPageIndex = pages.findIndex(
       (page) => page.name === currentPage
     );
     let arrayVal = rearrangeArray(pages, currentPageIndex);
-    if(currentPageIndex === 4){
+
+    if (arrayVal?.length > 0) {
+      const nextPage = arrayVal.find(
+        (page) =>
+          page.status !== "Generated" &&
+          page.status !== "Skipped" &&
+          page.status !== "Added"
+      );
+      if (nextPage) {
+        setSelectedPage(nextPage.name);
+      }
+    }
+    if (currentPageIndex === 4) {
       setAfterContact(true);
       return;
-    }
-    else if(arrayVal?.length > 0){
+    } else if (arrayVal?.length > 0) {
       setAfterContact(false);
-    const nextPage = arrayVal.find(
-      (page) => page.status !== "Generated" && page.status !== "Skipped" && page.status !== "Added"
-    );    
-    if (nextPage) {
-      setSelectedPage(nextPage.name);
+      const nextPage = arrayVal.find(
+        (page) =>
+          page.status !== "Generated" &&
+          page.status !== "Skipped" &&
+          page.status !== "Added"
+      );
+      if (nextPage) {
+        setSelectedPage(nextPage.name);
+      }
     }
-  }
   };
 
   // Example usage
@@ -569,13 +613,11 @@ const FinalPreview: React.FC = () => {
     setLoaded(true);
 
     if (fontFamily) {
-
       iframe.contentWindow.postMessage(
         { type: "changeFont", font: fontFamily },
         "*"
       );
     }
-
 
     if (Color.primary && Color.secondary) {
       iframe.contentWindow.postMessage(
@@ -616,16 +658,69 @@ const FinalPreview: React.FC = () => {
       }
       if (!fetchresult) {
         if (selectedPage === "Home" && pages[0].status !== "Generated") {
-          iframe.contentWindow.postMessage(
-            {
-              type: "start",
-              templateName: templateName,
-              pageName: currentPage?.slug,
-              bussinessname: businessName,
-              description: Description,
-            },
-            "*"
-          );
+          //home page auto generate code
+
+          setShowPopup(false);
+          setIsLoading(true);
+          setShowGwLoader(true);
+          setIsContentGenerating(true);
+
+          try {
+            const endpoint = getDomainFromEndpoint(
+              "wp-json/custom/v1/check-word-count"
+            );
+            if (!endpoint) {
+              console.error("Endpoint is not available.");
+              setIsLoading(false);
+              setShowGwLoader(false);
+              setIsContentGenerating(false);
+              return;
+            }
+
+            const response = await axios.get(endpoint);
+
+            if (response?.data?.status === true) {
+              const iframe = iframeRef.current;
+              const currentPage = pages.find(
+                (page) => page.name === selectedPage
+              );
+
+              if (currentPage && currentPage.status !== "Generated") {
+                iframe.contentWindow.postMessage(
+                  {
+                    type: "start",
+                    templateName: templateName,
+                    pageName: currentPage?.slug,
+                    bussinessname: businessName,
+                    description: Description,
+                    template_id: templateList?.id,
+                    bearer_token: bearer_token,
+                  },
+                  "*"
+                );
+              }
+            } else if (response?.data?.status === false) {
+              setwordCountAlert(true);
+            }
+          } catch (error) {
+            console.error("Error while calling the word count API:", error);
+            setapiIssue(true);
+          } finally {
+            setIsLoading(false);
+            setShowGwLoader(false);
+            setIsContentGenerating(false);
+          }
+
+          // iframe.contentWindow.postMessage(
+          //   {
+          //     type: "start",
+          //     templateName: templateName,
+          //     pageName: currentPage?.slug,
+          //     bussinessname: businessName,
+          //     description: Description,
+          //   },
+          //   "*"
+          // );
         }
         // if (
         //   selectedPage !== "Home" &&
@@ -654,6 +749,7 @@ const FinalPreview: React.FC = () => {
             pageName: currentPage?.slug,
             bussinessname: businessName,
             description: Description,
+            template_id: templateList?.id,
           },
           "*"
         );
@@ -684,6 +780,7 @@ const FinalPreview: React.FC = () => {
     //       pageName: currentPage?.slug,
     //       bussinessname: businessName,
     //       description: Description,
+    // template_id: templateList?.id,
     //     },
     //     "*"
     //   );
@@ -754,11 +851,10 @@ const FinalPreview: React.FC = () => {
       showWarningToast();
       return;
     }
-    if(action == "next" && currentPage == "Contact Us"){
-      setAfterContact(true)
-    }
-    else{
-      setAfterContact(false)
+    if (action == "next" && currentPage == "Contact Us") {
+      setAfterContact(true);
+    } else {
+      setAfterContact(false);
     }
     const currentPageIndex = pages.findIndex(
       (page) => page.name === currentPage
@@ -780,11 +876,9 @@ const FinalPreview: React.FC = () => {
             selected: true, // Set as selected
           })
         );
-      }
-      else if (
+      } else if (
         action === "next" &&
-        (currentPage == "Contact Us" ||
-        currentPage == "Blog")
+        (currentPage == "Contact Us" || currentPage == "Blog")
       ) {
         updatedPages[currentPageIndex].status = "Added";
         updatedPages[currentPageIndex].selected = true;
@@ -796,19 +890,25 @@ const FinalPreview: React.FC = () => {
             selected: true, // Set as selected
           })
         );
-      }
-       else if (action === "skip") {
+      } else if (action === "skip") {
         updatedPages[currentPageIndex].status = "Skipped";
         updatedPages[currentPageIndex].selected = false;
         dispatch(
           updateReduxPage({
             name: updatedPages[currentPageIndex].name, // Page name
             status: "Skipped", // Mark as Added
-            selected: false, 
+            selected: false,
           })
         );
-      } else if (action === "add" || currentPage == "Contact Us" || currentPage == "Blog") {
-        if(updatedPages[currentPageIndex].status == "Generated" && updatedPages[currentPageIndex].name != "Home"){
+      } else if (
+        action === "add" ||
+        currentPage == "Contact Us" ||
+        currentPage == "Blog"
+      ) {
+        if (
+          updatedPages[currentPageIndex].status == "Generated" &&
+          updatedPages[currentPageIndex].name != "Home"
+        ) {
           updatedPages[currentPageIndex].status = "Not Selected";
           updatedPages[currentPageIndex].selected = false;
 
@@ -819,8 +919,7 @@ const FinalPreview: React.FC = () => {
               selected: true, // Set as selected
             })
           );
-        }
-        else if(updatedPages[currentPageIndex].status == "Not Selected"){
+        } else if (updatedPages[currentPageIndex].status == "Not Selected") {
           updatedPages[currentPageIndex].status = "Generated";
           updatedPages[currentPageIndex].selected = true;
           dispatch(
@@ -830,8 +929,10 @@ const FinalPreview: React.FC = () => {
               selected: true, // Set as not selected
             })
           );
-        }
-        else if (currentPages[currentPageIndex].status == "" || currentPages[currentPageIndex].status == "Skipped") {
+        } else if (
+          currentPages[currentPageIndex].status == "" ||
+          currentPages[currentPageIndex].status == "Skipped"
+        ) {
           updatedPages[currentPageIndex].status = "Added";
           updatedPages[currentPageIndex].selected = true;
           dispatch(
@@ -841,9 +942,7 @@ const FinalPreview: React.FC = () => {
               selected: true, // Set as selected
             })
           );
-        } else if (
-          currentPages[currentPageIndex].status == "Added" 
-        ) {
+        } else if (currentPages[currentPageIndex].status == "Added") {
           updatedPages[currentPageIndex].status = "";
           updatedPages[currentPageIndex].selected = false;
           dispatch(
@@ -923,58 +1022,56 @@ const FinalPreview: React.FC = () => {
       // showWarningToast();
       return;
     }
+
     setShowPopup(false);
     setIsLoading(true);
     setShowGwLoader(true);
     setIsContentGenerating(true);
 
-    // try {
-    //   const endpoint = getDomainFromEndpoint(
-    //     "/wp-json/custom/v1/get-generated-page-status"
-    //   );
-    //   if (!endpoint) {
-    //     console.error("Endpoint is not available.");
-    //     return;
-    //   }
-
-    //   const response = await axios.get(endpoint);
-    //   const {data} = response?.status;
-
-    //   if(data)
-    //   {
-    //     const iframe = iframeRef.current;
-    //     const currentPage = pages.find((page) => page.name === selectedPage);
-    //     if (currentPage && currentPage.status !== "Generated") {
-    //       iframe.contentWindow.postMessage(
-    //         {
-    //           type: "start",
-    //           templateName: templateName,
-    //           pageName: currentPage?.slug,
-    //           bussinessname: businessName,
-    //           description: Description,
-    //         },
-    //         "*"
-    //       );
-    //     }
-    //   }
-
-    // } catch (error) {
-    //   console.error("error on");
-    // }
-
-    const iframe = iframeRef.current;
-    const currentPage = pages.find((page) => page.name === selectedPage);
-    if (currentPage && currentPage.status !== "Generated") {
-      iframe.contentWindow.postMessage(
-        {
-          type: "start",
-          templateName: templateName,
-          pageName: currentPage?.slug,
-          bussinessname: businessName,
-          description: Description,
-        },
-        "*"
+    try {
+      const endpoint = getDomainFromEndpoint(
+        "wp-json/custom/v1/check-word-count"
       );
+      if (!endpoint) {
+        console.error("Endpoint is not available.");
+        setIsLoading(false);
+        setShowGwLoader(false);
+        setIsContentGenerating(false);
+        setapiIssue(true);
+        return;
+      }
+
+      const response = await axios.get(endpoint);
+
+      if (response?.data?.status === true) {
+        const iframe = iframeRef.current;
+        const currentPage = pages.find((page) => page.name === selectedPage);
+
+        if (currentPage && currentPage.status !== "Generated") {
+          setIsContentGenerating(true);
+          iframe.contentWindow.postMessage(
+            {
+              type: "start",
+              templateName: templateName,
+              pageName: currentPage?.slug,
+              bussinessname: businessName,
+              description: Description,
+              template_id: templateList?.id,
+              bearer_token: bearer_token,
+            },
+            "*"
+          );
+        }
+      } else {
+        setwordCountAlert(true);
+      }
+    } catch (error) {
+      console.error("Error while calling the word count API:", error);
+      setapiIssue(true);
+    } finally {
+      setIsLoading(false);
+      setShowGwLoader(false);
+      setIsContentGenerating(false);
     }
   };
 
@@ -1005,15 +1102,13 @@ const FinalPreview: React.FC = () => {
   };
   const rearrangeArray = (array, startIndex) => {
     if (startIndex < 0 || startIndex >= array.length) {
-        throw new Error("Index out of bounds");
+      throw new Error("Index out of bounds");
     }
 
-    // Rearrange the array
-    const part1 = array.slice(startIndex); // From startIndex to the end
-    const part2 = array.slice(0, startIndex); // From the beginning to startIndex
-    return part1.concat(part2); // Combine the two parts
-}
-
+    const part1 = array.slice(startIndex);
+    const part2 = array.slice(0, startIndex);
+    return part1.concat(part2);
+  };
 
   const handleNext = (page: string) => {
     handlePageNavigation("next", page);
@@ -1028,7 +1123,6 @@ const FinalPreview: React.FC = () => {
     handlePageNavigation("add", page);
   };
 
-  // Effect to handle iframe resizing based on view mode
   useEffect(() => {
     if (iframeRef.current) {
       if (viewMode === "desktop") {
@@ -1104,27 +1198,38 @@ const FinalPreview: React.FC = () => {
 
   const handleImportSelectedPage = async () => {
     setImportLoad(true);
-    // try {
-    //   const endpoint = getDomainFromEndpoint(
-    //     "/wp-json/custom/v1/get-generated-page-status"
-    //   );
-    //   if (!endpoint) {
-    //     console.error("Endpoint is not available.");
-    //     return;
-    //   }
 
-    //   const response = await axios.post(endpoint);
+    try {
+      const endpoint = getDomainFromEndpoint(
+        "/wp-json/custom/v1/check-site-count"
+      );
+      if (!endpoint) {
+        console.error("Endpoint is not available.");
+        setImportLoad(false);
+        return;
+      }
 
-    //   if (response.status === 200) {
-    //     setImportLoad(false);
-    //     navigate("/processing", { state: { pageName: selectedPage } });
-    //   }
-    // } catch (error) {
-    //   console.error("error while calling the import tempalte avaiablity api");
-    //   setImportLoad(false);
-    // }
+      const response = await axios.get(endpoint);
 
-    navigate("/processing", { state: { pageName: selectedPage } });
+      if (response?.data?.status === true) {
+        setImportLoad(false);
+        navigate("/processing", { state: { pageName: selectedPage } });
+      } else {
+        setImportLoad(false);
+        alert(
+          "Site count exceeded. Please upgrade your plan or contact support."
+        );
+      }
+    } catch (error) {
+      console.error(
+        "Error while calling the import template availability API:",
+        error
+      );
+      setImportLoad(false);
+      alert(
+        "An error occurred while checking the site count. Please try again."
+      );
+    }
   };
 
   const handlePageUpdate = (
@@ -1167,8 +1272,12 @@ const FinalPreview: React.FC = () => {
   useEffect(() => {
     if (validReduxPages.length > 0) {
       setPages(validReduxPages); // Always take validReduxPages when available
-      if(validReduxPages?.every((page)=> {return page?.status == ""})){
-        fetchGeneratedPageStatus()
+      if (
+        validReduxPages?.every((page) => {
+          return page?.status == "";
+        })
+      ) {
+        fetchGeneratedPageStatus();
       }
     }
   }, [validReduxPages]);
@@ -1198,6 +1307,10 @@ const FinalPreview: React.FC = () => {
       }
     }
   };
+
+  useEffect(() => {
+    console.log("isContentGenerate changed", isContentGenerating);
+  }, [isContentGenerating]);
 
   return (
     <div className="h-screen flex font-[inter] w-screen">
@@ -1317,10 +1430,18 @@ const FinalPreview: React.FC = () => {
               </div>
             )}
 
+            {apiIssue && (
+              <div className="absolute inset-0 bg-white flex justify-center items-center z-20">
+                <ApiErrorPopup alertType="contentError" />
+              </div>
+            )}
+
             {/* Skeleton Loader Layer */}
             {isLoading &&
               !isContentGenerating &&
               !loadedPages[selectedPage!] && <PlumberPageSkeleton />}
+
+            {wordCountAlert && <WordLimit />}
 
             {/* Generated Content Iframe */}
             {generatedPage[selectedPage!] && isPageGenerated && (

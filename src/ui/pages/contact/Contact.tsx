@@ -8,6 +8,10 @@ import { useDispatch, useSelector } from "react-redux";
 import { updateContactForm } from "../../../Slice/activeStepSlice";
 import { RootState } from "../../../store/store";
 import useFetchCustomContentData from "../../../hooks/useFetchCustomContentData";
+import "react-phone-number-input/style.css";
+import PhoneInput from "react-phone-number-input";
+import flags from "react-phone-number-input/flags";
+import { isValidPhoneNumber } from "react-phone-number-input";
 
 function Contact() {
   const ContactFormRedux = useSelector(
@@ -61,24 +65,29 @@ function Contact() {
     }
   };
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
+  const validatePhoneNumber = (phone) => {
+    if (!isValidPhoneNumber(phone)) {
+      setFormError((prevData) => ({
+        ...prevData,
+        phoneNumber: "Enter a valid phone number",
+      }));
+    } else {
+      setFormError((prevData) => ({
+        ...prevData,
+        phoneNumber: "",
+      }));
+    }
+  };
+
+  const handleChange = (name, value) => {
     setFormError((prevData) => ({
       ...prevData,
       [name]: "",
     }));
-    let validInput = false;
-    if (name == "phoneNumber") {
-      validInput = /^[0-9]+$/.test(value);
-    } else {
-      validInput = true;
-    }
-    if (validInput === true) {
-      setFormData((prevData) => ({
-        ...prevData,
-        [name]: value,
-      }));
-    }
+    setFormData((prevData) => ({
+      ...prevData,
+      [name]: value,
+    }));
   };
 
   useEffect(() => {
@@ -187,7 +196,9 @@ function Contact() {
                     id="email"
                     autoComplete="email"
                     placeholder="Enter your email"
-                    onChange={handleChange}
+                    onChange={(e) =>
+                      handleChange(e.target.name, e.target.value)
+                    }
                     value={formData.email}
                     onBlur={() => {
                       validateEmail();
@@ -210,15 +221,27 @@ function Contact() {
                 </label>
                 <div className="relative mt-2.5">
                   <div className="absolute inset-y-0 left-0 flex items-center"></div>
-                  <input
+                  <PhoneInput
                     type="tel"
                     name="phoneNumber"
                     id="phone-number"
                     autoComplete="tel"
                     placeholder="Enter your Phone number"
-                    onChange={handleChange}
+                    onChange={(value) => {
+                      handleChange("phoneNumber", value);
+                      // validatePhoneNumber(value);
+                    }}
+                    onBlur={() => validatePhoneNumber(formData.phoneNumber)}
                     value={formData.phoneNumber}
-                    className={`block w-full rounded-lg bg-white px-4 py-2.5 w-[720px] ${
+                    international
+                    defaultCountry="US"
+                    flags={flags}
+                    inputClassName={`block w-full rounded-lg bg-white px-4 py-2.5 outline-none w-[720px] ${
+                      formError.phoneNumber !== ""
+                        ? "border border-[red]"
+                        : "border border-[rgba(205, 212, 219, 1)] focus:border-palatinate-blue-500 active:border-palatinate-blue-500 active:outline-palatinate-blue-500 focus:outline-palatinate-blue-500"
+                    }`}
+                    className={` w-full rounded-lg bg-white px-4 py-2.5 outline-none  w-[720px] ${
                       formError.phoneNumber !== ""
                         ? "border border-[red]"
                         : "border border-[rgba(205, 212, 219, 1)] focus:border-palatinate-blue-500 active:border-palatinate-blue-500 active:outline-palatinate-blue-500 focus:outline-palatinate-blue-500"
@@ -249,7 +272,7 @@ function Contact() {
                       : "border border-[rgba(205, 212, 219, 1)] focus:border-palatinate-blue-500 active:border-palatinate-blue-500 active:outline-palatinate-blue-500 focus:outline-palatinate-blue-500"
                   }`}
                   defaultValue={""}
-                  onChange={handleChange}
+                  onChange={(e) => handleChange(e.target.name, e.target.value)}
                   value={formData.address}
                 />
                 {formError.address && (
@@ -272,7 +295,7 @@ function Contact() {
                 type="submit"
               >
                 {loading ? (
-                  <div className="flex">
+                  <div className="flex min-w-[65px] justify-center items-center">
                     {" "}
                     <svg
                       className="animate-spin h-5 w-5 text-white"
