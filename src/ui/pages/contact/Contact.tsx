@@ -12,6 +12,7 @@ import "react-phone-number-input/style.css";
 import PhoneInput from "react-phone-number-input";
 import flags from "react-phone-number-input/flags";
 import { isValidPhoneNumber } from "react-phone-number-input";
+import arrow from "../../../assets/arrow.svg";
 
 function Contact() {
   const ContactFormRedux = useSelector(
@@ -241,7 +242,7 @@ function Contact() {
                         ? "border border-[red]"
                         : "border border-[rgba(205, 212, 219, 1)] focus:border-palatinate-blue-500 active:border-palatinate-blue-500 active:outline-palatinate-blue-500 focus:outline-palatinate-blue-500"
                     }`}
-                    className={` w-full rounded-lg bg-white px-4 py-2.5 outline-none  w-[720px] ${
+                    className={`w-full rounded-lg bg-white px-4 py-2.5 outline-none w-[720px] ${
                       formError.phoneNumber !== ""
                         ? "border border-[red]"
                         : "border border-[rgba(205, 212, 219, 1)] focus:border-palatinate-blue-500 active:border-palatinate-blue-500 active:outline-palatinate-blue-500 focus:outline-palatinate-blue-500"
@@ -282,23 +283,23 @@ function Contact() {
             </div>
           </form>
           <div className="bottom-0 flex items-center justify-between w-full mt-6">
-            <div className="flex gap-4 items-center">
+            <div className="flex items-center gap-4">
               <Link to={"/description"}>
                 <button className="previous-btn flex px-[30px] py-[15px] text-base text-white sm:mt-2 rounded-md w-[150px] gap-3 justify-center font-medium">
-                  <ArrowBackIcon fontSize="small" />
+                  <img src={arrow} alt="arrow-icon" />
                   Previous
                 </button>
               </Link>
               {/* <Link to={"/design"}> */}
               <button
-                className="tertiary px-[30px] py-[15px] text-base text-white sm:mt-2 font-medium rounded-md w-[150px] "
+                className="tertiary px-[30px] py-[15px] text-base text-white sm:mt-2 font-medium rounded-md w-[150px] min-h-[54px]"
                 type="submit"
               >
                 {loading ? (
                   <div className="flex min-w-[65px] justify-center items-center">
                     {" "}
                     <svg
-                      className="animate-spin h-5 w-5 text-white"
+                      className="w-5 h-5 text-white animate-spin"
                       xmlns="http://www.w3.org/2000/svg"
                       fill="none"
                       viewBox="0 0 24 24"

@@ -8,6 +8,7 @@ import { RootState } from "../../../store/store";
 import useDomainEndpoint from "../../../hooks/useDomainEndpoint";
 import { getBusinessName } from "../../../infrastructure/api/wordpress-api/name/getBusinessName.api";
 import { updateBusinessName } from "../../../infrastructure/api/wordpress-api/name/updateBusinessName.api";
+import arrow from "../../../assets/arrow.svg";
 
 function Name() {
   const dispatch = useDispatch();
@@ -92,21 +93,21 @@ function Name() {
               <div className="flex items-center gap-4 mt-6">
                 <button
                   onClick={handlePrevious}
-                  className="previous-btn flex px-[30px] font-medium py-[15px] text-base sm:text-sm text-white sm:mt-2  rounded-lg  gap-2.5 justify-center"
+                  className="previous-btn flex px-[30px] font-medium py-[15px] text-base sm:text-sm text-white sm:mt-2 rounded-lg  gap-2.5 justify-center"
                 >
-                  <ArrowBackIcon fontSize="small" />
+                  <img src={arrow} alt="arrow icon" />
                   Previous
                 </button>
                 <button
                   type="button"
                   onClick={handleClick}
-                  className="tertiary px-[35px] font-medium py-[15px] text-base sm:text-sm text-white  sm:mt-2 rounded-lg "
+                  className="tertiary font-medium px-[30px] py-[15px] text-base sm:text-sm text-white sm:mt-2 rounded-lg w-[150px] min-h-[54px]"
                 >
                   {loading ? (
                     <div className="flex min-w-[65px] justify-center items-center">
                       {" "}
                       <svg
-                        className="animate-spin h-5 w-5 text-white"
+                        className="w-5 h-5 text-white animate-spin"
                         xmlns="http://www.w3.org/2000/svg"
                         fill="none"
                         viewBox="0 0 24 24"

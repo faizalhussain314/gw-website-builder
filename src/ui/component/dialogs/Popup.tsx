@@ -23,31 +23,31 @@ const Popup: React.FC<PopupProps> = ({
   );
   console.log("contact form data", contactform);
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-gray-500 backdrop-blur-xl bg-opacity-50 z-50">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-500 bg-opacity-50 backdrop-blur-xl">
       <div className="relative bg-white shadow-lg p-8 sm:p-8 w-full max-w-[600px] pb-6 z-10 rounded-[10px] max-h-[740px] overflow-y-auto">
-        <div className=" flex items-start justify-between">
+        <div className="flex items-start justify-between ">
           <h2 className="text-2xl font-semibold inline-flex items-center w-full gap-2.5 mb-3">
             Congratulations, you’re almost there!
             <img src={partyImoji} />
           </h2>
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 text-gray-600 hover:text-gray-900"
+            className="absolute text-gray-600 top-4 right-4 hover:text-gray-900"
           >
             <CloseIcon fontSize="small" />
           </button>
         </div>
 
-        <p className="text-gray-600 mb-6">
+        <p className="mb-6 text-gray-600">
           Before we hit the final button, let’s quickly double-check everything.
         </p>
 
         <div className="">
-          <p className="font-semibold text-base">Business Name:</p>
+          <p className="text-base font-semibold">Business Name:</p>
           <p className="text-base text-[#4D586B]">{businessName}</p>
         </div>
 
-        <p className="font-semibold text-base my-4">Business Description:</p>
+        <p className="my-4 text-base font-semibold">Business Description:</p>
         <div className="flex flex-col items-start gap-3">
           <div className="flex items-start gap-x-3">
             <svg
@@ -75,7 +75,7 @@ const Popup: React.FC<PopupProps> = ({
             </p>
           </div>
           <div className="pb-2.5 w-full max-w-full overflow-y-auto">
-            <p className="text-gray-500 w-full ps-10 line-clamp-3">
+            <p className="w-full text-gray-500 ps-10 line-clamp-3">
               {description}
             </p>
           </div>
@@ -109,29 +109,32 @@ const Popup: React.FC<PopupProps> = ({
           </div>
 
           <div className="pb-2.5 w-full max-w-full overflow-y-auto">
-            <p className="text-gray-500 w-full ps-10 line-clamp-3">
+            <p className="w-full text-gray-500 ps-10 line-clamp-3">
               {secondDescription}
             </p>
           </div>
         </div>
         <div className="mt-6">
-          <p className="font-semibold text-base mb-2">Contact Details:</p>
+          <p className="mb-2 text-base font-semibold">Contact Details:</p>
           <ul className="text-base text-[#4D586B] list-none">
-            <li className="text-[#4D586B] flex justify-start items-center gap-2">
+            <li className="text-[#4D586B] flex justify-start items-start gap-2">
               <span className="mr-[83px]">Email</span>
-              <span>: {contactform.email}</span>
+              <span>:</span>
+              <span> {contactform.email}</span>
             </li>
-            <li className="text-[#4D586B] flex justify-start items-center gap-2">
+            <li className="text-[#4D586B] flex justify-start items-start gap-2">
               <span className="mr-[61px]">Address</span>
-              <span>: {contactform.address}</span>
+              <span>:</span>
+              <span> {contactform.address}</span>
             </li>
-            <li className="text-[#4D586B] flex justify-start items-center gap-2">
+            <li className="text-[#4D586B] flex justify-start items-start gap-2">
               <span className="mr-[10px]">Phone Number</span>
-              <span>: {contactform.phoneNumber}</span>
+              <span>:</span>
+              <span> {contactform.phoneNumber}</span>
             </li>
           </ul>
         </div>
-        <div className="flex w-full items-center flex-row-reverse gap-x-4 mt-6">
+        <div className="flex flex-row-reverse items-center w-full mt-6 gap-x-4">
           <Link
             to={"/custom-design"}
             className="tertiary w-full text-white py-[15px] px-[30px] rounded-lg font-medium text-base flex justify-center items-center"
