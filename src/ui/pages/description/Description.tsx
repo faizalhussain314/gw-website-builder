@@ -15,6 +15,7 @@ import { updateDescriptions } from "../../../infrastructure/api/wordpress-api/de
 import axios from "axios";
 import WordLimit from "../../component/dialogs/WordLimit";
 import UpgradePopup from "../../component/dialogs/UpgradePopup";
+import arrow from "../../../assets/arrow.svg"
 
 function Description() {
   const dispatch = useDispatch();
@@ -230,11 +231,11 @@ function Description() {
         />
       )}
       <div className="bg-[#F9FCFF] h-full flex flex-col justify-between overflow-hidden ">
-        <div className="h-full overflow-x-hidden overflow-y-auto px-10 pt-10">
+        <div className="h-full px-10 pt-10 overflow-x-hidden overflow-y-auto">
           <div className="flex flex-col">
             <h1 className="text-txt-black-600 font-semibold text-3xl font-[inter]">
               What is {businessName} {category}? Tell us more about the{" "}
-              {category}.
+              {category}
             </h1>
             <span className="mt-2.5 text-lg leading-6 text-txt-secondary-400 max-w-[617px]">
               Please be as descriptive as you can. Share details such as a brief
@@ -244,7 +245,7 @@ function Description() {
 
           <form className="mt-8 ">
             {/* Description 1 */}
-            <div className="flex gap-6 items-center">
+            <div className="flex items-center gap-6">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="26"
@@ -331,7 +332,7 @@ function Description() {
               </div>
             </div>
             {/* Description 2 */}
-            <div className="flex gap-6 items-center mt-6">
+            <div className="flex items-center gap-6 mt-6">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="26"
@@ -425,10 +426,10 @@ function Description() {
           </form>
         </div>
 
-        <div className="flex gap-4 px-10 pt-10 mt-auto pb-6 ml-11">
+        <div className="flex gap-4 px-10 pt-10 pb-6 mt-auto ml-11">
           <Link to="/name">
             <button className="previous-btn flex px-[30px] py-[15px] text-base text-white sm:mt-2 rounded-lg w-[150px] gap-3 justify-center font-medium">
-              <ArrowBackIcon fontSize="small" />
+              <img src={arrow} alt="arrow-icon" />
               Previous
             </button>
           </Link>
@@ -440,7 +441,7 @@ function Description() {
               <div className="flex min-w-[65px] justify-center items-center">
                 {" "}
                 <svg
-                  className="animate-spin h-5 w-5 text-white"
+                  className="w-5 h-5 text-white animate-spin"
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
                   viewBox="0 0 24 24"

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import ProfileArrowIcon from "../../assets/icons/profile-arrow-icon.svg";
 import CrownIcon from "../../assets/icons/crown.svg";
 // import ProfilePicture from "../../assets/ProfilePic.png";
@@ -9,11 +9,18 @@ import { RootState } from "../../store/store";
 import useDomainEndpoint from "../../hooks/useDomainEndpoint";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { useClickOutside } from "../../hooks/useClickOutside";
 
 const ProfileSection: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { getDomainFromEndpoint } = useDomainEndpoint();
   const navigate = useNavigate();
+
+  /** when user click outside then this hook will be exicuted*/
+  const wrapperRef = useRef(null);
+  useClickOutside(wrapperRef, () => {
+    setIsOpen(false);
+  });
 
   const toggleMenu = () => {
     setIsOpen(!isOpen);
@@ -48,10 +55,10 @@ const ProfileSection: React.FC = () => {
   };
 
   return (
-    <div className="relative w-full rounded-lg">
+    <div className="relative w-full rounded-lg" ref={wrapperRef}>
       {/* Account Action Button Section */}
       <div
-        className="w-full flex justify-between gap-x-3 p-5"
+        className="flex justify-between w-full p-5 gap-x-3"
         onClick={toggleMenu}
       >
         <div
@@ -64,7 +71,7 @@ const ProfileSection: React.FC = () => {
           </p>
           <button
             onClick={toggleMenu}
-            className="flex items-center bg-transparent border-none cursor-pointer p-0 focus:outline-none"
+            className="flex items-center p-0 bg-transparent border-none cursor-pointer focus:outline-none"
           >
             <img
               src={ProfileArrowIcon}
@@ -83,15 +90,15 @@ const ProfileSection: React.FC = () => {
       {/* Account Action Popup Section */}
       {isOpen && (
         <div className="absolute bottom-[90%] w-[96%] left-2 bg-white rounded-lg border border-[#DAE1E9] shadow-lg z-20 py-4 px-2 transition-all duration-300 ease-in-out">
-          <div className="w-full flex items-center justify-center gap-3 px-2">
+          <div className="flex items-center justify-center w-full gap-3 px-2">
             <img
               src={userDetails?.gravator}
               alt="Profile"
-              className="w-7 h-7 rounded-full shrink-0"
+              className="rounded-full w-7 h-7 shrink-0"
             />
             <div className="w-full flex gap-2 justify-between items-center max-w-[90%]">
               <div className="flex flex-col max-w-[70%] shrink-0">
-                <p className="text-base font-semibold truncate w-full">
+                <p className="w-full text-base font-semibold truncate">
                   {userDetails?.username}
                 </p>
                 <p className="text-sm text-[#6B7280] w-full truncate">
@@ -103,10 +110,10 @@ const ProfileSection: React.FC = () => {
               </span>
             </div>
           </div>
-          <div className="flex justify-center items-center my-5 px-4">
+          <div className="flex items-center justify-center px-4 my-5">
             <button
               onClick={toggleMenu}
-              className="text-base tertiary w-full text-white flex items-center justify-center gap-2 px-4 py-3 rounded-lg"
+              className="flex items-center justify-center w-full gap-2 px-4 py-3 text-base text-white rounded-lg tertiary"
             >
               <img src={CrownIcon} />
               Upgrade
@@ -115,7 +122,7 @@ const ProfileSection: React.FC = () => {
           <div className="h-[1px] w-full bg-gray-200"></div>
 
           <div className="px-4 py-2 pt-4">
-            <div className="flex items-center justify-between gap-2 w-full text-gray-700">
+            <div className="flex items-center justify-between w-full gap-2 text-gray-700">
               <div className="flex items-center gap-x-2.5">
                 <img src={AiGenerate} />
                 <span className="">AI Website Generation</span>
@@ -124,7 +131,7 @@ const ProfileSection: React.FC = () => {
                 {userDetails?.generatedSite}/{userDetails?.max_genration}
               </span>
             </div>
-            <div className="w-full bg-blue-200 rounded-full h-2 my-2 dark:bg-blue-100">
+            <div className="w-full h-2 my-2 bg-blue-200 rounded-full dark:bg-blue-100">
               <div
                 className="h-2 rounded-full bg-blue-gradient"
                 style={{ width: `${progressPercentage}%` }}

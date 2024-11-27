@@ -23,6 +23,7 @@ import StyleRemoveWarning from "../../component/dialogs/StyleRemoveWarning";
 import useStoreContent from "../../../hooks/useStoreContent ";
 import UpgradePopup from "../../component/dialogs/UpgradePopup";
 import { fetchWpToken } from "../../../core/utils/fetchWpToken";
+import arrow from "../../../assets/arrow.svg";
 
 const API_URL = import.meta.env.VITE_API_BACKEND_URL;
 
@@ -410,7 +411,7 @@ function Design() {
               </div>
               <div className="w-full">
                 <input
-                  className="w-full h-12 px-3 border rounded-md shadow-sm outline-none placeholder:zw-placeholder zw-input  border-app-border focus:border-app-secondary focus:border-palatinate-blue-500 active:border-palatinate-blue-500 focus:border-2 pl-11 false"
+                  className="w-full h-12 px-3 border rounded-md shadow-sm outline-none placeholder:zw-placeholder zw-input border-app-border focus:border-app-secondary focus:border-palatinate-blue-500 active:border-palatinate-blue-500 focus:border-2 pl-11 false"
                   value={category} // Show current search text
                   onChange={handleSearch}
                   placeholder="Search categories..."
@@ -418,11 +419,11 @@ function Design() {
               </div>
             </div>
           </form>
-          <div className="relative custom-confirmation-modal-scrollbar md:px-10 lg:px-14 xl:px-15 xl:max-w-full overflow-auto">
+          <div className="relative overflow-auto custom-confirmation-modal-scrollbar md:px-10 lg:px-14 xl:px-15 xl:max-w-full">
             {showError && (
-              <div className=" text-center">No templates found</div>
+              <div className="text-center ">No templates found</div>
             )}
-            <div className="flex flex-wrap items-start justify-start gap-x-6 gap-y-8 p-1">
+            <div className="flex flex-wrap items-start justify-start p-1 gap-x-6 gap-y-8">
               {templateList.map((list, index: number) => (
                 <div
                   key={index}
@@ -491,15 +492,15 @@ function Design() {
         </div>
         {/* Button Section */}
         <div className="pt-auto">
-          <div className="flex items-center gap-x-4 pt-10">
+          <div className="flex items-center pt-10 gap-x-4">
             <Link to={"/contact"}>
-              <button className=" previous-btn flex px-[10px] py-[13px] text-base text-white font-medium sm:mt-2 rounded-md w-[150px] gap-3 justify-center">
-                <ArrowBackIcon fontSize="small" />
+              <button className="previous-btn flex px-[10px] py-[15px] text-base text-white font-medium sm:mt-2 rounded-md w-[150px] gap-3 justify-center">
+                <img src={arrow} alt="arrow-icon" />
                 Previous
               </button>
             </Link>
             <button
-              className={` tertiary px-[30px] py-3.5 text-base text-white sm:mt-2 rounded-md w-[150px] ${
+              className={`tertiary px-[30px] py-[15px] text-base text-white sm:mt-2 rounded-md w-[150px] ${
                 !showValidationError && "opacity-50"
               }`}
               // onClick={() => setShowPopup(true)}
