@@ -348,9 +348,11 @@ const PageSelector: React.FC<Props> = ({
                     ) : (
                       <div className="w-full flex items-center gap-4">
                         <button
-                          className="bg-white text-[#1E2022] hover:bg-palatinate-blue-600 hover:text-white rounded px-3 py-1.5 w-full text-[14px] font-[500]"
+                          className={`bg-white text-[#1E2022] hover:bg-palatinate-blue-600 hover:text-white rounded px-3 py-1.5 w-full text-[14px] font-[500] ${
+                            !(isContentGenerating && isLoading) ? "opacity-100" : "opacity-50"
+                          }`}
                           onClick={handleGeneratePage}
-                          disabled={isLoading}
+                          disabled={isContentGenerating || isLoading}
                         >
                           Generate Page
                         </button>

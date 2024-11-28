@@ -23,12 +23,12 @@ const CustomizePopup: React.FC<CustomizePopup> = ({
     message = "If you want to regenerate more <br /> upgrade to Pro!!!";
   } else if (alertType === "websiteCreation") {
     message =
-      "You have already some customization. Do you want to continue or change customization?";
+      "You’ll lose customisations, and generated words will count towards your usage. Do You want to Proceed?";
   }
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-      <div className="bg-white rounded-lg shadow-lg text-center relative max-w-[350px] mx-auto px-7 py-7">
+      <div className="bg-white rounded-lg shadow-lg text-center relative max-w-[450px] mx-auto px-7 py-7">
         <button
           className="absolute right-4 top-4"
           onClick={onClose}
@@ -85,7 +85,7 @@ const CustomizePopup: React.FC<CustomizePopup> = ({
             </button>
             <button
               className="bg-[#2E42FF] w-full px-6 py-3.5 text-base text-white font-[600] rounded-lg"
-              onClick={onCreateFromScratch}
+              onClick={onClose}
             >
               Continue
             </button>
