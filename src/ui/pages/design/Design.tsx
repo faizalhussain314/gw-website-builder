@@ -24,6 +24,8 @@ import useStoreContent from "../../../hooks/useStoreContent ";
 import UpgradePopup from "../../component/dialogs/UpgradePopup";
 import { fetchWpToken } from "../../../core/utils/fetchWpToken";
 import arrow from "../../../assets/arrow.svg";
+import info from "../../../assets/icons/info.svg";
+import { Tooltip } from "@mui/material";
 
 const API_URL = import.meta.env.VITE_API_BACKEND_URL;
 
@@ -463,25 +465,20 @@ function Design() {
                         <div className="capitalize zw-base-semibold text-app-heading">
                           Option {index + 1}
                         </div>
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          strokeWidth="1.5"
-                          stroke="currentColor"
-                          aria-hidden="true"
-                          className="w-6 h-6 cursor-pointer text-app-active-icon"
-                          id="headlessui-menu-button-:rc:"
-                          aria-haspopup="menu"
-                          aria-expanded="false"
-                          data-headlessui-state=""
+                        <Tooltip
+                          placement="top"
+                          title={
+                            <div className="flex flex-col">
+                              {list.pages.map((page, index) => (
+                                <div className="px-2 py-1" key={index}>
+                                  {page.title}
+                                </div>
+                              ))}
+                            </div>
+                          }
                         >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"
-                          ></path>
-                        </svg>
+                          <img src={info} alt="info-icon" />
+                        </Tooltip>
                       </div>
                     </div>
                   </div>
