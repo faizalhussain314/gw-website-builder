@@ -20,7 +20,7 @@ function Welcome() {
 
   return (
     <IntroLayout>
-      <div className="bg-[#F9FCFF] w-full h-full flex items-center justify-between max-w-[1144px] mx-auto">
+      <div className="w-full h-full flex items-center justify-between max-w-[1144px] mx-auto">
         {/* 1 */}
         <div className="flex flex-col items-center align-middle">
           <div className="flex flex-col ">
@@ -48,7 +48,7 @@ function Welcome() {
           </div>
         </div>
         {/* 2 */}
-        <div className="h-full flex items-center">
+        <div className="flex items-center h-full">
           <img src={aibuilder} alt="" className="w-[461px] h-[449px]" />
         </div>
       </div>

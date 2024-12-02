@@ -1,6 +1,8 @@
 import CloseIcon from "@mui/icons-material/Close";
 import Caution from "../../../assets/caution.svg";
 import Crown from "../../../assets/crown.svg";
+import { useRef } from "react";
+import { useClickOutside } from "../../../hooks/useClickOutside";
 
 type limitProps = {
   onClose: () => void;
@@ -11,9 +13,18 @@ function LimitReachedPopup({ onClose, limit }: limitProps) {
   const upgradePlan = () => {
     window.open("https://gravitywrite.com/pricing", "_blank");
   };
+  /** when user click outside then this hook will be exicuted*/
+  const wrapperRef = useRef(null);
+  useClickOutside(wrapperRef, () => {
+    onClose();
+  });
+
   return (
-    <div className="fixed top-0 inset-0 right-0  flex items-start justify-end bg-black bg-opacity-50 z-50">
-      <div className="bg-white rounded-lg shadow-lg text-center relative max-w-[350px] mx-auto px-8 py-9 mt-4 mr-4">
+    <div className="fixed inset-0 z-50 flex items-start justify-center bg-black bg-opacity-50">
+      <div
+        className="bg-white rounded-lg shadow-lg text-center relative max-w-[400px] mx-auto px-7 py-9 my-auto"
+        ref={wrapperRef}
+      >
         <button
           className="absolute right-4 top-4"
           onClick={onClose}
@@ -26,13 +37,13 @@ function LimitReachedPopup({ onClose, limit }: limitProps) {
           <img src={Caution} alt="Caution" />
           <h2 className="text-[22px] leading-7 font-semibold">Limit Reached</h2>
         </div>
-        <p className="mt-6 text-black text-lg">
+        <p className="mt-6 text-lg text-black">
           Your plan's {limit} templates are over. If you want more templates,
           upgrade to Pro!
         </p>
 
         <button
-          className="mt-8 text-base tertiary text-white flex items-center justify-center gap-2 px-6 py-3 rounded-lg mx-auto"
+          className="flex items-center justify-center gap-2 px-6 py-3 mx-auto mt-8 text-base text-white rounded-lg tertiary"
           onClick={upgradePlan}
         >
           <img src={Crown} alt="Crown" /> Upgrade Plan

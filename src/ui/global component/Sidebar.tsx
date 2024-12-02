@@ -23,13 +23,13 @@ function Sidebar() {
           <img
             src="https://plugin.mywpsite.org/logo.svg"
             alt="gravity write logo"
-            className="h-10 p-2 rounded-md cursor-pointer hover:bg-palatinate-blue-50"
+            className="h-10 p-2 rounded-md"
           />
           <div className="relative cursor-pointer group" onClick={handleClick}>
             <img
               src={MenuIcon}
               alt="menu"
-              className="w-5 h-auto group hidden"
+              className="hidden w-5 h-auto group"
             />
           </div>
         </div>

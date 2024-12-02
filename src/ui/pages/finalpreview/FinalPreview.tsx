@@ -1315,28 +1315,28 @@ const FinalPreview: React.FC = () => {
   return (
     <div className="h-screen flex font-[inter] w-screen">
       <div className="w-[23%] lg:w-[30%]">
-        <aside className="z-10 fixed">
+        <aside className="fixed z-10">
           <div className="bg-white min-h-screen w-[23vw] lg:w-[30vw] z-10 border-r border-[#DFEAF6]">
             <div className="flex items-center justify-between py-4 border-b cursor-pointer pr-7 ps-3 sidebar-header border-[#DFEAF6]">
               <img
                 src={GravityWriteLogo}
                 alt="gravity write logo"
-                className="h-10 p-2 rounded-md cursor-pointer hover:bg-palatinate-blue-50"
+                className="h-10 p-2 rounded-md"
               />
-              <div className="relative border-gray-100 group flex items-center justify-between py-4 border-b cursor-pointer pr-7 ps-3 sidebar-header">
+              <div className="relative flex items-center justify-between py-4 border-b border-gray-100 cursor-pointer group pr-7 ps-3 sidebar-header">
                 <img
                   src={MenuIcon}
                   alt="menu"
-                  className="w-5 h-auto group hidden"
+                  className="hidden w-5 h-auto group"
                 />
               </div>
             </div>
-            <div className="px-5 py-4 w-full flex flex-col justify-center">
+            <div className="flex flex-col justify-center w-full px-5 py-4">
               <div className="flex items-center justify-between pb-2.5">
                 <h1 className="text-xl font-semibold">Website Preview</h1>
                 {/* <Link to={"/custom-design"}> */}
                 <button
-                  className="bg-button-bg-secondary hover:bg-palatinate-blue-600 hover:text-white px-4 font-medium py-2 rounded-md text-sm cursor-pointer"
+                  className="px-4 py-2 text-sm font-medium rounded-md cursor-pointer bg-button-bg-secondary hover:bg-palatinate-blue-600 hover:text-white"
                   onClick={() => {
                     setresetPopup(true);
                   }}
@@ -1382,19 +1382,19 @@ const FinalPreview: React.FC = () => {
               "Generated" &&
             Loaded &&
             selectedPage !== "Contact" && (
-              <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-                <div className="bg-white rounded-lg shadow-lg text-center absolute">
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+                <div className="absolute text-center bg-white rounded-lg shadow-lg">
                   <div className="absolute right-0">
                     <CloseIcon
                       className="top-0 m-2 cursor-pointer"
                       onClick={handleClosePopup}
                     />
                   </div>
-                  <div className="py-8 px-12">
+                  <div className="px-12 py-8">
                     <img
                       src={popupimg}
                       alt="Generate Page"
-                      className="mb-2 mx-auto"
+                      className="mx-auto mb-2"
                     />
                     <button
                       className="tertiary px-[30px] py-[10px] text-lg sm:text-sm text-white mt-8 sm:mt-2 rounded-md"
@@ -1413,7 +1413,7 @@ const FinalPreview: React.FC = () => {
               alertType="regenerate"
             />
           )}
-          <div className="relative  text-left my-4 flex justify-between">
+          <div className="relative flex justify-between my-4 text-left">
             <ViewModeSwitcher
               isOpen={isOpen}
               viewMode={viewMode}
@@ -1422,16 +1422,16 @@ const FinalPreview: React.FC = () => {
             />
           </div>
 
-          <div className="w-full h-screen flex justify-center items-center relative">
+          <div className="relative flex items-center justify-center w-full h-screen">
             {/* Show GwLoader only when showGwLoader is true */}
             {showGwLoader && (
-              <div className="absolute inset-0 bg-white flex justify-center items-center z-20">
+              <div className="absolute inset-0 z-20 flex items-center justify-center bg-white">
                 <GwLoader />
               </div>
             )}
 
             {apiIssue && (
-              <div className="absolute inset-0 bg-white flex justify-center items-center z-20">
+              <div className="absolute inset-0 z-20 flex items-center justify-center bg-white">
                 <ApiErrorPopup alertType="contentError" />
               </div>
             )}
