@@ -271,7 +271,7 @@ function Category() {
             </div>
             {error && <p className="mt-2 text-red-500">{error}</p>}
             {showDropdown && (
-              <ul className="absolute w-full mt-1 overflow-y-auto bg-white border border-gray-300 rounded-md max-h-80 p-4">
+              <ul className="absolute w-full p-4 mt-1 overflow-y-auto bg-white border border-gray-300 rounded-md max-h-80">
                 {categoryList.filter((option) =>
                   option.name.toLowerCase().includes(inputValue.toLowerCase())
                 ).length > 0 ? (
@@ -307,7 +307,7 @@ function Category() {
               <div className="flex min-w-[65px] justify-center items-center">
                 {" "}
                 <svg
-                  className="animate-spin h-5 w-5 text-white"
+                  className="w-5 h-5 text-white animate-spin"
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
                   viewBox="0 0 24 24"

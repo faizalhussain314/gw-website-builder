@@ -33,7 +33,7 @@ function ConnectAccount() {
       <img
         src={bgImage}
         alt="background image"
-        className="absolute inset-0 -z-10 size-full object-cover"
+        className="absolute inset-0 object-cover -z-10 size-full"
       />
 
       <img
@@ -47,10 +47,10 @@ function ConnectAccount() {
         className="hidden mac:inline-block absolute top-[25%] right-[137px] w-[226px] h-[226px]"
       />
 
-      <div className="mx-auto max-w-7xl px-6 lg:px-8">
+      <div className="px-6 mx-auto max-w-7xl lg:px-8">
         <div className="mx-auto max-w-7xl">
           <div className="grid justify-center">
-            <p className="text-center text-[52px] mac:text-[44px] leading-[56px] tracking-tighter	 font-bold mb-11 max-w-[800px]">
+            <p className="text-center text-[52px] mac:text-[44px] leading-[56px] tracking-tight font-bold mb-11 max-w-[800px]">
               Create stunning websites by linking GravityWrite and the AI
               Website Builder.
             </p>
