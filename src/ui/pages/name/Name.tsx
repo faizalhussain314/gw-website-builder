@@ -37,10 +37,7 @@ function Name() {
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newName = event.target.value;
-    setName(newName);
-    if (newName) {
-      setError(null);
-    }
+    setName(newName.trimStart());
   };
 
   const handleClick = async () => {

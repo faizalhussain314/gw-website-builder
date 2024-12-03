@@ -9,24 +9,18 @@ import { RootState } from "../../../store/store";
 function ConnectAccount() {
   const navigate = useNavigate();
   const { getDomainFromEndpoint } = useDomainEndpoint();
-  const userName = useSelector((state: RootState) => state.user.email);
+  const userName = useSelector((state: RootState) => state.user.username);
 
   const onContinue = () => {
     const callBackUrl = getDomainFromEndpoint(
-      "wp-admin/admin.php?page=gw-website-builder#/category"
+      "wp-admin/admin.php?page=gw-website-builder"
     );
-
-    // window.location.href = `https://staging.gravitywrite.com/login?domain=wordpress&callback_url=${callBackUrl}`;
-
-    // const callBackUrl =
-    //   "http://localhost:5173/wp-content/plugins/gw-website-builder-main/API/dist/#/category";
 
     if (userName) {
       navigate("/category");
     } else {
       window.location.href = `https://staging.gravitywrite.com/login?domain=wordpress-react&callback_url=${callBackUrl}`;
     }
-    // navigate("/category");
   };
   return (
     <div className="w-full h-screen relative isolate overflow-hidden pt-[100px] pb-[360px]">

@@ -36,6 +36,7 @@ type Props = {
   isLoading: boolean;
   importLoad: boolean;
   afterContact: boolean;
+  showGwLoader: boolean;
 };
 
 const PageSelector: React.FC<Props> = ({
@@ -58,6 +59,7 @@ const PageSelector: React.FC<Props> = ({
   isLoading,
   importLoad,
   afterContact,
+  showGwLoader,
 }) => {
   const showWarningToast = () => {
     toast.warn("Please wait while content is being generated.");
@@ -76,15 +78,12 @@ const PageSelector: React.FC<Props> = ({
       showWarningToast();
       return;
     } else {
-      // Update page status to 'Skipped' and set selected to false
       updatePageStatus(pageName, "Skipped", false);
 
-      // Directly update pages without using an updater function
       const updatedPages = pages.map((page) =>
         page.name === pageName ? { ...page, selected: false } : page
       );
 
-      // Set the updated pages array
       setPages(updatedPages);
       dispatch(
         updateReduxPage({
@@ -93,13 +92,13 @@ const PageSelector: React.FC<Props> = ({
           selected: false,
         })
       );
-      // Proceed to the next page
+
       handleSkipPage(pageName);
     }
   };
   const handlePageChange = (slug: string, newSelectedValue: boolean) => {
     const currentPage = pages.find((page) => page.slug === slug);
-    // Always keep Home page selected
+
     if (currentPage?.name === "Home") {
       const updatedPages = pages.map((page) =>
         page.slug === slug
@@ -110,7 +109,6 @@ const PageSelector: React.FC<Props> = ({
       return;
     }
 
-    // For other pages, update selection and reset status if deselected
     const updatedPages = pages.map((page) =>
       page.slug === slug
         ? {
@@ -123,7 +121,6 @@ const PageSelector: React.FC<Props> = ({
 
     setPages(updatedPages);
 
-    // Update Redux state
     dispatch(
       updateReduxPage({
         name: currentPage.name,
@@ -178,7 +175,7 @@ const PageSelector: React.FC<Props> = ({
                 : ""
             }`}
             onClick={() => {
-              if (isContentGenerating || isLoading) {
+              if (isContentGenerating || isLoading || showGwLoader) {
                 showWarningToast();
               } else {
                 handlePageClick(page.name);
@@ -349,16 +346,33 @@ const PageSelector: React.FC<Props> = ({
                       <div className="w-full flex items-center gap-4">
                         <button
                           className={`bg-white text-[#1E2022] hover:bg-palatinate-blue-600 hover:text-white rounded px-3 py-1.5 w-full text-[14px] font-[500] ${
-                            !(isContentGenerating && isLoading) ? "opacity-100" : "opacity-50"
+                            !(
+                              (isContentGenerating && isLoading) ||
+                              showGwLoader
+                            )
+                              ? "opacity-100"
+                              : "opacity-50"
                           }`}
                           onClick={handleGeneratePage}
-                          disabled={isContentGenerating || isLoading}
+                          disabled={
+                            isContentGenerating || isLoading || showGwLoader
+                          }
                         >
                           Generate Page
                         </button>
                         <button
-                          className="bg-white text-[#1E2022] hover:bg-palatinate-blue-600 hover:text-white rounded px-3 py-1.5 w-full text-[14px] font-[500]"
+                          className={`bg-white text-[#1E2022] hover:bg-palatinate-blue-600 hover:text-white rounded px-3 py-1.5 w-full text-[14px] font-[500] ${
+                            !(
+                              (isContentGenerating && isLoading) ||
+                              showGwLoader
+                            )
+                              ? "opacity-100"
+                              : "opacity-50"
+                          }`}
                           onClick={() => handleSkipClick(page.name)}
+                          disabled={
+                            isContentGenerating || isLoading || showGwLoader
+                          }
                         >
                           Skip Page
                         </button>

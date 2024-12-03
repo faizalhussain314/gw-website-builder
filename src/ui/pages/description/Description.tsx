@@ -15,7 +15,7 @@ import { updateDescriptions } from "../../../infrastructure/api/wordpress-api/de
 import axios from "axios";
 import WordLimit from "../../component/dialogs/WordLimit";
 import UpgradePopup from "../../component/dialogs/UpgradePopup";
-import arrow from "../../../assets/arrow.svg"
+import arrow from "../../../assets/arrow.svg";
 
 function Description() {
   const dispatch = useDispatch();
@@ -73,6 +73,15 @@ function Description() {
   }, [description2, isAIWriting, getDomainFromEndpoint]);
 
   const handleAIWrite = async (type: 1 | 2) => {
+    if (type === 1) {
+      setLoader1(true);
+      setLoader2(false);
+    } else {
+      setLoader2(true);
+      setLoader1(false);
+    }
+    setError(null);
+
     if (type === 2 && !description1) {
       setError("Description 1 is required before generating Description 2.");
       return;
@@ -99,15 +108,6 @@ function Description() {
     }
 
     setIsAIWriting((prev) => ({ ...prev, [type]: true }));
-
-    if (type === 1) {
-      setLoader1(true);
-      setLoader2(false);
-    } else {
-      setLoader2(true);
-      setLoader1(false);
-    }
-    setError(null);
 
     try {
       const reader = await fetchDescriptionStream(
@@ -194,8 +194,8 @@ function Description() {
       const updateResponse = await axios.post(updateCountEndpoint, {
         words: wordCount,
         page_title: "Business Description",
-        template_id: templateList?.id || "",
-        sitecount: 283940,
+        template_id: templateList?.id || "283940",
+        sitecount: 0,
         is_type: "words",
       });
 
@@ -275,7 +275,7 @@ function Description() {
               } focus:border-palatinate-blue-500 active:border-palatinate-blue-500 active:outline-palatinate-blue-500 focus:outline-palatinate-blue-500 ml-[50px]`}
               value={description1}
               onChange={(e) => {
-                const newDescription = e.target.value;
+                const newDescription = e.target.value.trimStart();
                 setDescription1(newDescription);
                 dispatch(setDescriptionOne(newDescription));
                 if (error) setError(null);
@@ -364,7 +364,7 @@ function Description() {
               } focus:border-palatinate-blue-500 active:border-palatinate-blue-500 active:outline-palatinate-blue-500 focus:outline-palatinate-blue-500 ml-[50px]`}
               value={description2}
               onChange={(e) => {
-                const newDescription = e.target.value;
+                const newDescription = e.target.value.trimStart();
                 setDescription2(newDescription);
                 dispatch(setDescriptionTwo(newDescription));
                 if (error) setError(null);

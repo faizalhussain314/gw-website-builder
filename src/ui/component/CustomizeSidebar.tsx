@@ -10,13 +10,10 @@ import useStoreContent from "../../hooks/useStoreContent ";
 import { SelectedColor, SelectedFont } from "../../types/customdesign.type";
 import FontSelector from "../component/custom-design/FontSelector";
 import ColorSelector from "../component/custom-design//ColorSelector";
-import {
-  fetchInitialCustomizationData,
-  sendMessageToIframes,
-} from "../../core/utils/design.utils";
+import { fetchInitialCustomizationData } from "../../core/utils/design.utils";
 import { Font } from "../../types/activeStepSlice.type";
 import { Slider } from "@mui/material";
-
+import { sendIframeMessage } from "../../core/utils/sendIframeMessage.utils";
 const CustomizeSidebar: React.FC = () => {
   const [selectedColor, setSelectedColor] = useState<SelectedColor>({
     primary: "",
@@ -34,6 +31,8 @@ const CustomizeSidebar: React.FC = () => {
   const businessName = useSelector(
     (state: RootState) => state.userData.businessName
   );
+
+  const [logoSize, setLogoSize] = useState<number>(150);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -60,6 +59,8 @@ const CustomizeSidebar: React.FC = () => {
 
   const handleChange = (event: Event, newValue: number | number[]) => {
     setValue(newValue as number);
+
+    sendIframeMessage("changeLogoSize", { size: newValue });
   };
 
   useEffect(() => {
@@ -176,7 +177,7 @@ const CustomizeSidebar: React.FC = () => {
       dispatch(setLogo(newLogoUrl));
       await storeContent({ logo: newLogoUrl });
 
-      sendMessageToIframes("changeLogo", { logoUrl: newLogoUrl });
+      sendIframeMessage("changeLogo", { logoUrl: newLogoUrl });
     } catch (err) {
       setError("Error uploading generated logo. Please try again.");
     } finally {
@@ -200,7 +201,7 @@ const CustomizeSidebar: React.FC = () => {
 
     await storeContent({ font: fontCombination });
 
-    sendMessageToIframes("changeFont", { font: fontCombination });
+    sendIframeMessage("changeFont", { font: fontCombination });
   };
 
   const handleColorChange = async (color: SelectedColor, store = true) => {
@@ -210,7 +211,7 @@ const CustomizeSidebar: React.FC = () => {
     if (store) {
       await storeContent({ color });
     }
-    sendMessageToIframes("changeGlobalColors", color);
+    sendIframeMessage("changeGlobalColors", color);
   };
 
   const handleLogoChange = async (
@@ -218,6 +219,12 @@ const CustomizeSidebar: React.FC = () => {
   ) => {
     const file = event.target.files?.[0];
     if (file) {
+      const validImageTypes = ["image/jpeg", "image/png", "image/gif"];
+
+      if (!validImageTypes.includes(file.type)) {
+        setError("Please upload a valid image file (JPG, PNG, or GIF).");
+        return; // Prevent further processing if file type is not valid
+      }
       const formData = new FormData();
       formData.append("image", file);
       const url = getDomainFromEndpoint("/wp-json/custom/v1/upload-logo");
@@ -244,7 +251,7 @@ const CustomizeSidebar: React.FC = () => {
         //   { type: "changeLogo", logoUrl: newLogoUrl },
         //   "*"
         // );
-        sendMessageToIframes("changeLogo", { logoUrl: newLogoUrl });
+        sendIframeMessage("changeLogo", { logoUrl: newLogoUrl });
       } catch (err) {
         console.error("Error uploading image:", err);
       }
@@ -265,7 +272,7 @@ const CustomizeSidebar: React.FC = () => {
       );
       setSelectedColor(color);
       await storeContent({ color });
-      sendMessageToIframes("changeGlobalColors", {
+      sendIframeMessage("changeGlobalColors", {
         primary: initialStyles.primaryColor,
         secondary: initialStyles.secondaryColor,
       });
@@ -278,7 +285,7 @@ const CustomizeSidebar: React.FC = () => {
       };
       dispatch(setFont(font));
       await storeContent({ font });
-      sendMessageToIframes("changeFont", {
+      sendIframeMessage("changeFont", {
         font: font,
       });
       setSelectedFont(font);
@@ -339,9 +346,11 @@ const CustomizeSidebar: React.FC = () => {
               />
               <div className="h-8 mt-4 custom-slider">
                 <Slider
-                  aria-label="Volume"
+                  aria-label="Logo Size"
                   value={value}
                   onChange={handleChange}
+                  min={10}
+                  max={200}
                 />
               </div>
             </div>

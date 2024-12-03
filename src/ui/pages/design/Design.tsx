@@ -388,11 +388,14 @@ function Design() {
             below.
           </p>
 
-          <form className="my-8">
+          <form className="my-8" onSubmit={(e) => e.preventDefault}>
             <div className="relative flex items-center">
               <div className="flex items-center h-12 mr-0">
                 <div className="absolute flex items-center left-3">
-                  <button className="flex items-center justify-center w-auto h-auto p-0 bg-transparent border-0 cursor-pointer focus:outline-none">
+                  <button
+                    className="flex items-center justify-center w-auto h-auto p-0 bg-transparent border-0 cursor-pointer focus:outline-none"
+                    disabled
+                  >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       fill="none"
@@ -414,7 +417,7 @@ function Design() {
               <div className="w-full">
                 <input
                   className="w-full h-12 px-3 border rounded-md shadow-sm outline-none placeholder:zw-placeholder zw-input border-app-border focus:border-app-secondary focus:border-palatinate-blue-500 active:border-palatinate-blue-500 focus:border-2 pl-11 false"
-                  value={category} // Show current search text
+                  value={category}
                   onChange={handleSearch}
                   placeholder="Search categories..."
                 />
