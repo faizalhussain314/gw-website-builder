@@ -97,6 +97,7 @@ const FinalPreview: React.FC = () => {
   const [apiIssue, setapiIssue] = useState(false);
   const [wordCountAlert, setwordCountAlert] = useState(false);
   const [afterContact, setAfterContact] = useState(false);
+  const [showRefreshWarning, setShowRefreshWarning] = useState(false);
   const contactDetails = useSelector(
     (state: RootState) => state.userData.contactform
   );
@@ -318,10 +319,14 @@ const FinalPreview: React.FC = () => {
               },
             };
             updatePageStatus(pageName, "Generated", true);
+            if (GwLoader) {
+              setShowGwLoader(false);
+            }
 
             if (selectedPage === pageName) {
               updateIframeSrc(cleanedHtmlContent);
               setShowIframe(false);
+              setShowGwLoader(false);
               setIsPageGenerated(true);
             }
 
@@ -646,6 +651,10 @@ const FinalPreview: React.FC = () => {
         templateName,
         "5.5"
       );
+      // if (fetchresult) {
+      //   setShowGwLoader(false);
+      //   return;
+      // }
       if (Color.primary && Color.secondary) {
         iframe.contentWindow.postMessage(
           {
@@ -657,13 +666,12 @@ const FinalPreview: React.FC = () => {
         );
       }
       if (!fetchresult) {
+        console.log("result is empty or null");
         if (selectedPage === "Home" && pages[0].status !== "Generated") {
-          //home page auto generate code
-
           setShowPopup(false);
           setIsLoading(true);
           setShowGwLoader(true);
-          setIsContentGenerating(true);
+          // setIsContentGenerating(true);
 
           try {
             const endpoint = getDomainFromEndpoint(
@@ -700,6 +708,7 @@ const FinalPreview: React.FC = () => {
                 );
               }
             } else if (response?.data?.status === false) {
+              setIsContentGenerating(false);
               setwordCountAlert(true);
             }
           } catch (error) {
@@ -707,8 +716,8 @@ const FinalPreview: React.FC = () => {
             setapiIssue(true);
           } finally {
             setIsLoading(false);
-            setShowGwLoader(false);
-            setIsContentGenerating(false);
+            // setShowGwLoader(false);
+            // setIsContentGenerating(false);
           }
 
           // iframe.contentWindow.postMessage(
@@ -741,7 +750,9 @@ const FinalPreview: React.FC = () => {
         const existingContent = generatedPage[selectedPage][0];
         updateIframeSrc(existingContent);
         setShowIframe(false);
+        setShowGwLoader(false);
       } else if (selectedPage === "Home" && pages[0].status !== "Generated") {
+        // setIsContentGenerating(true);
         iframe.contentWindow.postMessage(
           {
             type: "start",
@@ -826,6 +837,7 @@ const FinalPreview: React.FC = () => {
       updateIframeSrc(existingContent[0]); // Update the iframe source with the generated content
       setShowIframe(false);
       setIsPageGenerated(true);
+      setShowGwLoader(false);
     } else {
       // If the page content is not yet generated
       setShowIframe(true);
@@ -1018,15 +1030,15 @@ const FinalPreview: React.FC = () => {
     );
   };
   const handleGeneratePage = async () => {
-    if (isContentGenerating) {
-      // showWarningToast();
-      return;
-    }
+    // if (isContentGenerating) {
+    //   showWarningToast();
+    //   return;
+    // }
 
     setShowPopup(false);
     setIsLoading(true);
     setShowGwLoader(true);
-    setIsContentGenerating(true);
+    // setIsContentGenerating(true);
 
     try {
       const endpoint = getDomainFromEndpoint(
@@ -1048,7 +1060,6 @@ const FinalPreview: React.FC = () => {
         const currentPage = pages.find((page) => page.name === selectedPage);
 
         if (currentPage && currentPage.status !== "Generated") {
-          setIsContentGenerating(true);
           iframe.contentWindow.postMessage(
             {
               type: "start",
@@ -1070,7 +1081,7 @@ const FinalPreview: React.FC = () => {
       setapiIssue(true);
     } finally {
       setIsLoading(false);
-      setShowGwLoader(false);
+      setShowGwLoader(true);
       setIsContentGenerating(false);
     }
   };
@@ -1309,8 +1320,29 @@ const FinalPreview: React.FC = () => {
   };
 
   useEffect(() => {
-    console.log("isContentGenerate changed", isContentGenerating);
-  }, [isContentGenerating]);
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (isContentGenerating || showGwLoader) {
+        event.preventDefault();
+        event.returnValue = ""; // Most browsers ignore custom messages but require this to trigger the alert.
+        setShowRefreshWarning(true); // Show custom warning popup
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [isContentGenerating, showGwLoader]);
+
+  const handleRefreshConfirm = () => {
+    setShowRefreshWarning(false);
+    window.location.reload();
+  };
+
+  const handleRefreshCancel = () => {
+    setShowRefreshWarning(false);
+  };
 
   return (
     <div className="h-screen flex font-[inter] w-screen">
@@ -1370,6 +1402,7 @@ const FinalPreview: React.FC = () => {
               isLoading={isLoading}
               importLoad={importLoad}
               afterContact={afterContact}
+              showGwLoader={showGwLoader}
             />
           </div>
         </aside>
