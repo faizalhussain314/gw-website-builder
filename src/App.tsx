@@ -155,7 +155,10 @@ const App = () => {
   }, [location.pathname, firstLoad, updateLastStep]);
 
   const handleContinue = () => {
-    if (!fetchedData?.lastStep) return;
+    if (!fetchedData?.lastStep) {
+      console.log("data has not found");
+      return;
+    }
     navigate(fetchedData.lastStep);
     setSessionActive();
     setShowPopup(false);
@@ -195,7 +198,7 @@ const App = () => {
           onCreateFromScratch={handleCreateFromScratch}
         />
       )}
-      <div className="absolute right-4 top-4 z-200">
+      <div className="absolute right-4 top-4 z-50">
         <CloseIcon />
       </div>
       <AppRoutes />

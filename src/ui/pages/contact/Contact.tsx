@@ -35,6 +35,7 @@ function Contact() {
     phoneNumber: "",
     address: "",
   });
+  const [isFormValid, setIsFormValid] = useState(false);
   const { getDomainFromEndpoint } = useDomainEndpoint();
 
   const navigate = useNavigate();
@@ -80,14 +81,15 @@ function Contact() {
     }
   };
 
-  const handleChange = (name, value) => {
+  const handleChange = (name: string, value: string) => {
+    const proccessedvalue = value?.trimStart();
     setFormError((prevData) => ({
       ...prevData,
       [name]: "",
     }));
     setFormData((prevData) => ({
       ...prevData,
-      [name]: value,
+      [name]: proccessedvalue,
     }));
   };
 
@@ -97,21 +99,17 @@ function Contact() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    validateEmail();
+    validatePhoneNumber(formData.phoneNumber);
+
     let valid = true;
 
-    if (!formData.email) {
-      setFormError((prevData) => ({
-        ...prevData,
-        email: "Email is required",
-      }));
+    if (!formData.email || formError.email) {
       valid = false;
     }
 
-    if (!formData.phoneNumber) {
-      setFormError((prevData) => ({
-        ...prevData,
-        phoneNumber: "Phone number is required",
-      }));
+    if (!formData.phoneNumber || formError.phoneNumber) {
       valid = false;
     }
 
@@ -123,12 +121,10 @@ function Contact() {
       valid = false;
     }
 
-    // If any field is invalid, stop the submission
     if (!valid) {
       return;
     }
 
-    // Proceed with form submission
     setLoading(true);
 
     if (
@@ -163,11 +159,20 @@ function Contact() {
         return result;
       } catch (error) {
         console.error("Error making API call:", error);
+        setLoading(false);
         navigate("/design");
         return null;
       }
     }
   };
+
+  // useEffect(() => {
+  //   const isValid =
+  //     validateEmail() &&
+  //     validatePhoneNumber(formData.phoneNumber) &&
+  //     formData.address;
+  //   setIsFormValid(isValid);
+  // }, [formData.email, formData.phoneNumber, formData.address]);
 
   return (
     <MainLayout>
@@ -203,6 +208,11 @@ function Contact() {
                     value={formData.email}
                     onBlur={() => {
                       validateEmail();
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === " " && formData.email.length === 0) {
+                        e.preventDefault();
+                      }
                     }}
                     className={`block w-full rounded-lg bg-white px-4 py-2.5 w-[720px] ${
                       formError.email !== ""
@@ -292,7 +302,9 @@ function Contact() {
               </Link>
               {/* <Link to={"/design"}> */}
               <button
-                className="tertiary px-[30px] py-[15px] text-base text-white sm:mt-2 font-medium rounded-md w-[150px] min-h-[54px]"
+                className={`tertiary px-[30px] py-[15px] text-base text-white sm:mt-2 font-medium rounded-md w-[150px] min-h-[54px] ${
+                  !isFormValid ? "bg-[#ccc] cursor-not-allowed" : "bg-[#125BFF]"
+                } `}
                 type="submit"
               >
                 {loading ? (

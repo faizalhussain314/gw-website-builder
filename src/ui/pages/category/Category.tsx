@@ -102,8 +102,8 @@ function Category() {
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInputValue(e.target.value);
-    handleCategoryChange(e.target.value);
+    setInputValue(e.target.value.trimStart());
+    handleCategoryChange(e.target.value.trimStart());
     setShowDropdown(true);
   };
 
@@ -199,7 +199,15 @@ function Category() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          fields: ["id", "name", "email", "gravator", "plan_detail"],
+          fields: [
+            "id",
+            "name",
+            "email",
+            "gravator",
+            "plan_detail",
+            "website_used",
+            "website_total",
+          ],
         }),
       });
 
@@ -211,8 +219,8 @@ function Category() {
         dispatch(setWebsiteGenerationLimit(result[0]?.websiteGenerationLimit));
         dispatch(setEmail(result[0]?.email));
         dispatch(setGravator(result[0]?.gravator));
-        dispatch(setGeneratedSite(result[0]?.generatedsite || 1));
-        dispatch(setMaxGeneration(result[0]?.setMaxGeneration || 6));
+        dispatch(setGeneratedSite(result[0]?.website_used));
+        dispatch(setMaxGeneration(result[0]?.website_total));
         setMainLoader(false);
       }
     } catch (error) {

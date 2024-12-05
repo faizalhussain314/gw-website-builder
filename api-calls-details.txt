@@ -1,0 +1,80 @@
+//API call for install plugins
+Url: https://replace-with-websiteurl/wp-json/custom/v1/install-plugin
+Method: POST
+Body: raw(json)
+{
+    "plugins": [
+        "elementor", 
+        "elementskit-lite", 
+        "jeg-elementor-kit", 
+        "metform", 
+        "header-footer-elementor"
+    ]
+}
+
+//API call for install theme
+Url: https://replace-with-websiteurl/wp-json/custom/v1/install-theme
+Method: POST
+Body: no data required
+
+
+//API call for import posts
+Url: https://replace-with-websiteurl/wp-json/custom/v1/install-posts
+Method: POST
+Body:raw(json)
+{
+    "fileurl": "https://plugin.mywpsite.org/posts-data.xml"
+}
+//API call for import pages
+Url: https://replace-with-websiteurl/wp-json/custom/v1/install-pages
+Method: POST
+Body:raw(json)
+{
+    "fileurl": "https://plugin.mywpsite.org/new-page-export-data.xml"
+}
+//API call for import forms
+Url: https://replace-with-websiteurl/wp-json/custom/v1/install-forms
+Method: POST
+Body:raw(json)
+{
+    "fileurl": "https://plugin.mywpsite.org/metforms.xml"
+}
+//API call for site logo 
+URL: https://replace-with-websiteurl/wp-json/custom/v1/import-sitelogo
+Method: POST
+Body:raw(json)
+{
+    "fileurl": "https://replace-with-websiteurl/wp-content/uploads/2024/08/Plumber-1-300x65-1.png"
+}
+
+//API call for import menu and css
+URL: https://replace-with-websiteurl/wp-json/custom/v1/import-menus-css
+Method: POST
+Body:raw(json)
+{
+    "fileurl": "https://plugin.mywpsite.org/menu-css-data.json"
+}
+//API call for import header and footer
+Url: https://replace-with-websiteurl/wp-json/custom/v1/install-header-footer
+Method: POST
+Body:raw(json)
+{
+    "fileurl": "https://plugin.mywpsite.org/new-element-head-foot.xml"
+}
+//API call for import elementor kit
+Url: https://replace-with-websiteurl/wp-json/custom/v1/install-elementor-kit
+Method: POST
+Body:raw(json)
+{
+    "fileurl": "https://plugin.mywpsite.org/templates.xml"
+}
+//API call for import elementor settings
+Url: https://replace-with-websiteurl/wp-json/custom/v1/install-elementor-settings
+Method: POST
+Body:raw(json)
+{
+    "fileurl": "https://plugin.mywpsite.org/site-settings.json"
+}
+
+
+
