@@ -91,13 +91,24 @@ function Category() {
   };
 
   const handleClick = async () => {
-    if (selectedCategory) {
+    const isValidCategory = categoryList.some(
+      (category) => category.name.toLowerCase() === inputValue.toLowerCase()
+    );
+
+    if (isValidCategory) {
+      setError(null);
       setLoading(true);
-      await updateCategoryDetails(selectedCategory, getDomainFromEndpoint);
-      setLoading(false);
-      navigate("/name");
+      try {
+        await updateCategoryDetails(inputValue, getDomainFromEndpoint);
+        setLoading(false);
+        navigate("/name");
+      } catch (err) {
+        console.error("Error updating category details:", err);
+        setLoading(false);
+        setError("Failed to update category details. Please try again.");
+      }
     } else {
-      setError("Please select a category before continuing.");
+      setError("Please select a valid category from the list.");
     }
   };
 
