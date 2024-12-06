@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import CachedIcon from "@mui/icons-material/Cached";
 import { Page } from "../../../types/page.type";
 import { toast } from "react-toastify";
@@ -61,6 +61,7 @@ const PageSelector: React.FC<Props> = ({
   afterContact,
   showGwLoader,
 }) => {
+  const [showButtons, setShowButton] = useState(true);
   const showWarningToast = () => {
     toast.warn("Please wait while content is being generated.");
   };
@@ -266,7 +267,14 @@ const PageSelector: React.FC<Props> = ({
                         : selectedPage === page.name
                         ? "rotate-180 "
                         : "-rotate-0"
-                    } transition-all duration-200 ease-in ml-2.5`}
+                    } ${
+                      showButtons && selectedPage === page.name
+                        ? "rotate-180"
+                        : showButtons
+                        ? ""
+                        : "rotate-0"
+                    }  transition-all duration-200 ease-in ml-2.5`}
+                    onClick={() => setShowButton((prev) => !prev)}
                   >
                     <path
                       d="M11 3L6 8L1 3"
@@ -279,7 +287,7 @@ const PageSelector: React.FC<Props> = ({
                 </div>
               </div>
             </div>
-            {afterContact === true
+            {!showButtons || afterContact
               ? ""
               : selectedPage === page.name && (
                   <div className="mt-3 flex justify-evenly text-sm">

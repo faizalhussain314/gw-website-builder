@@ -14,6 +14,9 @@ import { fetchInitialCustomizationData } from "../../core/utils/design.utils";
 import { Font } from "../../types/activeStepSlice.type";
 import { Slider } from "@mui/material";
 import { sendIframeMessage } from "../../core/utils/sendIframeMessage.utils";
+import { uploadLogo } from "../../core/utils/customizesidebar/logoUploadUtils";
+import uploadLogoIcon from "../../assets/icons/uploadfile.svg";
+
 const CustomizeSidebar: React.FC = () => {
   const [selectedColor, setSelectedColor] = useState<SelectedColor>({
     primary: "",
@@ -35,10 +38,12 @@ const CustomizeSidebar: React.FC = () => {
   const [logoSize, setLogoSize] = useState<number>(150);
 
   const [loading, setLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -53,9 +58,7 @@ const CustomizeSidebar: React.FC = () => {
     logoUrl: state.userData.logo,
   }));
 
-  // slider
-
-  const [value, setValue] = React.useState<number>(30);
+  const [value, setValue] = React.useState<number>(150);
 
   const handleChange = (event: Event, newValue: number | number[]) => {
     setValue(newValue as number);
@@ -73,117 +76,6 @@ const CustomizeSidebar: React.FC = () => {
       storeContent
     );
   }, [dispatch, getDomainFromEndpoint]);
-
-  const generateBusinessLogo = (businessName: string) => {
-    const canvas = document.createElement("canvas");
-    canvas.width = 100;
-    canvas.height = 100;
-    const ctx = canvas.getContext("2d");
-
-    // Add background
-    ctx.fillStyle = "rgba(255, 255, 255, 0)";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    ctx.fillStyle = "#000";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-
-    // Define a function to adjust font size and split text into lines if necessary
-    const fitTextToCanvas = (text, maxWidth) => {
-      let fontSize = 24;
-      ctx.font = `bold ${fontSize}px Arial`;
-
-      // Reduce font size if text is too wide
-      while (ctx.measureText(text).width > maxWidth && fontSize > 8) {
-        fontSize -= 1;
-        ctx.font = `bold ${fontSize}px Arial`;
-      }
-
-      // Split text if it is still too wide
-      const words = text.split(" ");
-      const lines = [];
-      let line = "";
-
-      for (let i = 0; i < words.length; i++) {
-        const testLine = line + (line ? " " : "") + words[i];
-        if (ctx.measureText(testLine).width > maxWidth) {
-          lines.push(line);
-          line = words[i];
-        } else {
-          line = testLine;
-        }
-      }
-      lines.push(line);
-
-      return { fontSize, lines };
-    };
-
-    // Fit the business name to the canvas width and get lines
-    const maxWidth = canvas.width - 10; // Padding
-    const { fontSize, lines } = fitTextToCanvas(businessName, maxWidth);
-
-    // Set the final font size
-    ctx.font = `bold ${fontSize}px Arial`;
-
-    // Draw each line on the canvas
-    const lineHeight = fontSize + 4;
-    const yOffset = (canvas.height - lineHeight * lines.length) / 2;
-
-    lines.forEach((line, index) => {
-      ctx.fillText(line, canvas.width / 2, yOffset + index * lineHeight);
-    });
-
-    return canvas.toDataURL("image/png");
-  };
-
-  const dataURLtoBlob = (dataUrl: string) => {
-    const arr = dataUrl.split(",");
-    const mime = arr[0].match(/:(.*?);/)[1];
-    const bstr = atob(arr[1]);
-    let n = bstr.length;
-    const u8arr = new Uint8Array(n);
-    while (n--) {
-      u8arr[n] = bstr.charCodeAt(n);
-    }
-    return new Blob([u8arr], { type: mime });
-  };
-
-  const uploadGeneratedLogo = async (businessName: string) => {
-    const generatedLogo = generateBusinessLogo(businessName);
-    const logoBlob = dataURLtoBlob(generatedLogo);
-
-    const formData = new FormData();
-    formData.append("image", logoBlob, `${businessName}-logo.png`);
-
-    const url = getDomainFromEndpoint("/wp-json/custom/v1/upload-logo");
-
-    setLoading(true);
-    setError(null);
-
-    try {
-      const response = await fetch(url, {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to upload image");
-      }
-
-      const result = await response.json();
-      const newLogoUrl = result.url;
-
-      setLogoUrl(newLogoUrl);
-      dispatch(setLogo(newLogoUrl));
-      await storeContent({ logo: newLogoUrl });
-
-      sendIframeMessage("changeLogo", { logoUrl: newLogoUrl });
-    } catch (err) {
-      setError("Error uploading generated logo. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   useEffect(() => {
     if (businessName) {
@@ -214,47 +106,25 @@ const CustomizeSidebar: React.FC = () => {
     sendIframeMessage("changeGlobalColors", color);
   };
 
+  const extractFileName = (url: string): string => {
+    return url?.split("/").pop() || "Unknown file";
+  };
   const handleLogoChange = async (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     const file = event.target.files?.[0];
     if (file) {
-      const validImageTypes = ["image/jpeg", "image/png", "image/gif"];
-
-      if (!validImageTypes.includes(file.type)) {
-        setError("Please upload a valid image file (JPG, PNG, or GIF).");
-        return; // Prevent further processing if file type is not valid
-      }
-      const formData = new FormData();
-      formData.append("image", file);
-      const url = getDomainFromEndpoint("/wp-json/custom/v1/upload-logo");
-
-      try {
-        const response = await fetch(url, {
-          method: "POST",
-          body: formData,
-        });
-
-        if (!response.ok) {
-          throw new Error("Failed to upload image");
-        }
-
-        const result = await response.json();
-        const newLogoUrl = result.url;
-
-        setLogoUrl(newLogoUrl);
-        dispatch(setLogo(newLogoUrl));
-        await storeContent({ logo: newLogoUrl });
-
-        // Send the logo URL to the iframe
-        // window.parent.postMessage(
-        //   { type: "changeLogo", logoUrl: newLogoUrl },
-        //   "*"
-        // );
-        sendIframeMessage("changeLogo", { logoUrl: newLogoUrl });
-      } catch (err) {
-        console.error("Error uploading image:", err);
-      }
+      uploadLogo(
+        file,
+        getDomainFromEndpoint,
+        setLogoUrl,
+        setError,
+        setSuccessMessage,
+        setLoading,
+        dispatch,
+        storeContent,
+        sendIframeMessage
+      );
     }
   };
 
@@ -307,6 +177,12 @@ const CustomizeSidebar: React.FC = () => {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+  useEffect(() => {
+    const savedLogoUrl = localStorage.getItem("logoUrl");
+    if (savedLogoUrl) {
+      setLogoUrl(savedLogoUrl);
+    }
+  }, []);
 
   return (
     <div className="bg-white w-full min-h-screen h-screen z-10 border-2 flex flex-col justify-between">
@@ -330,13 +206,32 @@ const CustomizeSidebar: React.FC = () => {
           </label>
           <input
             type="file"
-            className="w-full p-3 border border-[#DFEAF6] rounded-md"
+            className="w-full p-3 border border-[#DFEAF6] rounded-md hidden"
             onChange={handleLogoChange}
+            ref={inputRef}
+            name={extractFileName(logoUrl)}
+            // value={logoUrl}
+            placeholder={extractFileName(logoUrl)}
           />
+          <button
+            onClick={() => {
+              inputRef.current.click();
+            }}
+            className="p-3 border border-[#DFEAF6] w-full rounded-md text-[#88898A] font-medium flex items-center gap-2 flex-1"
+          >
+            <img src={uploadLogoIcon} className="w-5" />
+            <span>
+              {logoUrl ? extractFileName(logoUrl) : "upload file here"}
+            </span>
+          </button>
+
           {loading && (
             <p className="text-sm text-blue-500 mt-2">Uploading logo...</p>
           )}
           {error && <p className="text-sm text-red-500 mt-2">{error}</p>}
+          {successMessage && (
+            <p className="text-sm text-green-500 mt-2">{successMessage}</p>
+          )}
           {logoUrl && (
             <div className="bg-white p-2.5 mt-2.5 border border-[#DFEAF6] rounded-md shadow-lg">
               <img

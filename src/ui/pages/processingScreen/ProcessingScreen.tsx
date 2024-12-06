@@ -4,7 +4,7 @@ import { CircularProgressbar, buildStyles } from "react-circular-progressbar";
 import "react-circular-progressbar/dist/styles.css";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { setPages } from "../../../Slice/activeStepSlice";
+import { clearUserData, setPages } from "../../../Slice/activeStepSlice";
 import "../../../index.css";
 import websitebg from "../../../assets/websiteloader-bg.svg";
 import useDomainEndpoint from "../../../hooks/useDomainEndpoint";
@@ -356,12 +356,28 @@ const ProcessingScreen: React.FC = () => {
     await postData("/wp-json/custom/v1/empty-tables", {}, "DELETE");
 
     setProgress(100);
+    dispatch(clearUserData());
     setIsProcessing(false);
   };
 
   useEffect(() => {
     if (!isProcessing) processAPIs();
   }, []);
+
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isProcessing) {
+        e.preventDefault();
+        e.returnValue =
+          "We are importing all essential things. If you leave, the process will be abandoned. Would you like to proceed?";
+      }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [isProcessing]);
 
   useEffect(() => {
     if (progress === 100) {

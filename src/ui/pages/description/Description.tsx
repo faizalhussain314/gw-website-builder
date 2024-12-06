@@ -76,9 +76,11 @@ function Description() {
     if (type === 1) {
       setLoader1(true);
       setLoader2(false);
+      setDescription1("");
     } else {
       setLoader2(true);
       setLoader1(false);
+      setDescription2("");
     }
     setError(null);
 
@@ -211,8 +213,12 @@ function Description() {
   };
 
   const setReduxValue = async () => {
-    if (!description1 || !description2) {
-      setError("Both descriptions are required.");
+    if (!description1 && !description2) {
+      setError("Both description are required");
+    } else if (!description1) {
+      setError("service descriptions is required.");
+    } else if (!description2) {
+      setError("step descriptions is required.");
     } else {
       setLoading(true);
       dispatch(setDescriptionOne(description1));
@@ -222,12 +228,41 @@ function Description() {
     }
   };
 
+  const getInputClass = (descriptionType: "des1" | "des2", error: string) => {
+    let base =
+      "bg-white px-4 py-2.5 border h-[100px] border-[rgba(205,212,219,1)] w-[96%] mt-5 rounded-lg placeholder:font-normal text-[#5f5f5f] focus:border-palatinate-blue-500 active:border-palatinate-blue-500 active:outline-palatinate-blue-500 focus:outline-palatinate-blue-500 ml-[50px]";
+
+    if (
+      descriptionType === "des1" &&
+      error === "service descriptions is required."
+    ) {
+      base += " border-red-500";
+    }
+
+    if (
+      descriptionType === "des2" &&
+      error === "step descriptions is required."
+    ) {
+      base += " border-red-500";
+    }
+
+    if (error === "Both description are required") {
+      base += " border-red-500";
+    }
+
+    return base;
+  };
+
   return (
     <MainLayout>
       {wordLimitError && (
         <UpgradePopup
           alertType={"wordLimit"}
-          onClose={() => setwordLimitError(false)}
+          onClose={() => {
+            setwordLimitError(false);
+            setLoader1(false);
+            setLoader2(false);
+          }}
         />
       )}
       <div className="bg-[#F9FCFF] h-full flex flex-col justify-between overflow-hidden ">
@@ -270,12 +305,12 @@ function Description() {
               </label>
             </div>
             <textarea
-              className={`bg-white px-4 py-2.5 border h-[100px] border-[rgba(205,212,219,1)] w-[96%] mt-5 rounded-lg placeholder:font-normal text-[#5f5f5f] ${
-                error && "border-red-500 rounded-lg"
-              } focus:border-palatinate-blue-500 active:border-palatinate-blue-500 active:outline-palatinate-blue-500 focus:outline-palatinate-blue-500 ml-[50px]`}
+              // className={getInputClass(des1)}
+              className={getInputClass("des1", error)}
               value={description1}
               onChange={(e) => {
                 const newDescription = e.target.value.trimStart();
+
                 setDescription1(newDescription);
                 dispatch(setDescriptionOne(newDescription));
                 if (error) setError(null);
@@ -359,9 +394,10 @@ function Description() {
               </label>
             </div>
             <textarea
-              className={`bg-white p-4 border h-[100px] border-[rgba(205,212,219,1)] w-[96%] mt-4 placeholder:font-normal rounded-lg text-[#5f5f5f] ${
-                error && "border-red-500 rounded-lg"
-              } focus:border-palatinate-blue-500 active:border-palatinate-blue-500 active:outline-palatinate-blue-500 focus:outline-palatinate-blue-500 ml-[50px]`}
+              // className={`bg-white p-4 border h-[100px] border-[rgba(205,212,219,1)] w-[96%] mt-4 placeholder:font-normal rounded-lg text-[#5f5f5f] ${
+              //   error && "border-red-500 rounded-lg"
+              // } focus:border-palatinate-blue-500 active:border-palatinate-blue-500 active:outline-palatinate-blue-500 focus:outline-palatinate-blue-500 ml-[50px]`}
+              className={getInputClass("des2", error)}
               value={description2}
               onChange={(e) => {
                 const newDescription = e.target.value.trimStart();

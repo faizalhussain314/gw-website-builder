@@ -5,7 +5,12 @@ import Crown from "../../../assets/crown.svg";
 
 type UpgradePopupProps = {
   onClose: () => void;
-  alertType: "regenerate" | "websiteCreation" | "upgradeTemp" | "wordLimit";
+  alertType:
+    | "regenerate"
+    | "websiteCreation"
+    | "upgradeTemp"
+    | "wordLimit"
+    | "importLimit";
 };
 
 const UpgradePopup: React.FC<UpgradePopupProps> = ({ onClose, alertType }) => {
@@ -26,6 +31,11 @@ const UpgradePopup: React.FC<UpgradePopupProps> = ({ onClose, alertType }) => {
     title = "Limit Reached";
     message = ` You've reached the word limit for your current plan. To unlock more
           words and continue generating content, consider upgrading your word
+          limit`;
+  } else if (alertType === "importLimit") {
+    title = "Import Limit Reached";
+    message = ` You've reached Template Import limit for your current plan. To unlock more
+          Template Import and continue your importing process , consider upgrading your template import
           limit`;
   }
 
