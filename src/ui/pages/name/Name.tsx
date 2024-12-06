@@ -37,6 +37,9 @@ function Name() {
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newName = event.target.value;
+    if (newName.length >= 0) {
+      setError("");
+    }
     setName(newName.trimStart());
   };
 

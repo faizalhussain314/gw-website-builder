@@ -675,7 +675,7 @@ function save_generated_page_status(WP_REST_Request $request) {
     $plugin_dir = plugin_dir_path(__FILE__); 
     $log_dir = $plugin_dir . 'logs'; 
     $log_file_path = $log_dir . '/plugin-log.txt';
-     $api_url = $request->get_route();
+    $api_url = $request->get_route();
 
     if (!file_exists($log_dir)) {
         mkdir($log_dir, 0755, true);
@@ -688,7 +688,13 @@ function save_generated_page_status(WP_REST_Request $request) {
 
     // Ensure all required parameters are present
     if (!$page_name || !$page_slug) {
-        return new WP_REST_Response('Missing required parameters', 400);
+        $message = 'Missing required parameters: page_name or page_slug.';
+        log_message($message, $log_file_path, 'error', $api_url);
+
+        return new WP_REST_Response([
+            'status' => 'error',
+            'message' => $message,
+        ], 200); // Always return status code 200
     }
 
     // Check if entry exists
@@ -701,32 +707,45 @@ function save_generated_page_status(WP_REST_Request $request) {
         // Update existing entry
         $success = $wpdb->update($table_name, $params, ['id' => $existing->id]);
 
-        if ($success) {
+        if ($success !== false) {
             $message = "Updated existing entry for page: '$page_name' with slug: '$page_slug'.";
-            log_message($message, $log_file_path, 'success',$api_url);
+            log_message($message, $log_file_path, 'success', $api_url);
+
+            return new WP_REST_Response([
+                'status' => 'success',
+                'message' => $message,
+            ], 200); // Always return status code 200
         } else {
             $message = "Failed to update entry for page: '$page_name' with slug: '$page_slug'.";
-            log_message($message, $log_file_path, 'error',$api_url);
-        }
-        if ($success === false) {
-            return new WP_REST_Response('Update failed', 500);
+            log_message($message, $log_file_path, 'error', $api_url);
+
+            return new WP_REST_Response([
+                'status' => 'error',
+                'message' => $message,
+            ], 200); // Always return status code 200
         }
     } else {
         // Insert new entry
         $success = $wpdb->insert($table_name, $params);
+
         if ($success) {
             $message = "Inserted new entry for page: '$page_name' with slug: '$page_slug'.";
-            log_message($message, $log_file_path, 'success',$api_url);
+            log_message($message, $log_file_path, 'success', $api_url);
+
+            return new WP_REST_Response([
+                'status' => 'success',
+                'message' => $message,
+            ], 200); // Always return status code 200
         } else {
             $message = "Failed to insert new entry for page: '$page_name' with slug: '$page_slug'.";
-            log_message($message, $log_file_path, 'error',$api_url);
-        }
-        if ($success === false) {
-            return new WP_REST_Response('Insert failed', 500);
+            log_message($message, $log_file_path, 'error', $api_url);
+
+            return new WP_REST_Response([
+                'status' => 'error',
+                'message' => $message,
+            ], 200); // Always return status code 200
         }
     }
-
-    return new WP_REST_Response('Success', 200);
 }
 
 function get_generated_page_status(WP_REST_Request $request) {
@@ -735,7 +754,8 @@ function get_generated_page_status(WP_REST_Request $request) {
     $plugin_dir = plugin_dir_path(__FILE__); 
     $log_dir = $plugin_dir . 'logs';
     $log_file_path = $log_dir . '/plugin-log.txt';
-     $api_url = $request->get_route(); // Get the API URL
+    $api_url = $request->get_route(); // Get the API URL
+
     if (!file_exists($log_dir)) {
         mkdir($log_dir, 0755, true);
     }
@@ -746,13 +766,24 @@ function get_generated_page_status(WP_REST_Request $request) {
     $results = $wpdb->get_results($query, ARRAY_A);
 
     if (!empty($results)) {
-        log_message("Successfully retrieved generated page status data.", $log_file_path, 'success',$api_url);
-        return new WP_REST_Response($results, 200);
+        log_message("Successfully retrieved generated page status data.", $log_file_path, 'success', $api_url);
+
+        return new WP_REST_Response([
+            'status' => 'success',
+            'message' => 'Successfully retrieved data.',
+            'data' => $results,
+        ], 200); // Always return 200
     } else {
-        log_message("No data found in generated page status.", $log_file_path, 'warning',$api_url);
-        return new WP_Error('no_data', 'No HTML metadata found', ['status' => 404]);
+        log_message("No data found in generated page status.", $log_file_path, 'warning', $api_url);
+
+        return new WP_REST_Response([
+            'status' => 'error',
+            'message' => 'No HTML metadata found.',
+            'data' => [],
+        ], 200); // Always return 200
     }
 }
+
 
 
 function fetch_html_data_details(WP_REST_Request $request) {
@@ -789,7 +820,7 @@ function fetch_html_data($request) {
     $plugin_dir = plugin_dir_path(__FILE__);
     $log_dir = $plugin_dir . 'logs'; 
     $log_file_path = $log_dir . '/plugin-log.txt';
-     $api_url = $request->get_route();
+    $api_url = $request->get_route();
 
     if (!file_exists($log_dir)) {
         mkdir($log_dir, 0755, true);
@@ -814,13 +845,22 @@ function fetch_html_data($request) {
             $results[$index]['html_data'] = $clean_html;
         }
 
-        log_message("Successfully fetched HTML data for version: $version_name, page: $page_name, template: $template_name.", $log_file_path, 'success',$api_url);
-        return new WP_REST_Response($results, 200);
+        log_message("Successfully fetched HTML data for version: $version_name, page: $page_name, template: $template_name.", $log_file_path, 'success', $api_url);
+        return new WP_REST_Response([
+            'status' => 'success',
+            'message' => 'Successfully fetched HTML data.',
+            'data' => $results,
+        ], 200); // Always return 200
     } else {
-        log_message("No HTML data found for version: $version_name, page: $page_name, template: $template_name.", $log_file_path, 'warning',$api_url);
-        return new WP_Error('no_data', 'No HTML data found for the given criteria', ['status' => 404]);
+        log_message("No HTML data found for version: $version_name, page: $page_name, template: $template_name.", $log_file_path, 'warning', $api_url);
+        return new WP_REST_Response([
+            'status' => 'error',
+            'message' => 'No HTML data found for the given criteria.',
+            'data' => [],
+        ], 200); // Always return 200
     }
 }
+
 
 function save_generated_html_data($request) {
     global $wpdb;
@@ -1665,16 +1705,22 @@ function check_word_count($request) {
     $log_dir = $plugin_dir . 'logs';
     $log_file_path = $log_dir . '/plugin-log.txt';
 
+    // Ensure the logs directory exists
     if (!file_exists($log_dir)) {
         mkdir($log_dir, 0755, true);
     }
+
     $api_request_url = $request->get_route();
     $api_url = 'https://staging-api.gravitywrite.com/api/check-word-count';
     $bearer_token = get_option('api_user_token', true);
 
+    // Check if Bearer token is available
     if (empty($bearer_token)) {
         log_message("Bearer token is missing", $log_file_path, 'error', $api_request_url);
-        return new WP_Error('missing_token', 'Bearer token is missing', ['status' => 400]);
+        return [
+            'status' => false,
+            'message' => 'Bearer token is missing'
+        ];
     }
 
     $headers = [
@@ -1684,22 +1730,45 @@ function check_word_count($request) {
 
     $response = wp_remote_get($api_url, ['headers' => $headers]);
 
+    // Handle API connection errors
     if (is_wp_error($response)) {
         log_message("Failed to connect to external API", $log_file_path, 'error', $api_request_url);
-        return new WP_Error('api_error', 'Failed to connect to external API', ['status' => 500]);
+        return [
+            'status' => false,
+            'message' => 'Failed to connect to external API'
+        ];
     }
 
     $response_body = wp_remote_retrieve_body($response);
     $response_data = json_decode($response_body, true);
 
+    // Handle various error cases based on API response
     if (isset($response_data['status']) && $response_data['status'] === false) {
-        log_message("Invalid Bearer token provided", $log_file_path, 'error', $api_request_url);
-        return new WP_Error('invalid_token', 'Invalid Bearer token provided', ['status' => 401]);
+        if (isset($response_data['wp_status']) && $response_data['wp_status'] == 1) {
+            // Word limit reached error
+            log_message("Word limit reached", $log_file_path, 'error', $api_request_url);
+            return [
+                'status' => false,
+                'message' => 'Word limit reached'
+            ];
+        } else {
+            // Invalid token error
+            log_message("Invalid Bearer token provided", $log_file_path, 'error', $api_request_url);
+            return [
+                'status' => false,
+                'message' => 'Invalid Bearer token provided'
+            ];
+        }
     }
 
+    // Successful response
     log_message("Word count checked successfully", $log_file_path, 'success', $api_request_url);
-    return ['status' => true, 'message' => 'Word count checked successfully'];
+    return [
+        'status' => true,
+        'message' => 'Word count checked successfully'
+    ];
 }
+
 
 function check_site_count($request) {
     global $wpdb;
@@ -2875,13 +2944,19 @@ class GW_Website_Builder {
                 
                     <!-- View GravityWrite Button (positioned to the right) -->
                     <div class="view-gw-button">
-                        <?php $token = get_option('api_user_fe_token'); ?>
-                        <a href="https://staging.gravitywrite.com/dashboard" target="_blank" 
+                        <?php 
+                        $token = get_option('api_user_fe_token');
+                        // Get everything after the '|' in the token
+                        $token_parts = explode('|', $token);
+                        $cleaned_token = isset($token_parts[1]) ? $token_parts[1] : ''; // Take the part after '|', or use an empty string if not present
+                        ?>
+                        <a href="https://staging.gravitywrite.com/dashboard?impersonateToken=<?php echo $cleaned_token; ?>" 
+                           target="_blank" 
                            style="line-height: 22px; font-size: 16px; font-weight: 500 !important; padding: 12px 35px; background-color: #2e4eff; color: #fff; text-decoration: none; border-radius: 7px;">
                            View GravityWrite
                         </a>
-
                     </div>
+
                 </div>
 
     

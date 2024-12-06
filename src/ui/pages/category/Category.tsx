@@ -138,7 +138,8 @@ function Category() {
     if (userDetails.generatedSite >= userDetails.max_genration) {
       return;
     } else {
-      setLimitReached(false);
+      // setLimitReached(false);
+      window.location.href = "/wp-admin/admin.php?page=gravitywrite_settings";
     }
   };
 
@@ -233,7 +234,7 @@ function Category() {
       {limitReached && (
         <LimitReachedPopup
           onClose={handleClose}
-          limit={userDetails.generatedSite}
+          limit={userDetails.max_genration}
         />
       )}
 
@@ -293,7 +294,7 @@ function Category() {
                       <li
                         key={option.id}
                         onClick={() => handleSelect(option.name)}
-                        className="p-4 cursor-pointer hover:bg-[#EBF4FF] text-[#1E2022] text-base font-normal rounded-md"
+                        className="p-4 cursor-pointer hover:bg-[#EBF4FF] text-[#1E2022] rounded-md"
                       >
                         {option.name}
                       </li>

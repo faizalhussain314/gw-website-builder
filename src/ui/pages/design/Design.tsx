@@ -416,8 +416,9 @@ function Design() {
               </div>
               <div className="w-full">
                 <input
-                  className="w-full h-12 px-3 border rounded-md shadow-sm outline-none placeholder:zw-placeholder zw-input border-app-border focus:border-app-secondary focus:border-palatinate-blue-500 active:border-palatinate-blue-500 focus:border-2 pl-11 false"
+                  className="w-full h-12 px-3 border rounded-md shadow-sm outline-none placeholder:zw-placeholder zw-input border-app-border focus:border-app-secondary  pl-11 false"
                   value={category}
+                  disabled
                   onChange={handleSearch}
                   placeholder="Search categories..."
                 />

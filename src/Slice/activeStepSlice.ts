@@ -112,6 +112,12 @@ export const activeStepSlice = createSlice({
       state.contactform = { email: "", phoneNumber: "", address: "" };
       state.isFormDetailsLoaded = false;
       state.lastStep = "";
+      state.style = {
+        defaultColor: { primary: "", secondary: "" },
+        defaultFont: { primary: "", secondary: "" },
+        color: [],
+        fonts: [],
+      };
     },
 
     setTemplateList: (state, action: PayloadAction<templateList>) => {

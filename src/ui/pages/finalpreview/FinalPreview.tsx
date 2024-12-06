@@ -98,6 +98,7 @@ const FinalPreview: React.FC = () => {
   const [wordCountAlert, setwordCountAlert] = useState(false);
   const [afterContact, setAfterContact] = useState(false);
   const [showRefreshWarning, setShowRefreshWarning] = useState(false);
+  const [showImportWarning, setshowImportWarning] = useState(false);
   const contactDetails = useSelector(
     (state: RootState) => state.userData.contactform
   );
@@ -899,7 +900,7 @@ const FinalPreview: React.FC = () => {
           updateReduxPage({
             name: updatedPages[currentPageIndex].name, // Page name
             status: "Added", // Mark as generated
-            selected: true, // Set as selected
+            selected: true,
           })
         );
       } else if (action === "skip") {
@@ -907,8 +908,8 @@ const FinalPreview: React.FC = () => {
         updatedPages[currentPageIndex].selected = false;
         dispatch(
           updateReduxPage({
-            name: updatedPages[currentPageIndex].name, // Page name
-            status: "Skipped", // Mark as Added
+            name: updatedPages[currentPageIndex].name,
+            status: "Skipped",
             selected: false,
           })
         );
@@ -993,6 +994,36 @@ const FinalPreview: React.FC = () => {
         if (currentPageIndex === 0) {
           setPreviousClicked(true);
         }
+      } else {
+        console.log(
+          "if condition not worked",
+          nextPageIndex < updatedPages.length &&
+            currentPage != updatedPages[currentPageIndex]?.name
+        );
+        setSelectedPage(updatedPages[nextPageIndex].name);
+
+        const nextPageContent = generatedPage[updatedPages[nextPageIndex].name];
+        setShowIframe(true);
+        setIsPageGenerated(false);
+        setIsLoading(true);
+        if (nextPageContent) {
+          updateIframeSrc(nextPageContent[0]);
+          setShowIframe(false);
+        } else {
+          setShowIframe(true);
+          setIsPageGenerated(false);
+          setIsLoading(true);
+          const iframe: null | HTMLIFrameElement = iframeRef.current;
+          const nextPageSlug = updatedPages[nextPageIndex].slug;
+          if (iframe) {
+            iframe.src = `${iframeSrc}/${nextPageSlug}`;
+          }
+        }
+        // const iframe: null | HTMLIFrameElement = iframeRef.current;
+        // const nextPageSlug = updatedPages[nextPageIndex].slug;
+        // if (iframe) {
+        //   iframe.src = `${iframeSrc}/${nextPageSlug}`;
+        // }
       }
     }
   };
@@ -1167,7 +1198,22 @@ const FinalPreview: React.FC = () => {
       } else if (event.data.type === "generatedContent") {
         const pageName = event.data.pageName || selectedPage || "";
         const htmlContent = event.data.content;
-
+        // const PageList = [...pages];
+        const currentPageIndex = pages.findIndex(
+          (page) => page?.name === selectedPage
+        );
+        console.log(
+          "pages[findIndex].name",
+          pages[currentPageIndex]?.name,
+          currentPageIndex
+        );
+        dispatch(
+          updateReduxPage({
+            name: pages[currentPageIndex].name,
+            status: "Generated",
+            selected: true,
+          })
+        );
         setGeneratedPage((prevPages: any) => {
           const updatedPages = {
             ...prevPages,
@@ -1227,9 +1273,7 @@ const FinalPreview: React.FC = () => {
         navigate("/processing", { state: { pageName: selectedPage } });
       } else {
         setImportLoad(false);
-        alert(
-          "Site count exceeded. Please upgrade your plan or contact support."
-        );
+        setshowImportWarning(true);
       }
     } catch (error) {
       console.error(
@@ -1237,9 +1281,7 @@ const FinalPreview: React.FC = () => {
         error
       );
       setImportLoad(false);
-      alert(
-        "An error occurred while checking the site count. Please try again."
-      );
+      setapiIssue(true);
     }
   };
 
@@ -1278,7 +1320,7 @@ const FinalPreview: React.FC = () => {
     };
 
     storePagesInDB();
-  }, [savePageEndPoint, pages]);
+  }, [savePageEndPoint, pages, findIndex]);
 
   useEffect(() => {
     if (validReduxPages.length > 0) {
@@ -1440,6 +1482,12 @@ const FinalPreview: React.FC = () => {
               </div>
             )}
 
+          {showImportWarning && (
+            <UpgradePopup
+              onClose={() => setshowImportWarning(false)}
+              alertType="importLimit"
+            />
+          )}
           {showUpgradePopup && (
             <UpgradePopup
               onClose={() => setShowUpgradePopup(false)}

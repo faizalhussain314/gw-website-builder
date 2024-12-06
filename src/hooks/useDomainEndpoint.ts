@@ -10,7 +10,7 @@ const useDomainEndpoint = () => {
       return `${baseUrl}/${endpoint}`;
     } else {
       // console.error("Could not find wp-admin in the current URL.");
-      const tempurl = `https://manageable-molaison-n12l.zipwp.top/${endpoint}`;
+      const tempurl = `http://localhost/wordpress/${endpoint}`;
       // const tempurl = `https://plugin.mywpsite.org/${endpoint}`;
       return tempurl;
     }
