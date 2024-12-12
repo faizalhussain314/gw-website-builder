@@ -23,6 +23,8 @@ import axios from "axios";
 import { useSelector } from "react-redux";
 import { RootState } from "./store/store";
 import { fetchWpToken } from "./core/utils/fetchWpToken";
+import ApiErrorPopup from "./ui/component/dialogs/ApiErrorPopup";
+import ApiIssue from "./ui/component/dialogs/ApiIssue";
 
 const App = () => {
   const navigate = useNavigate();
@@ -36,10 +38,12 @@ const App = () => {
   const [fetchedData, setFetchedData] = useState<any>(null);
   const [firstLoad, setFirstLoad] = useState(true);
   const [isRefresh, setIsRefresh] = useState(false);
+  const [apiErrorPopup, setapiErrorPopup] = useState(false);
   const username = useSelector((state: RootState) => state.user.username);
 
   const { fetchContent, emptyTable } = useFetchContentData();
   const { getDomainFromEndpoint } = useDomainEndpoint();
+  const [erros, setErrors] = useState({ titile: "", message: "" });
 
   const fetchUserDetails = async () => {
     try {
@@ -70,11 +74,11 @@ const App = () => {
       if (result) {
         dispatch(setUsername(result[0]?.name));
         dispatch(setPlan(result[0]?.plan_detail));
-        dispatch(setWebsiteGenerationLimit(result[0]?.websiteGenerationLimit));
+        dispatch(setWebsiteGenerationLimit(parseInt(result[0]?.website_total)));
         dispatch(setEmail(result[0]?.email));
         dispatch(setGravator(result[0]?.gravator));
-        dispatch(setGeneratedSite(result[0]?.website_used || 1));
-        dispatch(setMaxGeneration(result[0]?.website_total || 6));
+        dispatch(setGeneratedSite(parseInt(result[0]?.website_used) || 1));
+        dispatch(setMaxGeneration(parseInt(result[0]?.website_total) || 6));
       }
     } catch (error) {
       if (axios.isAxiosError(error)) {
@@ -190,6 +194,7 @@ const App = () => {
 
   return (
     <div className="relative">
+      {/* {apiErrorPopup && <ApiIssue />} */}
       {showPopup && (
         <ContinuePopup
           onClose={() => setShowPopup(false)}

@@ -43,6 +43,7 @@ const initialState: UserDataState = {
     color: [],
     fonts: [],
   },
+  logoWidth: 150,
 };
 
 export const activeStepSlice = createSlice({
@@ -77,6 +78,9 @@ export const activeStepSlice = createSlice({
     },
     setLogo: (state, action: PayloadAction<string>) => {
       state.logo = action.payload;
+    },
+    setWidth: (state, action: PayloadAction<number>) => {
+      state.logoWidth = action.payload;
     },
     setFont: (state, action: PayloadAction<Color>) => {
       state.font.primary = action.payload.primary;
@@ -268,6 +272,7 @@ export const {
   setFormDetailsLoaded,
   setlastStep,
   setStyle,
+  setWidth,
 } = activeStepSlice.actions;
 
 export default activeStepSlice.reducer;

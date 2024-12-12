@@ -37,6 +37,7 @@ import { deleteStyle } from "../../../infrastructure/api/wordpress-api/final-pre
 import { sendIframeMessage } from "../../../core/utils/sendIframeMessage.utils.ts";
 import ApiErrorPopup from "../../component/dialogs/ApiErrorPopup.tsx";
 import WordLimit from "../../component/dialogs/WordLimit.tsx";
+import { updateIframeLogo } from "../../../core/utils/changeIframeLogo.ts";
 
 const FinalPreview: React.FC = () => {
   const reduxPages =
@@ -119,6 +120,7 @@ const FinalPreview: React.FC = () => {
   const fontFamily = useSelector((state: RootState) => state.userData.font);
   const Color = useSelector((state: RootState) => state.userData.color);
   const logoUrl = useSelector((state: RootState) => state.userData.logo);
+  const logoWidth = useSelector((state: RootState) => state.userData.logoWidth);
   const templateList = useSelector(
     (state: RootState) => state.userData.templateList
   );
@@ -166,49 +168,49 @@ const FinalPreview: React.FC = () => {
     updatePageStatus(selectedPage!, "Generated", false);
   };
 
-  // useEffect(() => {
-  //   // const fetchGeneratedPageStatus = async () => {
-  //   //   try {
-  //   //     const endpoint = getDomainFromEndpoint(
-  //   //       "/wp-json/custom/v1/get-generated-page-status"
-  //   //     );
-  //   //     if (!endpoint) {
-  //   //       console.error("Endpoint is not available.");
-  //   //       return;
-  //   //     }
+  useEffect(() => {
+    const fetchGeneratedPageStatus = async () => {
+      try {
+        const endpoint = getDomainFromEndpoint(
+          "/wp-json/custom/v1/get-generated-page-status"
+        );
+        if (!endpoint) {
+          console.error("Endpoint is not available.");
+          return;
+        }
 
-  //   //     const response = await axios.post(endpoint);
-  //   //     if (response.status === 200) {
-  //   //       const { data } = response;
+        const response = await axios.post(endpoint);
+        if (response.status === 200) {
+          const { data } = response;
 
-  //   //       if (data && Array.isArray(data)) {
-  //   //         const updatedPages = data.map((page) => ({
-  //   //           name: page.page_name,
-  //   //           slug: page.page_slug,
-  //   //           status: page.page_status,
-  //   //           selected: page.selected === "1",
-  //   //         }));
+          if (data && Array.isArray(data)) {
+            const updatedPages = data.map((page) => ({
+              name: page.page_name,
+              slug: page.page_slug,
+              status: page.page_status,
+              selected: page.selected === "1",
+            }));
 
-  //   //         // Update pages state with status from the API
-  //   //         setPages(updatedPages);
+            // Update pages state with status from the API
+            setPages(updatedPages);
 
-  //   //         // Automatically select the first non-generated/skipped page
-  //   //         const nextPage = updatedPages.find(
-  //   //           (page) => page.status !== "Generated" && page.status !== "Skipped"
-  //   //         );
-  //   //         if (nextPage) {
-  //   //           setSelectedPage(nextPage.name);
-  //   //         }
-  //   //       }
-  //   //     }
-  //   //   } catch (error) {
-  //   //     console.error("Error fetching generated page status:", error);
-  //   //   }
-  //   // };
+            // Automatically select the first non-generated/skipped page
+            const nextPage = updatedPages.find(
+              (page) => page.status !== "Generated" && page.status !== "Skipped"
+            );
+            if (nextPage) {
+              setSelectedPage(nextPage.name);
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching generated page status:", error);
+      }
+    };
 
-  //   // Call the function to fetch status when the component loads for the first time
-  //   fetchGeneratedPageStatus();
-  // }, [getDomainFromEndpoint]);
+    // Call the function to fetch status when the component loads for the first time
+    fetchGeneratedPageStatus();
+  }, [getDomainFromEndpoint]);
 
   // Ensure the effect runs when fetchGeneratedPageStatus is updated
 
@@ -298,19 +300,18 @@ const FinalPreview: React.FC = () => {
           template_name: templateName,
         });
 
-        if (
-          response.status === 200 &&
-          response.data &&
-          response.data.length > 0
-        ) {
-          const rawHtmlContent = response.data[0].html_data;
+        console.log("outside the response", response.data.data[0].html_data);
+
+        if (response.status === 200 && response.data) {
+          console.log("condition was true");
+          const rawHtmlContent = response.data.data[0].html_data;
           const cleanedHtmlContent = rawHtmlContent
             .replace(/^"(.*)"$/, "$1")
             .replace(/\\"/g, '"')
             .replace(/\\n/g, "")
             .replace(/\\t/g, "")
             .replace(/\\\\/g, "");
-
+          console.log("condition was true", response);
           setGeneratedPage((prevPages: any) => {
             const updatedPages = {
               ...prevPages,
@@ -444,6 +445,9 @@ const FinalPreview: React.FC = () => {
         return;
       }
 
+      if (!pageName) {
+        return;
+      }
       const updatedPages = pages.map((page) =>
         page.name === pageName
           ? { ...page, status: newStatus, selected: isSelected }
@@ -522,7 +526,7 @@ const FinalPreview: React.FC = () => {
       const response = await axios.post(endpoint);
 
       if (response.status === 200) {
-        const { data } = response;
+        const { data } = response.data;
         if (data && Array.isArray(data)) {
           setPages((prevPages) => {
             // Merge existing pages with API response data
@@ -532,6 +536,7 @@ const FinalPreview: React.FC = () => {
               );
               if (matchingPage) {
                 // Dispatch the Redux action to update the status and selection in the store
+
                 dispatch(
                   updateReduxPage({
                     name: page.name,
@@ -573,6 +578,9 @@ const FinalPreview: React.FC = () => {
 
   const updateContactDetails = (email, phone, address) => {
     if (iframeRef.current) {
+      if (!email || !phone || !address) {
+        return;
+      }
       iframeRef.current.contentWindow.postMessage(
         {
           type: "updateContactDetails",
@@ -589,8 +597,11 @@ const FinalPreview: React.FC = () => {
   // Replace these values with the actual email, phone, and address to be updated
 
   const onLoadMsg = async () => {
+    setwordCountAlert(false);
+    setLoaded(true);
     const iframe = iframeRef.current;
     const currentPage = pages.find((page) => page.name === selectedPage);
+
     const currentPageIndex = pages.findIndex(
       (page) => page.name === selectedPage
     );
@@ -600,6 +611,7 @@ const FinalPreview: React.FC = () => {
       contactDetails?.phoneNumber,
       contactDetails?.address
     );
+
     setfindIndex(currentPageIndex);
     sendNonClickable();
 
@@ -615,8 +627,6 @@ const FinalPreview: React.FC = () => {
         [selectedPage]: true,
       }));
     }
-
-    setLoaded(true);
 
     if (fontFamily) {
       iframe.contentWindow.postMessage(
@@ -637,42 +647,37 @@ const FinalPreview: React.FC = () => {
     }
 
     if (logoUrl) {
-      changeLogo(logoUrl);
+      updateIframeLogo(logoUrl, logoWidth);
     } else if (businessName) {
       sendIframeMessage("bussinessName", businessName);
     }
-
+    // console.log("selected page", generatedPage[selectedPage]);
     if (selectedPage && generatedPage[selectedPage]) {
       const existingContent = generatedPage[selectedPage][0];
       updateIframeSrc(existingContent);
       setShowIframe(false);
     } else if (selectedPage && !generatedPage[selectedPage]) {
-      const fetchresult = await fetchAndStorePageData(
+      setwordCountAlert(false);
+      const fetchResult = await fetchAndStorePageData(
         selectedPage,
         templateName,
         "5.5"
       );
-      // if (fetchresult) {
-      //   setShowGwLoader(false);
-      //   return;
-      // }
-      if (Color.primary && Color.secondary) {
-        iframe.contentWindow.postMessage(
-          {
-            type: "changeGlobalColors",
-            primaryColor: Color.primary,
-            secondaryColor: Color.secondary,
-          },
-          "*"
-        );
+
+      console.log("fetch result", fetchResult);
+
+      if (fetchResult) {
+        console.log("fetch result is true");
+        setShowGwLoader(false);
+        setwordCountAlert(false);
+        return;
       }
-      if (!fetchresult) {
+
+      if (!fetchResult) {
         console.log("result is empty or null");
         if (selectedPage === "Home" && pages[0].status !== "Generated") {
           setShowPopup(false);
           setIsLoading(true);
-          setShowGwLoader(true);
-          // setIsContentGenerating(true);
 
           try {
             const endpoint = getDomainFromEndpoint(
@@ -687,6 +692,10 @@ const FinalPreview: React.FC = () => {
             }
 
             const response = await axios.get(endpoint);
+
+            // if (generatedPage[selectedPage] && response?.data.status) {
+            //   return;
+            // }
 
             if (response?.data?.status === true) {
               const iframe = iframeRef.current;
@@ -711,40 +720,16 @@ const FinalPreview: React.FC = () => {
             } else if (response?.data?.status === false) {
               setIsContentGenerating(false);
               setwordCountAlert(true);
+              setShowGwLoader(false);
+              setIsLoading(false);
             }
           } catch (error) {
             console.error("Error while calling the word count API:", error);
             setapiIssue(true);
           } finally {
             setIsLoading(false);
-            // setShowGwLoader(false);
-            // setIsContentGenerating(false);
           }
-
-          // iframe.contentWindow.postMessage(
-          //   {
-          //     type: "start",
-          //     templateName: templateName,
-          //     pageName: currentPage?.slug,
-          //     bussinessname: businessName,
-          //     description: Description,
-          //   },
-          //   "*"
-          // );
         }
-        // if (
-        //   selectedPage !== "Home" &&
-        //   currentPage &&
-        //   currentPage.status !== "Generated" &&
-        //   currentPage.status !== "Skipped"
-        // ) {
-        //   setTimeout(() => {
-        //     setShowPopup(true);
-        //   }, 100);
-        // } else if (fetchresult) {
-        //   console.log("fetchresult is true");
-        //   // updatePageStatus(selectedPage, "Generated");
-        // }
       }
     } else {
       if (selectedPage && generatedPage[selectedPage] && isPageGenerated) {
@@ -753,7 +738,6 @@ const FinalPreview: React.FC = () => {
         setShowIframe(false);
         setShowGwLoader(false);
       } else if (selectedPage === "Home" && pages[0].status !== "Generated") {
-        // setIsContentGenerating(true);
         iframe.contentWindow.postMessage(
           {
             type: "start",
@@ -766,37 +750,7 @@ const FinalPreview: React.FC = () => {
           "*"
         );
       }
-
-      // if (
-      //   selectedPage !== "Home" &&
-      //   currentPage &&
-      //   currentPage.status !== "Generated" &&
-      //   currentPage.status !== "Skipped"
-      // ) {
-      //   setTimeout(() => {
-      //     setShowPopup(true);
-      //   }, 100);
-      // }
     }
-
-    // Additional handling based on the page type and generation status
-    // if (selectedPage && generatedPage[selectedPage] && isPageGenerated) {
-    //   const existingContent = generatedPage[selectedPage][0];
-    //   updateIframeSrc(existingContent);
-    //   setShowIframe(false);
-    // } else if (selectedPage === "Home" && pages[0].status !== "Generated") {
-    //   iframe.contentWindow.postMessage(
-    //     {
-    //       type: "start",
-    //       templateName: templateName,
-    //       pageName: currentPage?.slug,
-    //       bussinessname: businessName,
-    //       description: Description,
-    // template_id: templateList?.id,
-    //     },
-    //     "*"
-    //   );
-    // }
 
     if (!isContentGenerating) {
       setIsLoading(false);
@@ -827,20 +781,19 @@ const FinalPreview: React.FC = () => {
   };
 
   const togglePage = (page: string) => {
-    if (page === selectedPage) return; // Prevent reselecting the same page
+    if (page === selectedPage) return;
     setAfterContact(false);
-    setSelectedPage(page);
 
+    setSelectedPage(page);
+    setwordCountAlert(false);
     const existingContent = generatedPage[page];
 
     if (existingContent) {
-      // If the content for the page is already generated
-      updateIframeSrc(existingContent[0]); // Update the iframe source with the generated content
+      updateIframeSrc(existingContent[0]);
       setShowIframe(false);
       setIsPageGenerated(true);
       setShowGwLoader(false);
     } else {
-      // If the page content is not yet generated
       setShowIframe(true);
       setIsPageGenerated(false);
       setIsLoading(true);
@@ -1105,6 +1058,15 @@ const FinalPreview: React.FC = () => {
           );
         }
       } else {
+        setShowGwLoader(false);
+        setIsContentGenerating(false);
+        setIsLoading(false);
+        if (selectedPage === generatedPage[selectedPage]) {
+          console.log("page was true");
+          setwordCountAlert(false);
+          setIsContentGenerating(false);
+          setIsLoading(false);
+        }
         setwordCountAlert(true);
       }
     } catch (error) {
@@ -1112,7 +1074,7 @@ const FinalPreview: React.FC = () => {
       setapiIssue(true);
     } finally {
       setIsLoading(false);
-      setShowGwLoader(true);
+      // setShowGwLoader(true);
       setIsContentGenerating(false);
     }
   };
@@ -1376,15 +1338,6 @@ const FinalPreview: React.FC = () => {
       window.removeEventListener("beforeunload", handleBeforeUnload);
     };
   }, [isContentGenerating, showGwLoader]);
-
-  const handleRefreshConfirm = () => {
-    setShowRefreshWarning(false);
-    window.location.reload();
-  };
-
-  const handleRefreshCancel = () => {
-    setShowRefreshWarning(false);
-  };
 
   return (
     <div className="h-screen flex font-[inter] w-screen">

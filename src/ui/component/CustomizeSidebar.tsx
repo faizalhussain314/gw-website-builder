@@ -1,9 +1,14 @@
 import React, { useState, useEffect, useRef } from "react";
 import GravityWriteLogo from "../../assets/logo.svg";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+// import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { setFont, setColor, setLogo } from "../../Slice/activeStepSlice";
+import {
+  setFont,
+  setColor,
+  setLogo,
+  setWidth,
+} from "../../Slice/activeStepSlice";
 import { RootState } from "../../store/store";
 import useDomainEndpoint from "../../hooks/useDomainEndpoint";
 import useStoreContent from "../../hooks/useStoreContent ";
@@ -16,8 +21,14 @@ import { Slider } from "@mui/material";
 import { sendIframeMessage } from "../../core/utils/sendIframeMessage.utils";
 import { uploadLogo } from "../../core/utils/customizesidebar/logoUploadUtils";
 import uploadLogoIcon from "../../assets/icons/uploadfile.svg";
+import axios from "axios";
+import LimitReachedPopup from "./dialogs/LimitReachedPopup";
+import WordLimit from "./dialogs/WordLimit";
+import UpgradeWords from "./dialogs/UpgradeWords";
 
-const CustomizeSidebar: React.FC = () => {
+const CustomizeSidebar: React.FC<{
+  setLimitReached: React.Dispatch<React.SetStateAction<boolean>>;
+}> = ({ setLimitReached }) => {
   const [selectedColor, setSelectedColor] = useState<SelectedColor>({
     primary: "",
     secondary: "",
@@ -38,12 +49,14 @@ const CustomizeSidebar: React.FC = () => {
   const [logoSize, setLogoSize] = useState<number>(150);
 
   const [loading, setLoading] = useState(false);
+  const [wordCountLoader, setWordCountLoader] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  // const [limitReached, setLimitReached] = useState(true);
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -62,7 +75,7 @@ const CustomizeSidebar: React.FC = () => {
 
   const handleChange = (event: Event, newValue: number | number[]) => {
     setValue(newValue as number);
-
+    dispatch(setWidth(newValue as number));
     sendIframeMessage("changeLogoSize", { size: newValue });
   };
 
@@ -162,7 +175,26 @@ const CustomizeSidebar: React.FC = () => {
     }
   };
 
-  const nextPage = () => navigate("/final-preview");
+  const nextPage = async () => {
+    setWordCountLoader(true);
+    try {
+      const endpoint = getDomainFromEndpoint(
+        "wp-json/custom/v1/check-word-count"
+      );
+
+      const response = await axios.get(endpoint);
+
+      if (response?.data?.status === true) {
+        navigate("/final-preview");
+      } else if (response?.data?.status === false) {
+        setWordCountLoader(false);
+        setLimitReached(true);
+      }
+    } catch (error) {
+      console.error("Error while calling the word count API:", error);
+      setWordCountLoader(false);
+    }
+  };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -292,7 +324,33 @@ const CustomizeSidebar: React.FC = () => {
           onClick={nextPage}
           className="px-2 py-3 text-white rounded-md tertiary text-sm sm:mt-2 w-full"
         >
-          Start Building
+          {wordCountLoader ? (
+            <div className="flex min-w-[65px] justify-center items-center">
+              {" "}
+              <svg
+                className="w-5 h-5 text-white animate-spin"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                ></path>
+              </svg>
+            </div>
+          ) : (
+            "Start Building"
+          )}
         </button>
       </div>
     </div>

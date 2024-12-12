@@ -41,6 +41,7 @@ function Category() {
   const [loading, setLoading] = useState(false);
   const [mainLoader, setMainLoader] = useState(false);
   const [apiError, setApiError] = useState(false);
+  const [erros, setErrors] = useState({ titile: "", message: "" });
   const wp_token = useSelector((state: RootState) => state.user.wp_token);
 
   useEffect(() => {
@@ -54,6 +55,7 @@ function Category() {
         setCategoryList(categories);
       } catch (err) {
         console.error("Error fetching category list:", err);
+
         setError("Failed to fetch category list. Please try again.");
       }
     };
@@ -146,12 +148,11 @@ function Category() {
   // };
 
   const handleClose = () => {
-    if (userDetails.generatedSite >= userDetails.max_genration) {
-      return;
-    } else {
-      // setLimitReached(false);
-      window.location.href = "/wp-admin/admin.php?page=gravitywrite_settings";
-    }
+    // if (userDetails.generatedSite >= userDetails.max_genration) {
+    //   return;
+    // } else {
+    //   // setLimitReached(false);
+    window.location.href = "/wp-admin/admin.php?page=gravitywrite_settings";
   };
 
   useEffect(() => {
@@ -159,6 +160,7 @@ function Category() {
       setLimitReached(true);
     }
   }, [userDetails]);
+
   useEffect(() => {
     if (location.hash.includes("/category")) {
       const queryParams = new URLSearchParams(location.hash.split("?")[1]);

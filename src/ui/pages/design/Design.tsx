@@ -115,7 +115,15 @@ function Design() {
       setshowError(false);
       settemplateList(templates);
     } catch (error) {
-      console.error("Error fetching templates:", error);
+      if (error.response?.status === 401) {
+        console.log("Error fetching templates: Unauthorized (401)");
+      } else {
+        console.error(
+          "Error fetching templates:",
+          error.response?.status || error.message
+        );
+      }
+
       setshowError(true); // Show error if the API call fails
     }
   };

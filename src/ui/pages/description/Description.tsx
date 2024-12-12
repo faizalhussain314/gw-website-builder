@@ -41,6 +41,9 @@ function Description() {
     (state: RootState) => state.userData.templateList
   );
   const [wordLimitError, setwordLimitError] = useState(false);
+  const [showWordCount, setShowWordCount] = useState(false);
+  const [description1Error, setDescription1Error] = useState<boolean>(false);
+  const [description2Error, setDescription2Error] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchInitialDescriptions = async () => {
@@ -71,6 +74,27 @@ function Description() {
       updateDescriptions("description2", description2, getDomainFromEndpoint);
     }
   }, [description2, isAIWriting, getDomainFromEndpoint]);
+  const [visibleWordCount, setVisibleWordCount] = useState<1 | 2 | null>(null);
+
+  const validateFields = () => {
+    let isValid = true;
+
+    if (!description1.trim()) {
+      setDescription1Error(true); // Set error state for description1
+      isValid = false;
+    } else {
+      setDescription1Error(false); // Clear error state for description1
+    }
+
+    if (!description2.trim()) {
+      setDescription2Error(true); // Set error state for description2
+      isValid = false;
+    } else {
+      setDescription2Error(false); // Clear error state for description2
+    }
+
+    return isValid;
+  };
 
   const handleAIWrite = async (type: 1 | 2) => {
     if (type === 1) {
@@ -105,16 +129,16 @@ function Description() {
       }
     } catch (error) {
       console.error("Error checking word count:", error);
-
       return;
     }
 
     setIsAIWriting((prev) => ({ ...prev, [type]: true }));
+    setVisibleWordCount(type); // Show word count for the current description
 
     try {
       const reader = await fetchDescriptionStream(
-        dispatch, // Add dispatch
-        getDomainFromEndpoint, // Add getDomainFromEndpoint
+        dispatch,
+        getDomainFromEndpoint,
         businessName,
         category,
         type,
@@ -144,6 +168,19 @@ function Description() {
                 setIsAIWriting((prev) => ({ ...prev, [type]: false }));
                 setLoader1(false);
                 setLoader2(false);
+
+                // Hide word count after 7000ms
+                // Inside `handleAIWrite` function
+                setVisibleWordCount(type); // Show word count for the current description
+
+                setTimeout(() => {
+                  if (visibleWordCount === type) {
+                    setVisibleWordCount(null); // Hide the word count after 7000ms
+                  }
+                }, 7000);
+
+                // Ensure this logic works for both description1 and description2
+
                 return;
               }
 
@@ -162,6 +199,11 @@ function Description() {
                   const newDescription = prev + deltaContent;
                   completeDescription = newDescription;
                   dispatch(setDescriptionTwo(newDescription));
+                  setTimeout(() => {
+                    if (visibleWordCount === type) {
+                      setVisibleWordCount(null);
+                    }
+                  }, 7000);
                   return newDescription;
                 });
               }
@@ -213,44 +255,58 @@ function Description() {
   };
 
   const setReduxValue = async () => {
-    if (!description1 && !description2) {
-      setError("Both description are required");
-    } else if (!description1) {
-      setError("service descriptions is required.");
-    } else if (!description2) {
-      setError("step descriptions is required.");
+    let errorMessage = "";
+
+    const description1WordCount = calculateWordCount(description1);
+    const description2WordCount = calculateWordCount(description2);
+
+    if (!description1.trim() && !description2.trim()) {
+      setDescription1Error(true);
+      setDescription2Error(true);
+      errorMessage = "Both descriptions are required.";
+    } else if (description1WordCount < 5) {
+      setDescription1Error(true);
+      setDescription2Error(false);
+      errorMessage = "Services description must have at least 5 words.";
+    } else if (description2WordCount < 5) {
+      setDescription2Error(true);
+      setDescription1Error(false);
+      errorMessage = "Step description must have at least 5 words.";
     } else {
+      setDescription1Error(false);
+      setDescription2Error(false);
+      setError(null);
       setLoading(true);
       dispatch(setDescriptionOne(description1));
       dispatch(setDescriptionTwo(description2));
       setLoading(false);
       navigate("/contact");
+      return;
     }
+
+    setError(errorMessage);
   };
 
-  const getInputClass = (descriptionType: "des1" | "des2", error: string) => {
+  const getInputClass = (descriptionType: "des1" | "des2") => {
     let base =
       "bg-white px-4 py-2.5 border h-[100px] border-[rgba(205,212,219,1)] w-[96%] mt-5 rounded-lg placeholder:font-normal text-[#5f5f5f] focus:border-palatinate-blue-500 active:border-palatinate-blue-500 active:outline-palatinate-blue-500 focus:outline-palatinate-blue-500 ml-[50px]";
 
-    if (
-      descriptionType === "des1" &&
-      error === "service descriptions is required."
-    ) {
-      base += " border-red-500";
+    if (descriptionType === "des1" && description1Error) {
+      base += " border-red-500"; // Add red border for description1 errors
     }
 
-    if (
-      descriptionType === "des2" &&
-      error === "step descriptions is required."
-    ) {
-      base += " border-red-500";
-    }
-
-    if (error === "Both description are required") {
-      base += " border-red-500";
+    if (descriptionType === "des2" && description2Error) {
+      base += " border-red-500"; // Add red border for description2 errors
     }
 
     return base;
+  };
+
+  const calculateWordCount = (text: string) => {
+    return text
+      .trim()
+      .split(/\s+/)
+      .filter((word) => word.length > 0).length;
   };
 
   return (
@@ -306,14 +362,28 @@ function Description() {
             </div>
             <textarea
               // className={getInputClass(des1)}
-              className={getInputClass("des1", error)}
+              className={getInputClass("des1")}
               value={description1}
               onChange={(e) => {
-                const newDescription = e.target.value.trimStart();
+                const newValue = e.target.value.trimStart();
 
-                setDescription1(newDescription);
-                dispatch(setDescriptionOne(newDescription));
-                if (error) setError(null);
+                setDescription1(newValue);
+                dispatch(setDescriptionOne(newValue));
+                const wordCount = calculateWordCount(newValue);
+
+                if (newValue) {
+                  setDescription1Error(false);
+                  if (!description2.trim()) {
+                    setError("Step description is required.");
+                  } else if (wordCount < 5) {
+                    setError(
+                      "Services description must have at least 5 words."
+                    );
+                    setDescription1Error(true);
+                  } else {
+                    setError(null);
+                  }
+                }
               }}
             />
             {/* AI Write Button for Description 1 */}
@@ -324,7 +394,7 @@ function Description() {
                 }`}
               >
                 <div
-                  className="flex gap-2 text-palatinate-blue-600 hover:text-palatinate-blue-800"
+                  className="flex gap-2 text-palatinate-blue-600 hover:text-palatinate-blue-800 flex-1"
                   onClick={() => {
                     loader2 || loader1 ? "" : handleAIWrite(1);
                   }}
@@ -333,35 +403,40 @@ function Description() {
                     src="https://plugin.mywpsite.org/sparkles.svg"
                     alt="sparkle"
                   />
-                  <span className="text-sm font-normal transition duration-150 ease-in-out">
-                    Write Using AI
+                  <span className="text-sm font-normal transition duration-150 ease-in-out flex-1 flex items-center">
+                    Write Using AI{" "}
+                    {loader1 && (
+                      <button type="button" disabled className="ml-2">
+                        <svg
+                          className="text-palatinate-blue-600 animate-spin"
+                          viewBox="0 0 64 64"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="16"
+                          height="16"
+                        >
+                          <path
+                            d="M32 3C35.8083 3 39.5794 3.75011 43.0978 5.20749C46.6163 6.66488 49.8132 8.80101 52.5061 11.4939C55.199 14.1868 57.3351 17.3837 58.7925 20.9022C60.2499 24.4206 61 28.1917 61 32C61 35.8083 60.2499 39.5794 58.7925 43.0978C57.3351 46.6163 55.199 49.8132 52.5061 52.5061C49.8132 55.199 46.6163 57.3351 43.0978 58.7925C39.5794 60.2499 35.8083 61 32 61C28.1917 61 24.4206 60.2499 20.9022 58.7925C17.3837 57.3351 14.1868 55.199 11.4939 52.5061C8.801 49.8132 6.66487 46.6163 5.20749 43.0978C3.7501 39.5794 3 35.8083 3 32C3 28.1917 3.75011 24.4206 5.2075 20.9022C6.66489 17.3837 8.80101 14.1868 11.4939 11.4939C14.1868 8.80099 17.3838 6.66487 20.9022 5.20749C24.4206 3.7501 28.1917 3 32 3L32 3Z"
+                            stroke="currentColor"
+                            stroke-width="5"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          ></path>
+                          <path
+                            d="M32 3C36.5778 3 41.0906 4.08374 45.1692 6.16256C49.2477 8.24138 52.7762 11.2562 55.466 14.9605C58.1558 18.6648 59.9313 22.9614 60.6315 27.4996"
+                            stroke="#E5E7EB"
+                            stroke-width="5"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          ></path>
+                        </svg>
+                      </button>
+                    )}
                   </span>
-                  {loader1 && (
-                    <button type="button" disabled>
-                      <svg
-                        className="text-palatinate-blue-600 animate-spin"
-                        viewBox="0 0 64 64"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="16"
-                        height="16"
-                      >
-                        <path
-                          d="M32 3C35.8083 3 39.5794 3.75011 43.0978 5.20749C46.6163 6.66488 49.8132 8.80101 52.5061 11.4939C55.199 14.1868 57.3351 17.3837 58.7925 20.9022C60.2499 24.4206 61 28.1917 61 32C61 35.8083 60.2499 39.5794 58.7925 43.0978C57.3351 46.6163 55.199 49.8132 52.5061 52.5061C49.8132 55.199 46.6163 57.3351 43.0978 58.7925C39.5794 60.2499 35.8083 61 32 61C28.1917 61 24.4206 60.2499 20.9022 58.7925C17.3837 57.3351 14.1868 55.199 11.4939 52.5061C8.801 49.8132 6.66487 46.6163 5.20749 43.0978C3.7501 39.5794 3 35.8083 3 32C3 28.1917 3.75011 24.4206 5.2075 20.9022C6.66489 17.3837 8.80101 14.1868 11.4939 11.4939C14.1868 8.80099 17.3838 6.66487 20.9022 5.20749C24.4206 3.7501 28.1917 3 32 3L32 3Z"
-                          stroke="currentColor"
-                          stroke-width="5"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                        ></path>
-                        <path
-                          d="M32 3C36.5778 3 41.0906 4.08374 45.1692 6.16256C49.2477 8.24138 52.7762 11.2562 55.466 14.9605C58.1558 18.6648 59.9313 22.9614 60.6315 27.4996"
-                          stroke="#E5E7EB"
-                          stroke-width="5"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                        ></path>
-                      </svg>
-                    </button>
+                </div>
+                <div>
+                  {visibleWordCount === 1 && (
+                    <span>{calculateWordCount(description1)} words used</span>
                   )}
                 </div>
               </div>
@@ -395,15 +470,27 @@ function Description() {
             </div>
             <textarea
               // className={`bg-white p-4 border h-[100px] border-[rgba(205,212,219,1)] w-[96%] mt-4 placeholder:font-normal rounded-lg text-[#5f5f5f] ${
-              //   error && "border-red-500 rounded-lg"
+              //   error && "border-red-500 first-line: rounded-lg"
               // } focus:border-palatinate-blue-500 active:border-palatinate-blue-500 active:outline-palatinate-blue-500 focus:outline-palatinate-blue-500 ml-[50px]`}
-              className={getInputClass("des2", error)}
+              className={getInputClass("des2")}
               value={description2}
               onChange={(e) => {
-                const newDescription = e.target.value.trimStart();
-                setDescription2(newDescription);
-                dispatch(setDescriptionTwo(newDescription));
-                if (error) setError(null);
+                const newValue = e.target.value.trimStart();
+                setDescription2(newValue);
+                dispatch(setDescriptionTwo(newValue));
+                const wordCount = calculateWordCount(newValue);
+
+                if (newValue) {
+                  setDescription2Error(false);
+                  if (!description1.trim()) {
+                    setError("Services description is required.");
+                  } else if (wordCount < 5) {
+                    setError("Step description must have at least 5 words.");
+                    setDescription2Error(true);
+                  } else {
+                    setError(null);
+                  }
+                }
               }}
             />
             {/* AI Write Button for Description 2 */}
@@ -414,7 +501,7 @@ function Description() {
                 }`}
               >
                 <div
-                  className="flex gap-2 text-palatinate-blue-600 hover:text-palatinate-blue-800"
+                  className="flex gap-2 text-palatinate-blue-600 hover:text-palatinate-blue-800 flex-1"
                   onClick={() => {
                     loader2 || loader1 ? "" : handleAIWrite(2);
                   }}
@@ -423,39 +510,45 @@ function Description() {
                     src="https://plugin.mywpsite.org/sparkles.svg"
                     alt="sparkle"
                   />
-                  <span className="text-sm font-normal transition duration-150 ease-in-out">
-                    Write Using AI
+                  <span className="text-sm font-normal transition duration-150 ease-in-out flex-1 flex items-center">
+                    Write Using AI{" "}
+                    {loader2 && (
+                      <button type="button" disabled className="ml-2">
+                        <svg
+                          className="text-palatinate-blue-600 animate-spin"
+                          viewBox="0 0 64 64"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="16"
+                          height="16"
+                        >
+                          <path
+                            d="M32 3C35.8083 3 39.5794 3.75011 43.0978 5.20749C46.6163 6.66488 49.8132 8.80101 52.5061 11.4939C55.199 14.1868 57.3351 17.3837 58.7925 20.9022C60.2499 24.4206 61 28.1917 61 32C61 35.8083 60.2499 39.5794 58.7925 43.0978C57.3351 46.6163 55.199 49.8132 52.5061 52.5061C49.8132 55.199 46.6163 57.3351 43.0978 58.7925C39.5794 60.2499 35.8083 61 32 61C28.1917 61 24.4206 60.2499 20.9022 58.7925C17.3837 57.3351 14.1868 55.199 11.4939 52.5061C8.801 49.8132 6.66487 46.6163 5.20749 43.0978C3.7501 39.5794 3 35.8083 3 32C3 28.1917 3.75011 24.4206 5.2075 20.9022C6.66489 17.3837 8.80101 14.1868 11.4939 11.4939C14.1868 8.80099 17.3838 6.66487 20.9022 5.20749C24.4206 3.7501 28.1917 3 32 3L32 3Z"
+                            stroke="currentColor"
+                            stroke-width="5"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          ></path>
+                          <path
+                            d="M32 3C36.5778 3 41.0906 4.08374 45.1692 6.16256C49.2477 8.24138 52.7762 11.2562 55.466 14.9605C58.1558 18.6648 59.9313 22.9614 60.6315 27.4996"
+                            stroke="#E5E7EB"
+                            stroke-width="5"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          ></path>
+                        </svg>
+                      </button>
+                    )}
                   </span>
-                  {loader2 && (
-                    <button type="button" disabled>
-                      <svg
-                        className="text-palatinate-blue-600 animate-spin"
-                        viewBox="0 0 64 64"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="16"
-                        height="16"
-                      >
-                        <path
-                          d="M32 3C35.8083 3 39.5794 3.75011 43.0978 5.20749C46.6163 6.66488 49.8132 8.80101 52.5061 11.4939C55.199 14.1868 57.3351 17.3837 58.7925 20.9022C60.2499 24.4206 61 28.1917 61 32C61 35.8083 60.2499 39.5794 58.7925 43.0978C57.3351 46.6163 55.199 49.8132 52.5061 52.5061C49.8132 55.199 46.6163 57.3351 43.0978 58.7925C39.5794 60.2499 35.8083 61 32 61C28.1917 61 24.4206 60.2499 20.9022 58.7925C17.3837 57.3351 14.1868 55.199 11.4939 52.5061C8.801 49.8132 6.66487 46.6163 5.20749 43.0978C3.7501 39.5794 3 35.8083 3 32C3 28.1917 3.75011 24.4206 5.2075 20.9022C6.66489 17.3837 8.80101 14.1868 11.4939 11.4939C14.1868 8.80099 17.3838 6.66487 20.9022 5.20749C24.4206 3.7501 28.1917 3 32 3L32 3Z"
-                          stroke="currentColor"
-                          stroke-width="5"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                        ></path>
-                        <path
-                          d="M32 3C36.5778 3 41.0906 4.08374 45.1692 6.16256C49.2477 8.24138 52.7762 11.2562 55.466 14.9605C58.1558 18.6648 59.9313 22.9614 60.6315 27.4996"
-                          stroke="#E5E7EB"
-                          stroke-width="5"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                        ></path>
-                      </svg>
-                    </button>
+                </div>
+                <div>
+                  {visibleWordCount === 2 && (
+                    <span>{calculateWordCount(description2)} words used</span>
                   )}
                 </div>
               </div>
             </div>
+
             {error && (
               <div className="text-red-500 mt-4 ml-[50px]">{error}</div>
             )}

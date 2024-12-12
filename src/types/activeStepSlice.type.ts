@@ -82,4 +82,5 @@ export interface UserDataState {
   isFormDetailsLoaded: boolean;
   lastStep: string;
   style: StyleState;
+  logoWidth: number;
 }
