@@ -120,6 +120,7 @@ const App = () => {
 
         if (
           hasData &&
+          username &&
           !isSessionActive &&
           !isRefresh &&
           location.pathname === "/"
@@ -150,6 +151,7 @@ const App = () => {
     isSessionActive,
     isRefresh,
     setSessionActive,
+    fetchUserDetails,
   ]);
 
   useEffect(() => {

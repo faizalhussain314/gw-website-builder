@@ -1,7 +1,5 @@
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { Link, useNavigate } from "react-router-dom";
 import MainLayout from "../../Layouts/MainLayout";
-import useStoreContent from "../../../hooks/useStoreContent ";
 import { useState, useEffect } from "react";
 import useDomainEndpoint from "../../../hooks/useDomainEndpoint";
 import { useDispatch, useSelector } from "react-redux";
@@ -13,6 +11,7 @@ import PhoneInput from "react-phone-number-input";
 import flags from "react-phone-number-input/flags";
 import { isValidPhoneNumber } from "react-phone-number-input";
 import arrow from "../../../assets/arrow.svg";
+import { handleEnterKey } from "../../../core/utils/handleEnterKey";
 
 function Contact() {
   const ContactFormRedux = useSelector(
@@ -166,6 +165,17 @@ function Contact() {
     }
   };
 
+  useEffect(() => {
+    const isValid =
+      !!formData.email &&
+      !formError.email &&
+      !!formData.phoneNumber &&
+      !formError.phoneNumber &&
+      !!formData.address;
+
+    setIsFormValid(isValid); // `isValid` is now always a boolean
+  }, [formData, formError]);
+
   // useEffect(() => {
   //   const isValid =
   //     validateEmail() &&
@@ -176,7 +186,15 @@ function Contact() {
 
   return (
     <MainLayout>
-      <form onSubmit={handleSubmit}>
+      <form
+        onSubmit={handleSubmit}
+        onKeyDown={(event) =>
+          handleEnterKey({
+            event,
+            callback: handleSubmit,
+          })
+        }
+      >
         <div className="bg-[#F9FCFF] w-full p-10">
           <h1 className="text-txt-black-600 font-semibold text-3xl font-[inter] mb-2.5">
             How can people get in touch with {businessName} {category}
@@ -303,7 +321,9 @@ function Contact() {
               {/* <Link to={"/design"}> */}
               <button
                 className={`tertiary px-[30px] py-[15px] text-base text-white sm:mt-2 font-medium rounded-md w-[150px] min-h-[54px] ${
-                  !isFormValid ? "bg-[#ccc] cursor-not-allowed" : "bg-[#125BFF]"
+                  !isFormValid
+                    ? "bg-[#ccc] cursor-not-allowed"
+                    : "bg-[#125BFF] cursor-pointer"
                 } `}
                 type="submit"
               >

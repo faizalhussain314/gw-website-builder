@@ -678,7 +678,7 @@ const FinalPreview: React.FC = () => {
         if (selectedPage === "Home" && pages[0].status !== "Generated") {
           setShowPopup(false);
           setIsLoading(true);
-
+          setShowGwLoader(true);
           try {
             const endpoint = getDomainFromEndpoint(
               "wp-json/custom/v1/check-word-count"
@@ -704,6 +704,7 @@ const FinalPreview: React.FC = () => {
               );
 
               if (currentPage && currentPage.status !== "Generated") {
+                setShowGwLoader(true);
                 iframe.contentWindow.postMessage(
                   {
                     type: "start",
@@ -728,6 +729,7 @@ const FinalPreview: React.FC = () => {
             setapiIssue(true);
           } finally {
             setIsLoading(false);
+            setShowGwLoader(false);
           }
         }
       }
@@ -749,6 +751,7 @@ const FinalPreview: React.FC = () => {
           },
           "*"
         );
+        // setShowGwLoader(true);
       }
     }
 

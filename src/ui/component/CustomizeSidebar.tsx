@@ -22,9 +22,7 @@ import { sendIframeMessage } from "../../core/utils/sendIframeMessage.utils";
 import { uploadLogo } from "../../core/utils/customizesidebar/logoUploadUtils";
 import uploadLogoIcon from "../../assets/icons/uploadfile.svg";
 import axios from "axios";
-import LimitReachedPopup from "./dialogs/LimitReachedPopup";
-import WordLimit from "./dialogs/WordLimit";
-import UpgradeWords from "./dialogs/UpgradeWords";
+import { useDebounce } from "use-debounce";
 
 const CustomizeSidebar: React.FC<{
   setLimitReached: React.Dispatch<React.SetStateAction<boolean>>;
@@ -44,6 +42,10 @@ const CustomizeSidebar: React.FC<{
   );
   const businessName = useSelector(
     (state: RootState) => state.userData.businessName
+  );
+
+  const darkTheme = useSelector(
+    (state: RootState) => state.userData.templateList.dark_theme
   );
 
   const [logoSize, setLogoSize] = useState<number>(150);
@@ -92,13 +94,16 @@ const CustomizeSidebar: React.FC<{
 
   useEffect(() => {
     if (businessName) {
-      console.log("event started");
       window.parent.postMessage(
-        { type: "businessName", text: businessName },
+        {
+          type: "businessName",
+          text: businessName,
+          dark_theme: darkTheme ?? false,
+        },
         "*"
       );
     }
-  }, [businessName]);
+  }, [businessName, darkTheme]);
   const handleFontChange = async (fontCombination: SelectedFont) => {
     setSelectedFont(fontCombination);
     dispatch(setFont(fontCombination));
@@ -108,6 +113,7 @@ const CustomizeSidebar: React.FC<{
 
     sendIframeMessage("changeFont", { font: fontCombination });
   };
+  const [debouncedValue] = useDebounce(value, 300);
 
   const handleColorChange = async (color: SelectedColor, store = true) => {
     setSelectedColor(color);
@@ -195,6 +201,23 @@ const CustomizeSidebar: React.FC<{
       setWordCountLoader(false);
     }
   };
+
+  useEffect(() => {
+    const updateLogoWidth = async () => {
+      try {
+        const endpoint = getDomainFromEndpoint(
+          "wp-json/custom/v1/set-logo-width"
+        );
+        await axios.post(endpoint, { width: debouncedValue });
+      } catch (error) {
+        console.error("Error while setting logo width:", error);
+      }
+    };
+
+    if (debouncedValue) {
+      updateLogoWidth();
+    }
+  }, [debouncedValue, getDomainFromEndpoint]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

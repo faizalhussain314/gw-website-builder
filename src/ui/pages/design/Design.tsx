@@ -26,6 +26,7 @@ import { fetchWpToken } from "../../../core/utils/fetchWpToken";
 import arrow from "../../../assets/arrow.svg";
 import info from "../../../assets/icons/info.svg";
 import { Tooltip } from "@mui/material";
+import { handleEnterKey } from "../../../core/utils/handleEnterKey";
 
 const API_URL = import.meta.env.VITE_API_BACKEND_URL;
 
@@ -362,6 +363,11 @@ function Design() {
   // const handlePopOverClose = () =>{
 
   // }
+
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLFormElement>) => {
+    handleEnterKey({ event, callback: handleContinue }); // Use your utility function
+  };
+
   return (
     <MainLayout>
       {showPopup && (
@@ -396,7 +402,11 @@ function Design() {
             below.
           </p>
 
-          <form className="my-8" onSubmit={(e) => e.preventDefault}>
+          <form
+            className="my-8"
+            onSubmit={(e) => e.preventDefault}
+            onKeyDown={handleKeyDown}
+          >
             <div className="relative flex items-center">
               <div className="flex items-center h-12 mr-0">
                 <div className="absolute flex items-center left-3">
