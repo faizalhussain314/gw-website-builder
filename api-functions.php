@@ -4,6 +4,12 @@
 // Register REST API routes
 add_action('rest_api_init', function () {
     
+    register_rest_route('custom/v1', '/check-previous-import', array(
+        'methods' => WP_REST_Server::CREATABLE,
+        'callback' => 'check_previous_import',
+        'permission_callback' => '__return_true'
+    ));
+    
     register_rest_route('custom/v1', '/get-user-token', [
         'methods' => 'GET',
         'callback' => 'get_logged_user_token',
@@ -833,8 +839,8 @@ function fetch_html_data($request) {
     $template_name = sanitize_text_field($request->get_param('template_name'));
 
     $query = $wpdb->prepare(
-        "SELECT html_data FROM $table_name WHERE version_name = %s AND page_name = %s AND template_name = %s",
-        $version_name, $page_name, $template_name
+        "SELECT html_data FROM $table_name WHERE version_name = %s AND page_name = %s",
+        $version_name, $page_name
     );
 
     $results = $wpdb->get_results($query, ARRAY_A);
@@ -1468,6 +1474,26 @@ function delete_all_styles(WP_REST_Request $request) {
 }
 
 //user flow starts here
+
+
+function check_previous_import() {
+    // Get the value of the option 'is_imported'
+    $is_imported = get_option('is_imported');
+    // Check if 'is_imported' is set to 'yes'
+    if ($is_imported === 'yes') {
+        
+        return new WP_REST_Response([
+            'value' => true
+        ], 200);
+    }
+    else{
+        return new WP_REST_Response([
+            'value' => false
+        ], 200);
+
+    }
+
+}
 
 function get_logged_user_token() {
     $api_user_token = get_option('api_user_token');
@@ -2787,8 +2813,7 @@ class GW_Website_Builder {
                         Boost your SEO game with our seamless content transfer between GravityWrite Content Editor and WordPress. Refine and perfect your articles effortlessly, ensuring your SEO strategy is never left to luck. Create content that ranks with GravityWrite in WordPress today!
                     </p>
 
-                    <a href="https://staging.gravitywrite.com/login?callback_url=<?php echo ($current_page_url); ?>&domain=wordpress" target="_blank"
-                       style="display: inline-block; margin-top: 20px; padding: 10px 20px; background-color: #2E42FF; color: white; text-decoration: none; border-radius: 5px;">
+                    <a href="https://staging.gravitywrite.com/login?callback_url=<?php echo ($current_page_url); ?>&domain=wordpress" style="display: inline-block; margin-top: 20px; padding: 10px 20px; background-color: #2E42FF; color: white; text-decoration: none; border-radius: 5px;">
                         Log in and integrate with GravityWrite
                     </a>
                 </div>

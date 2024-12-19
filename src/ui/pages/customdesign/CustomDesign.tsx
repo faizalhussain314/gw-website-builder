@@ -6,6 +6,7 @@ import { setTemplateList } from "../../../Slice/activeStepSlice";
 import PlumberPageSkeleton from "../../component/PlumberPageSkeleton ";
 import { RootState } from "../../../store/store";
 import { sendIframeMessage } from "../../../core/utils/sendIframeMessage.utils";
+import UpgradeWords from "../../component/dialogs/UpgradeWords";
 
 function CustomDesign() {
   const [parsedTemplateList, setParsedTemplateList] = useState(null);
@@ -17,6 +18,7 @@ function CustomDesign() {
   );
 
   const currentUrl = parsedTemplateList?.pages?.[0]?.iframe_url;
+  const [limitReached, setLimitReached] = useState(false);
 
   const fetchInitialData = async () => {
     const url = getDomainFromEndpoint("/wp-json/custom/v1/get-form-details");
@@ -53,7 +55,7 @@ function CustomDesign() {
 
   const sendNonClickable = () => {
     const iframe = document.getElementById("myIframe") as HTMLIFrameElement;
-    console.log("event triggered");
+
     iframe.contentWindow?.postMessage(
       {
         type: "nonClickable",
@@ -76,7 +78,7 @@ function CustomDesign() {
       if (result && result.templateList) {
         const parsedData = JSON.parse(result.templateList);
         setParsedTemplateList(parsedData);
-
+        console.log("this is parsed Data", parsedData);
         dispatch(setTemplateList(parsedData));
       }
     } catch (error) {
@@ -91,17 +93,19 @@ function CustomDesign() {
   const onLoadmsg = () => {
     sendNonClickable();
     fetchInitialData();
-
-    console.log("event from react");
   };
   return (
-    <CustomizeLayout>
+    <CustomizeLayout setLimitReached={setLimitReached}>
+      {limitReached && <UpgradeWords />} {/* Render popup here */}
+      {/* Pass setter */}
       {currentUrl ? (
         <iframe
           src={currentUrl}
           title="website"
           id="myIframe"
-          className="h-full w-full transition-fade shadow-lg rounded-lg"
+          className={`h-full w-full transition-fade shadow-lg rounded-lg ${
+            limitReached && "hidden"
+          }`}
           onLoad={onLoadmsg}
         />
       ) : (

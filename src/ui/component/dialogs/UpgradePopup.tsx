@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useRef } from "react";
 import CloseIcon from "@mui/icons-material/Close";
 import Caution from "../../../assets/caution.svg";
 import Crown from "../../../assets/crown.svg";
+import { useClickOutside } from "../../../hooks/useClickOutside";
 
 type UpgradePopupProps = {
   onClose: () => void;
@@ -32,20 +33,23 @@ const UpgradePopup: React.FC<UpgradePopupProps> = ({ onClose, alertType }) => {
     message = ` You've reached the word limit for your current plan. To unlock more
           words and continue generating content, consider upgrading your word
           limit`;
-  } else if (alertType === "importLimit") {
-    title = "Import Limit Reached";
-    message = ` You've reached Template Import limit for your current plan. To unlock more
-          Template Import and continue your importing process , consider upgrading your template import
-          limit`;
   }
 
   const upgradeRedirection = () => {
     window.open("https://gravitywrite.com/pricing", "_blank");
   };
 
+  const wrapperRef = useRef(null);
+  useClickOutside(wrapperRef, () => {
+    onClose();
+  });
+
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-      <div className="bg-white rounded-lg shadow-lg text-center relative max-w-[400px] mx-auto px-7 py-9">
+      <div
+        className="bg-white rounded-lg shadow-lg text-center relative max-w-[400px] mx-auto px-7 py-9"
+        ref={wrapperRef}
+      >
         <button
           className="absolute right-4 top-4"
           onClick={onClose}

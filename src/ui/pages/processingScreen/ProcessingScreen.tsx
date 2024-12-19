@@ -37,6 +37,7 @@ const ProcessingScreen: React.FC = () => {
   const { getDomainFromEndpoint } = useDomainEndpoint();
   const fetchCustomContentData = useFetchCustomContentData();
   const logo = useSelector((state: RootState) => state.userData.logo);
+  const formData = useSelector((state: RootState) => state.userData);
   const template_id = useSelector(
     (state: RootState) => state.userData.templateid
   );
@@ -183,6 +184,10 @@ const ProcessingScreen: React.FC = () => {
     const templateData = await fetchTemplates();
     if (!templateData) {
       console.error("Template has no data");
+      if (!templateData && !bussinessName) {
+        navigate("/");
+      }
+
       return;
     }
 

@@ -13,13 +13,12 @@ import ProcessingScreen from "../ui/pages/processingScreen/ProcessingScreen";
 import FinalPreview from "../ui/pages/finalpreview/FinalPreview";
 import CustomDesign from "../ui/pages/customdesign/CustomDesign";
 import Success from "../ui/pages/successPage/Success";
-import Test from "../test/Test";
 
 const AppRoutes = () => (
   <Routes>
     <Route path="/welcome" element={<Welcome />} />
     <Route path="/connect-account" element={<ConnectAccount />} />
-    <Route path="/test" element={<Test />} />
+    {/* <Route path="/test" element={<Test />} /> */}
     <Route path="/" element={<Welcome />} />
     <Route path="/category" element={<Category />} />
     <Route path="/name" element={<Name />} />

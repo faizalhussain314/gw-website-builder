@@ -1,32 +1,7 @@
 import React from "react";
 import errorgif from "../../../assets/Error.gif";
 
-// Define alert types that you want to handle
-type alertType = "contentError" | "userDetails" | "word limit";
-
-type ApiErrorPopupProps = {
-  alertType: alertType;
-};
-
-const ApiErrorPopup: React.FC<ApiErrorPopupProps> = ({ alertType }) => {
-  let title = "";
-  let message = "";
-
-  if (alertType === "contentError") {
-    title = "Oops! Error While Generating Content";
-    message =
-      "There was an issue while generating content. Please try again later!";
-  } else if (alertType === "userDetails") {
-    title = "Oops! Error While Store The User Details ";
-    message =
-      "There was an issue fetching your user details. Please try again!";
-  } else if (alertType === "word limit") {
-    title = "Word Limit exceeded";
-    message = `You've reached the word limit for your current plan. To unlock more
-          words and continue generating content, consider upgrading your word
-          limit.`;
-  }
-
+const ApiIssue = (title: string, message: string) => {
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-gray-500 backdrop-blur-xl bg-opacity-50 z-50">
       <div className="relative bg-white shadow-lg p-8 sm:p-8 w-full max-w-[500px] pb-6 z-10 rounded-[10px]">
@@ -56,4 +31,4 @@ const ApiErrorPopup: React.FC<ApiErrorPopupProps> = ({ alertType }) => {
   );
 };
 
-export default ApiErrorPopup;
+export default ApiIssue;

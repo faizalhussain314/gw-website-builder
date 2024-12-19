@@ -48,6 +48,7 @@ export interface page {
 export interface templateList {
   id: number;
   name: string;
+  dark_theme: boolean;
   pages: page[];
   site_category_id: number;
 }
@@ -82,4 +83,5 @@ export interface UserDataState {
   isFormDetailsLoaded: boolean;
   lastStep: string;
   style: StyleState;
+  logoWidth: number;
 }

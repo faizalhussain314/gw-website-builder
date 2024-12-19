@@ -17,7 +17,6 @@ const ColorSelector: React.FC<ColorSelectorProps> = ({
   handleColorChange,
   resetStyles,
 }) => {
-  console.log("color combination", colorCombinations);
   return (
     <div className="mt-4">
       <div className="flex w-full justify-between items-center mb-2.5">

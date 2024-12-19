@@ -36,15 +36,12 @@ const ProfileSection: React.FC = () => {
       const endpoint = getDomainFromEndpoint("/wp-json/custom/v1/disconnect");
 
       const response = await axios.get(endpoint);
-      console.log("API call successful:", response?.data);
 
       if (
         response?.data?.success === true ||
         response?.data?.data?.message ===
           "Disconnection has already been completed."
       ) {
-        console.log("True block executed, redirecting...");
-
         window.location.href = "/wp-admin/admin.php?page=gravitywrite_settings";
       } else {
         console.error("Unexpected API response:", response?.data);

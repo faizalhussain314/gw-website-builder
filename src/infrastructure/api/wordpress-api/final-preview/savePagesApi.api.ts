@@ -18,7 +18,10 @@ export const savePagesToDB = async (
     const pagestatus = pages[currentIndex]?.status;
     const pageslug = pages[currentIndex]?.slug;
     const selectedvalue = pages[currentIndex]?.selected;
-    // if(pagename ,)
+    if (!pagestatus) {
+      return;
+    }
+
     const response = await axios.post(endpoint, {
       page_name: pagename,
       page_status: pagestatus,

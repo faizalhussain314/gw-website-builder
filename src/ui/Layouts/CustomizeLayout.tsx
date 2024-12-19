@@ -5,15 +5,19 @@ import Header from "../global component/Header";
 
 interface MainLayoutProps {
   children: ReactNode;
+  setLimitReached: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-const CustomizeLayout: React.FC<MainLayoutProps> = ({ children }) => {
+const CustomizeLayout: React.FC<MainLayoutProps> = ({
+  children,
+  setLimitReached,
+}) => {
   return (
     <>
       <div className="h-screen flex  flex-nowrap  font-[inter]">
         <div className="w-[20%] ">
           <aside className="z-10 ">
-            <CustomizeSidebar />
+            <CustomizeSidebar setLimitReached={setLimitReached} />
           </aside>
         </div>
         <div className="w-[80%]">

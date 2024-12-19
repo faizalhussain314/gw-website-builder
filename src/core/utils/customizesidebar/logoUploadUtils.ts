@@ -1,4 +1,4 @@
-// import { Dispatch, SetStateAction } from "react";
+import { Dispatch, SetStateAction } from "react";
 // import { RootState } from "../../../store/store";
 // import { Font } from "../../../types/activeStepSlice.type";
 import {
@@ -11,6 +11,7 @@ import {
   StoreContent,
   SendIframeMessage,
 } from "../../../types/customdesign.type";
+import { setLogo } from "../../../Slice/activeStepSlice";
 
 export const uploadLogo = async (
   file: File,
@@ -23,9 +24,9 @@ export const uploadLogo = async (
   storeContent: StoreContent,
   sendIframeMessage: SendIframeMessage
 ) => {
-  const validImageTypes = ["image/jpeg", "image/png", "image/gif"];
+  const imageTypeRegex = /^image\/(jpeg|png|gif)$/;
 
-  if (!validImageTypes.includes(file.type)) {
+  if (!imageTypeRegex.test(file.type)) {
     setError("Please upload a valid image file (JPG, PNG, or GIF).");
     return;
   }
@@ -46,21 +47,23 @@ export const uploadLogo = async (
     });
 
     if (!response.ok) {
-      throw new Error("Failed to upload image");
+      const errorResponse = await response.json(); // Parse the error response
+      throw new Error(errorResponse?.message);
     }
 
     const result = await response.json();
     const newLogoUrl = result.url;
 
     setLogoUrl(newLogoUrl);
-    dispatch({ type: "SET_LOGO", payload: newLogoUrl });
+    dispatch(setLogo(newLogoUrl));
     await storeContent({ logo: newLogoUrl });
 
     sendIframeMessage("changeLogo", { logoUrl: newLogoUrl });
 
     setSuccessMessage("Logo uploaded successfully!");
   } catch (err) {
-    setError("Error uploading image. Please try again.");
+    console.log("this is the error message", err);
+    setError(err.message);
   } finally {
     setLoading(false);
   }

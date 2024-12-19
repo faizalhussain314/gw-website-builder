@@ -10,10 +10,8 @@ function Welcome() {
 
   const handleRedirection = () => {
     if (userDetails?.username || userDetails?.username?.trim()?.length > 0) {
-      console.log("Redirection to /category");
       navigate("/category");
     } else {
-      console.log("Redirection to /connect-account");
       navigate("/connect-account");
     }
   };

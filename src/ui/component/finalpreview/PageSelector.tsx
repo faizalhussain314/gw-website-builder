@@ -37,6 +37,7 @@ type Props = {
   importLoad: boolean;
   afterContact: boolean;
   showGwLoader: boolean;
+  generatedPageName: string[];
 };
 
 const PageSelector: React.FC<Props> = ({
@@ -60,15 +61,22 @@ const PageSelector: React.FC<Props> = ({
   importLoad,
   afterContact,
   showGwLoader,
+  generatedPageName,
 }) => {
   const [showButtons, setShowButton] = useState(true);
   const showWarningToast = () => {
     toast.warn("Please wait while content is being generated.");
   };
+  const showLoadingToast = () => {
+    toast.warn("please wait until the page loads");
+  };
 
   const dispatch = useDispatch();
 
   const currentPages = useSelector((state: RootState) => state.userData.pages);
+  const isHomeGenerated = pages.some(
+    (page) => page.name === "Home" && page.status === "Generated"
+  );
 
   const handlePageClick = (pageName: string) => {
     togglePage(pageName);
@@ -135,6 +143,16 @@ const PageSelector: React.FC<Props> = ({
     setShowPopup(true);
     lateloader(true);
   };
+
+  const [pageButtonStates, setPageButtonStates] = useState<
+    Record<string, boolean>
+  >(() =>
+    pages.reduce((acc, page) => {
+      acc[page.name] = true; // Default `showButtons` to true for all pages
+      return acc;
+    }, {} as Record<string, boolean>)
+  );
+
   const offerButtonRef = useRef<HTMLButtonElement>(null);
   let lastAnimation = "";
   useEffect(() => {
@@ -157,6 +175,24 @@ const PageSelector: React.FC<Props> = ({
     return () => clearInterval(timer);
   }, []);
 
+  // useEffect(() => {
+  //   console.log("page button value", pageButtonStates);
+  // }, [pageButtonStates]);
+
+  const handleToggleButtons = (pageName: string) => {
+    if (selectedPage !== pageName) {
+      setPageButtonStates((prev) => ({
+        ...prev,
+        [pageName]: true,
+      }));
+      return;
+    }
+    setPageButtonStates((prev) => ({
+      ...prev,
+      [pageName]: !prev[pageName],
+    }));
+  };
+
   return (
     <div className="p-5">
       <h2 className="text-xl font-semibold">
@@ -176,9 +212,12 @@ const PageSelector: React.FC<Props> = ({
                 : ""
             }`}
             onClick={() => {
-              if (isContentGenerating || isLoading || showGwLoader) {
+              if (isLoading && !isContentGenerating && !showGwLoader) {
+                showLoadingToast();
+              } else if (isContentGenerating || isLoading || showGwLoader) {
                 showWarningToast();
               } else {
+                setShowButton(true);
                 handlePageClick(page.name);
               }
             }}
@@ -207,7 +246,7 @@ const PageSelector: React.FC<Props> = ({
                     }
                     onClick={(e: any) => {
                       handlePageChange(page.slug, e?.target?.checked);
-                    }} // Make sure the slug is passed to toggle selection
+                    }}
                   />
                 </div>
                 <span className="font-medium text-base">{page.name}</span>
@@ -262,19 +301,20 @@ const PageSelector: React.FC<Props> = ({
                     viewBox="0 0 12 12"
                     fill="none"
                     className={`${
-                      afterContact === true
-                        ? ""
-                        : selectedPage === page.name
-                        ? "rotate-180 "
-                        : "-rotate-0"
-                    } ${
-                      showButtons && selectedPage === page.name
+                      pageButtonStates[page.name] &&
+                      selectedPage === page.name &&
+                      !afterContact
                         ? "rotate-180"
-                        : showButtons
+                        : pageButtonStates[page.name] && !afterContact
                         ? ""
                         : "rotate-0"
                     }  transition-all duration-200 ease-in ml-2.5`}
-                    onClick={() => setShowButton((prev) => !prev)}
+                    onClick={(e) => {
+                      if (selectedPage === page.name) {
+                        e.stopPropagation();
+                      }
+                      handleToggleButtons(page.name);
+                    }}
                   >
                     <path
                       d="M11 3L6 8L1 3"
@@ -287,13 +327,12 @@ const PageSelector: React.FC<Props> = ({
                 </div>
               </div>
             </div>
-            {!showButtons || afterContact
+            {!showButtons || afterContact || !pageButtonStates[selectedPage]
               ? ""
               : selectedPage === page.name && (
                   <div className="mt-3 flex justify-evenly text-sm">
                     {[
                       "Generated",
-                      "Skipped",
                       "Not Selected",
                       "Blog",
                       "Contact",
@@ -303,7 +342,8 @@ const PageSelector: React.FC<Props> = ({
                     page.name === "Home" ||
                     page.name === "Blog" ||
                     page.name === "Contact" ||
-                    page.name === "Contact Us" ? (
+                    page.name === "Contact Us" ||
+                    generatedPageName.includes(selectedPage) ? (
                       <div className="w-full flex items-center gap-4">
                         <button
                           className={`bg-white text-[#1E2022] hover:bg-palatinate-blue-600 hover:text-white rounded px-3 py-1.5 w-full text-[14px] font-[500] ${
@@ -354,10 +394,7 @@ const PageSelector: React.FC<Props> = ({
                       <div className="w-full flex items-center gap-4">
                         <button
                           className={`bg-white text-[#1E2022] hover:bg-palatinate-blue-600 hover:text-white rounded px-3 py-1.5 w-full text-[14px] font-[500] ${
-                            !(
-                              (isContentGenerating && isLoading) ||
-                              showGwLoader
-                            )
+                            !(isContentGenerating || isLoading || showGwLoader)
                               ? "opacity-100"
                               : "opacity-50"
                           }`}
@@ -370,10 +407,7 @@ const PageSelector: React.FC<Props> = ({
                         </button>
                         <button
                           className={`bg-white text-[#1E2022] hover:bg-palatinate-blue-600 hover:text-white rounded px-3 py-1.5 w-full text-[14px] font-[500] ${
-                            !(
-                              (isContentGenerating && isLoading) ||
-                              showGwLoader
-                            )
+                            !(isContentGenerating || isLoading || showGwLoader)
                               ? "opacity-100"
                               : "opacity-50"
                           }`}
@@ -427,13 +461,20 @@ const PageSelector: React.FC<Props> = ({
         </div>
 
         <button
-          className={`tertiary w-full text-white py-3 px-8 rounded-md mb-4 flex items-center justify-center outline-none rounded-lg font-medium text-center tracking-tight transition duration-300 ease-in-out ${
-            !isContentGenerating ? "opacity-100" : "opacity-50"
+          className={`tertiary w-full text-white py-3 px-8  mb-4 flex items-center justify-center outline-none rounded-lg font-medium text-center tracking-tight transition duration-300 ease-in-out ${
+            !isContentGenerating && isHomeGenerated
+              ? "opacity-100"
+              : "opacity-50"
           }`}
           ref={offerButtonRef}
           onClick={() => {
-            isContentGenerating === false ? handleImportSelectedPage() : "";
+            if (!isContentGenerating && isHomeGenerated) {
+              handleImportSelectedPage();
+            } else {
+              showWarningToast();
+            }
           }}
+          disabled={!isHomeGenerated || isContentGenerating}
         >
           <span className="flex items-center gap-1.5 w-[80%] mx-auto justify-center">
             Import Selected Page

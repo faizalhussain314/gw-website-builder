@@ -41,12 +41,12 @@ function Category() {
   const [loading, setLoading] = useState(false);
   const [mainLoader, setMainLoader] = useState(false);
   const [apiError, setApiError] = useState(false);
+  const [erros, setErrors] = useState({ titile: "", message: "" });
   const wp_token = useSelector((state: RootState) => state.user.wp_token);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        console.log("Fetching category list...");
         const categories = await fetchCategoryList(
           dispatch,
           getDomainFromEndpoint
@@ -54,6 +54,7 @@ function Category() {
         setCategoryList(categories);
       } catch (err) {
         console.error("Error fetching category list:", err);
+
         setError("Failed to fetch category list. Please try again.");
       }
     };
@@ -146,12 +147,11 @@ function Category() {
   // };
 
   const handleClose = () => {
-    if (userDetails.generatedSite >= userDetails.max_genration) {
-      return;
-    } else {
-      // setLimitReached(false);
-      window.location.href = "/wp-admin/admin.php?page=gravitywrite_settings";
-    }
+    // if (userDetails.generatedSite >= userDetails.max_genration) {
+    //   return;
+    // } else {
+    //   // setLimitReached(false);
+    window.location.href = "/wp-admin/admin.php?page=gravitywrite_settings";
   };
 
   useEffect(() => {
@@ -159,6 +159,7 @@ function Category() {
       setLimitReached(true);
     }
   }, [userDetails]);
+
   useEffect(() => {
     if (location.hash.includes("/category")) {
       const queryParams = new URLSearchParams(location.hash.split("?")[1]);
@@ -190,8 +191,6 @@ function Category() {
         wp_token: wp_token,
         fe_token: fe_token,
       });
-
-      console.log("Response from backend:", response.data);
 
       await fetchUserDetails();
     } catch (error) {
@@ -228,17 +227,21 @@ function Category() {
       if (result) {
         dispatch(setUsername(result[0]?.name));
         dispatch(setPlan(result[0]?.plan_detail));
-        dispatch(setWebsiteGenerationLimit(result[0]?.websiteGenerationLimit));
+        dispatch(setWebsiteGenerationLimit(parseInt(result[0]?.website_total)));
         dispatch(setEmail(result[0]?.email));
         dispatch(setGravator(result[0]?.gravator));
-        dispatch(setGeneratedSite(result[0]?.website_used));
-        dispatch(setMaxGeneration(result[0]?.website_total));
+        dispatch(setGeneratedSite(parseInt(result[0]?.website_used) || 1));
+        dispatch(setMaxGeneration(parseInt(result[0]?.website_total) || 6));
         setMainLoader(false);
       }
     } catch (error) {
       console.error("Error fetching user details:", error);
     }
   };
+
+  useEffect(() => {
+    setInputValue(selectedCategory || "");
+  }, [selectedCategory]);
 
   return (
     <MainLayout>

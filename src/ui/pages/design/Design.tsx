@@ -26,6 +26,7 @@ import { fetchWpToken } from "../../../core/utils/fetchWpToken";
 import arrow from "../../../assets/arrow.svg";
 import info from "../../../assets/icons/info.svg";
 import { Tooltip } from "@mui/material";
+import { handleEnterKey } from "../../../core/utils/handleEnterKey";
 
 const API_URL = import.meta.env.VITE_API_BACKEND_URL;
 
@@ -115,7 +116,15 @@ function Design() {
       setshowError(false);
       settemplateList(templates);
     } catch (error) {
-      console.error("Error fetching templates:", error);
+      if (error.response?.status === 401) {
+        console.error("Error fetching templates: Unauthorized (401)");
+      } else {
+        console.error(
+          "Error fetching templates:",
+          error.response?.status || error.message
+        );
+      }
+
       setshowError(true); // Show error if the API call fails
     }
   };
@@ -175,7 +184,6 @@ function Design() {
     );
     try {
       await saveSelectedTemplate(template, endpoint);
-      console.log("Template saved successfully to the backend.", template);
     } catch (error) {
       console.error("Error saving template to backend:", error);
     }
@@ -195,8 +203,6 @@ function Design() {
         });
 
         const data = response.data;
-
-        console.log("API response data:", data);
 
         const parsedTemplate = JSON.parse(data.templateList);
         if (parsedTemplate.name) {
@@ -354,6 +360,11 @@ function Design() {
   // const handlePopOverClose = () =>{
 
   // }
+
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLFormElement>) => {
+    handleEnterKey({ event, callback: handleContinue }); // Use your utility function
+  };
+
   return (
     <MainLayout>
       {showPopup && (
@@ -388,7 +399,11 @@ function Design() {
             below.
           </p>
 
-          <form className="my-8" onSubmit={(e) => e.preventDefault}>
+          <form
+            className="my-8"
+            onSubmit={(e) => e.preventDefault}
+            onKeyDown={handleKeyDown}
+          >
             <div className="relative flex items-center">
               <div className="flex items-center h-12 mr-0">
                 <div className="absolute flex items-center left-3">
