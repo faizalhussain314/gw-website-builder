@@ -38,6 +38,7 @@ import { sendIframeMessage } from "../../../core/utils/sendIframeMessage.utils.t
 import ApiErrorPopup from "../../component/dialogs/ApiErrorPopup.tsx";
 import WordLimit from "../../component/dialogs/WordLimit.tsx";
 import { updateIframeLogo } from "../../../core/utils/changeIframeLogo.ts";
+import ImportWarning from "../../component/dialogs/importWarning.tsx";
 
 const FinalPreview: React.FC = () => {
   const reduxPages =
@@ -74,7 +75,7 @@ const FinalPreview: React.FC = () => {
   ]);
   const [isOpen, setIsOpen] = useState(false);
   const [viewMode, setViewMode] = useState("desktop");
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [isContentGenerating, setIsContentGenerating] = useState(false);
   const [isPageGenerated, setIsPageGenerated] = useState(false);
   const [selectedPage, setSelectedPage] = useState<string | null>("Home");
@@ -82,6 +83,7 @@ const FinalPreview: React.FC = () => {
   const [oldNewContent, setOldNewContent] = useState<Record<string, any>>({});
   const [generatedPagesList, setGeneratedPagesList] = useState<Page[]>([]);
   const [generatedPage, setGeneratedPage] = useState<any>({});
+  const [generatedPageName, setGeneratedPageName] = useState<string[]>([]);
   const [pageContents, setPageContents] = useState<any>({});
   const [showPopup, setShowPopup] = useState(false);
   const [resetPopup, setresetPopup] = useState(false);
@@ -100,6 +102,9 @@ const FinalPreview: React.FC = () => {
   const [afterContact, setAfterContact] = useState(false);
   const [showRefreshWarning, setShowRefreshWarning] = useState(false);
   const [showImportWarning, setshowImportWarning] = useState(false);
+  const [showImportWarningDialouge, setshowImportWarningDialouge] =
+    useState(false);
+  const [isImportLoading, setIsImportLoading] = useState(false);
   const contactDetails = useSelector(
     (state: RootState) => state.userData.contactform
   );
@@ -165,7 +170,7 @@ const FinalPreview: React.FC = () => {
 
   const showSuccessToast = () => {
     toast.success("Content generation complete!");
-    updatePageStatus(selectedPage!, "Generated", false);
+    updatePageStatus(selectedPage!, "Generated", true);
   };
 
   useEffect(() => {
@@ -294,16 +299,14 @@ const FinalPreview: React.FC = () => {
         const currentPageIndex = pages.findIndex(
           (page) => page.name === selectedPage
         );
+        setIsLoading(true);
         const response = await axios.post(endpoint, {
           version_name: versionName,
           page_name: pageName,
           template_name: templateName,
         });
 
-        console.log("outside the response", response.data.data[0].html_data);
-
-        if (response.status === 200 && response.data) {
-          console.log("condition was true");
+        if (response.status === 200 && response.data.data) {
           const rawHtmlContent = response.data.data[0].html_data;
           const cleanedHtmlContent = rawHtmlContent
             .replace(/^"(.*)"$/, "$1")
@@ -311,7 +314,7 @@ const FinalPreview: React.FC = () => {
             .replace(/\\n/g, "")
             .replace(/\\t/g, "")
             .replace(/\\\\/g, "");
-          console.log("condition was true", response);
+
           setGeneratedPage((prevPages: any) => {
             const updatedPages = {
               ...prevPages,
@@ -598,7 +601,9 @@ const FinalPreview: React.FC = () => {
 
   const onLoadMsg = async () => {
     setwordCountAlert(false);
+    setIsLoading(true);
     setLoaded(true);
+
     const iframe = iframeRef.current;
     const currentPage = pages.find((page) => page.name === selectedPage);
 
@@ -645,13 +650,13 @@ const FinalPreview: React.FC = () => {
         "*"
       );
     }
-
+    // updateIframeLogo(logoUrl, logoWidth);
     if (logoUrl) {
       updateIframeLogo(logoUrl, logoWidth);
     } else if (businessName) {
       sendIframeMessage("bussinessName", businessName);
     }
-    // console.log("selected page", generatedPage[selectedPage]);
+
     if (selectedPage && generatedPage[selectedPage]) {
       const existingContent = generatedPage[selectedPage][0];
       updateIframeSrc(existingContent);
@@ -664,21 +669,17 @@ const FinalPreview: React.FC = () => {
         "5.5"
       );
 
-      console.log("fetch result", fetchResult);
-
       if (fetchResult) {
-        console.log("fetch result is true");
         setShowGwLoader(false);
         setwordCountAlert(false);
         return;
       }
 
       if (!fetchResult) {
-        console.log("result is empty or null");
         if (selectedPage === "Home" && pages[0].status !== "Generated") {
           setShowPopup(false);
           setIsLoading(true);
-
+          setShowGwLoader(true);
           try {
             const endpoint = getDomainFromEndpoint(
               "wp-json/custom/v1/check-word-count"
@@ -704,6 +705,7 @@ const FinalPreview: React.FC = () => {
               );
 
               if (currentPage && currentPage.status !== "Generated") {
+                setShowGwLoader(true);
                 iframe.contentWindow.postMessage(
                   {
                     type: "start",
@@ -721,13 +723,14 @@ const FinalPreview: React.FC = () => {
               setIsContentGenerating(false);
               setwordCountAlert(true);
               setShowGwLoader(false);
-              setIsLoading(false);
+              // setIsLoading(false);
             }
           } catch (error) {
             console.error("Error while calling the word count API:", error);
             setapiIssue(true);
           } finally {
             setIsLoading(false);
+            setShowGwLoader(false);
           }
         }
       }
@@ -749,6 +752,7 @@ const FinalPreview: React.FC = () => {
           },
           "*"
         );
+        // setShowGwLoader(true);
       }
     }
 
@@ -781,11 +785,13 @@ const FinalPreview: React.FC = () => {
   };
 
   const togglePage = (page: string) => {
+    // setIsLoading(true);
     if (page === selectedPage) return;
     setAfterContact(false);
 
     setSelectedPage(page);
     setwordCountAlert(false);
+
     const existingContent = generatedPage[page];
 
     if (existingContent) {
@@ -817,6 +823,7 @@ const FinalPreview: React.FC = () => {
       showWarningToast();
       return;
     }
+
     if (action == "next" && currentPage == "Contact Us") {
       setAfterContact(true);
     } else {
@@ -934,9 +941,10 @@ const FinalPreview: React.FC = () => {
           updateIframeSrc(nextPageContent[0]);
           setShowIframe(false);
         } else {
+          setIsLoading(true);
           setShowIframe(true);
           setIsPageGenerated(false);
-          setIsLoading(true);
+
           const iframe: null | HTMLIFrameElement = iframeRef.current;
           const nextPageSlug = updatedPages[nextPageIndex].slug;
           if (iframe) {
@@ -948,11 +956,6 @@ const FinalPreview: React.FC = () => {
           setPreviousClicked(true);
         }
       } else {
-        console.log(
-          "if condition not worked",
-          nextPageIndex < updatedPages.length &&
-            currentPage != updatedPages[currentPageIndex]?.name
-        );
         setSelectedPage(updatedPages[nextPageIndex].name);
 
         const nextPageContent = generatedPage[updatedPages[nextPageIndex].name];
@@ -990,9 +993,9 @@ const FinalPreview: React.FC = () => {
       prevPages.map((page) => {
         if (page.name === pageName) {
           // Debugging log to check if the condition matches
-          // console.log(
-          //   `Updating ${pageName}: status=${status}, selected=${selected}`
-          // );
+          console.log(
+            `Updating ${pageName}: status=${status}, selected=${selected}`
+          );
           return { ...page, status, selected };
         }
         return page;
@@ -1062,7 +1065,6 @@ const FinalPreview: React.FC = () => {
         setIsContentGenerating(false);
         setIsLoading(false);
         if (selectedPage === generatedPage[selectedPage]) {
-          console.log("page was true");
           setwordCountAlert(false);
           setIsContentGenerating(false);
           setIsLoading(false);
@@ -1164,11 +1166,7 @@ const FinalPreview: React.FC = () => {
         const currentPageIndex = pages.findIndex(
           (page) => page?.name === selectedPage
         );
-        console.log(
-          "pages[findIndex].name",
-          pages[currentPageIndex]?.name,
-          currentPageIndex
-        );
+
         dispatch(
           updateReduxPage({
             name: pages[currentPageIndex].name,
@@ -1197,6 +1195,8 @@ const FinalPreview: React.FC = () => {
         const pageName = event.data.pageName || selectedPage || "";
         const wordCount = calculateWordCount(event.data.content);
         handleOldNewContent(pageName, event.data.content, wordCount);
+      } else if (event.data.type === "streamingError") {
+        setapiIssue(true);
       }
     };
     function calculateWordCount(contentObject: object) {
@@ -1231,20 +1231,56 @@ const FinalPreview: React.FC = () => {
       const response = await axios.get(endpoint);
 
       if (response?.data?.status === true) {
-        setImportLoad(false);
-        navigate("/processing", { state: { pageName: selectedPage } });
+        const confirmEndpoint = getDomainFromEndpoint(
+          "/wp-json/custom/v1/check-previous-import"
+        );
+        const confirmResponse = await axios.post(confirmEndpoint, {
+          value: true,
+        });
+
+        if (confirmResponse?.data?.value === true) {
+          setshowImportWarningDialouge(true);
+        } else {
+          setImportLoad(false);
+          navigate("/processing", { state: { pageName: selectedPage } });
+        }
       } else {
         setImportLoad(false);
         setshowImportWarning(true);
       }
     } catch (error) {
-      console.error(
-        "Error while calling the import template availability API:",
-        error
-      );
+      console.error("Error during the import process:", error);
       setImportLoad(false);
       setapiIssue(true);
     }
+  };
+
+  const handleContinueImport = async () => {
+    setIsImportLoading(true);
+
+    try {
+      await axios.delete(
+        getDomainFromEndpoint("/wp-json/custom/v1/delete-theme-and-plugins")
+      );
+      await axios.delete(
+        getDomainFromEndpoint("/wp-json/custom/v1/delete-all-posts")
+      );
+
+      setIsImportLoading(false);
+      setshowImportWarningDialouge(false);
+      setImportLoad(false);
+      navigate("/processing", { state: { pageName: selectedPage } });
+    } catch (error) {
+      console.error("Error during the cleanup process:", error);
+      setIsImportLoading(false);
+      setImportLoad(false);
+    }
+  };
+
+  // Function to handle popup close
+  const handleCloseWarning = () => {
+    setshowImportWarningDialouge(false);
+    setImportLoad(false);
   };
 
   const handlePageUpdate = (
@@ -1324,6 +1360,13 @@ const FinalPreview: React.FC = () => {
   };
 
   useEffect(() => {
+    const pageNames = Object.keys(generatedPage).filter(
+      (key) => key !== "spinner" && typeof generatedPage[key] === "object"
+    );
+    setGeneratedPageName(pageNames);
+  }, [generatedPage]);
+
+  useEffect(() => {
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
       if (isContentGenerating || showGwLoader) {
         event.preventDefault();
@@ -1398,6 +1441,7 @@ const FinalPreview: React.FC = () => {
               importLoad={importLoad}
               afterContact={afterContact}
               showGwLoader={showGwLoader}
+              generatedPageName={generatedPageName}
             />
           </div>
         </aside>
@@ -1441,6 +1485,13 @@ const FinalPreview: React.FC = () => {
               alertType="importLimit"
             />
           )}
+          {showImportWarningDialouge && (
+            <ImportWarning
+              onClose={handleCloseWarning}
+              continueImport={handleContinueImport}
+              isimportLoading={isImportLoading}
+            />
+          )}
           {showUpgradePopup && (
             <UpgradePopup
               onClose={() => setShowUpgradePopup(false)}
@@ -1471,14 +1522,12 @@ const FinalPreview: React.FC = () => {
             )}
 
             {/* Skeleton Loader Layer */}
-            {isLoading &&
-              !isContentGenerating &&
-              !loadedPages[selectedPage!] && <PlumberPageSkeleton />}
+            {isLoading && !isContentGenerating && <PlumberPageSkeleton />}
 
             {wordCountAlert && <WordLimit />}
 
             {/* Generated Content Iframe */}
-            {generatedPage[selectedPage!] && isPageGenerated && (
+            {generatedPage[selectedPage] && isPageGenerated && (
               <iframe
                 ref={iframeRef}
                 src={iframeSrc}

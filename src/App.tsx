@@ -120,6 +120,7 @@ const App = () => {
 
         if (
           hasData &&
+          username &&
           !isSessionActive &&
           !isRefresh &&
           location.pathname === "/"
@@ -150,6 +151,7 @@ const App = () => {
     isSessionActive,
     isRefresh,
     setSessionActive,
+    fetchUserDetails,
   ]);
 
   useEffect(() => {
@@ -160,7 +162,6 @@ const App = () => {
 
   const handleContinue = () => {
     if (!fetchedData?.lastStep) {
-      console.log("data has not found");
       return;
     }
     navigate(fetchedData.lastStep);
@@ -181,9 +182,6 @@ const App = () => {
       if (username) {
         // Fetch token only if username exists
         const token = await fetchWpToken(dispatch, getDomainFromEndpoint);
-        if (token) {
-          console.log("Token stored in Redux:", token);
-        }
       } else {
         console.log("Username is empty, skipping token fetch.");
       }

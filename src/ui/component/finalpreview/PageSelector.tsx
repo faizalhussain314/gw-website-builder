@@ -37,6 +37,7 @@ type Props = {
   importLoad: boolean;
   afterContact: boolean;
   showGwLoader: boolean;
+  generatedPageName: string[];
 };
 
 const PageSelector: React.FC<Props> = ({
@@ -60,6 +61,7 @@ const PageSelector: React.FC<Props> = ({
   importLoad,
   afterContact,
   showGwLoader,
+  generatedPageName,
 }) => {
   const [showButtons, setShowButton] = useState(true);
   const showWarningToast = () => {
@@ -173,14 +175,21 @@ const PageSelector: React.FC<Props> = ({
     return () => clearInterval(timer);
   }, []);
 
-  useEffect(() => {
-    console.log("page button value", pageButtonStates);
-  }, [pageButtonStates]);
+  // useEffect(() => {
+  //   console.log("page button value", pageButtonStates);
+  // }, [pageButtonStates]);
 
   const handleToggleButtons = (pageName: string) => {
+    if (selectedPage !== pageName) {
+      setPageButtonStates((prev) => ({
+        ...prev,
+        [pageName]: true,
+      }));
+      return;
+    }
     setPageButtonStates((prev) => ({
       ...prev,
-      [pageName]: !prev[pageName], // Toggle the state for the specific page
+      [pageName]: !prev[pageName],
     }));
   };
 
@@ -324,7 +333,6 @@ const PageSelector: React.FC<Props> = ({
                   <div className="mt-3 flex justify-evenly text-sm">
                     {[
                       "Generated",
-                      "Skipped",
                       "Not Selected",
                       "Blog",
                       "Contact",
@@ -334,7 +342,8 @@ const PageSelector: React.FC<Props> = ({
                     page.name === "Home" ||
                     page.name === "Blog" ||
                     page.name === "Contact" ||
-                    page.name === "Contact Us" ? (
+                    page.name === "Contact Us" ||
+                    generatedPageName.includes(selectedPage) ? (
                       <div className="w-full flex items-center gap-4">
                         <button
                           className={`bg-white text-[#1E2022] hover:bg-palatinate-blue-600 hover:text-white rounded px-3 py-1.5 w-full text-[14px] font-[500] ${

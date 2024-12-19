@@ -9,6 +9,7 @@ import useDomainEndpoint from "../../../hooks/useDomainEndpoint";
 import { getBusinessName } from "../../../infrastructure/api/wordpress-api/name/getBusinessName.api";
 import { updateBusinessName } from "../../../infrastructure/api/wordpress-api/name/updateBusinessName.api";
 import arrow from "../../../assets/arrow.svg";
+import { handleEnterKey } from "../../../core/utils/handleEnterKey";
 
 function Name() {
   const dispatch = useDispatch();
@@ -78,7 +79,15 @@ function Name() {
               Please be as descriptive as you can. Share details such as a brief
               about the {category}, specialty, menu, etc.
             </span>
-            <form onSubmit={(e) => e.preventDefault()}>
+            <form
+              onSubmit={(e) => e.preventDefault()}
+              onKeyDown={(event) =>
+                handleEnterKey({
+                  event,
+                  callback: handleClick,
+                })
+              }
+            >
               <input
                 type="text"
                 value={name}

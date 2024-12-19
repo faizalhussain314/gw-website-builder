@@ -47,7 +47,6 @@ function Category() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        console.log("Fetching category list...");
         const categories = await fetchCategoryList(
           dispatch,
           getDomainFromEndpoint
@@ -193,8 +192,6 @@ function Category() {
         fe_token: fe_token,
       });
 
-      console.log("Response from backend:", response.data);
-
       await fetchUserDetails();
     } catch (error) {
       console.error("Error sending data to backend:", error);
@@ -230,17 +227,21 @@ function Category() {
       if (result) {
         dispatch(setUsername(result[0]?.name));
         dispatch(setPlan(result[0]?.plan_detail));
-        dispatch(setWebsiteGenerationLimit(result[0]?.websiteGenerationLimit));
+        dispatch(setWebsiteGenerationLimit(parseInt(result[0]?.website_total)));
         dispatch(setEmail(result[0]?.email));
         dispatch(setGravator(result[0]?.gravator));
-        dispatch(setGeneratedSite(result[0]?.website_used));
-        dispatch(setMaxGeneration(result[0]?.website_total));
+        dispatch(setGeneratedSite(parseInt(result[0]?.website_used) || 1));
+        dispatch(setMaxGeneration(parseInt(result[0]?.website_total) || 6));
         setMainLoader(false);
       }
     } catch (error) {
       console.error("Error fetching user details:", error);
     }
   };
+
+  useEffect(() => {
+    setInputValue(selectedCategory || "");
+  }, [selectedCategory]);
 
   return (
     <MainLayout>

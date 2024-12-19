@@ -22,7 +22,6 @@ function Success() {
     const domain = currentUrl.split("/wp-admin")[0];
 
     window.open(`${domain}`, "_blank");
-    console.log("domain", domain);
   };
 
   return (

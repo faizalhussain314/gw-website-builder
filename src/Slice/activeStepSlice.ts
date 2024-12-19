@@ -26,6 +26,7 @@ const initialState: UserDataState = {
   templateList: {
     id: null,
     name: null,
+    dark_theme: null,
     pages: [],
     site_category_id: null,
   },
@@ -109,6 +110,7 @@ export const activeStepSlice = createSlice({
       state.templateList = {
         id: null,
         name: null,
+        dark_theme: null,
         pages: [],
         site_category_id: null,
       };
@@ -125,7 +127,7 @@ export const activeStepSlice = createSlice({
     },
 
     setTemplateList: (state, action: PayloadAction<templateList>) => {
-      const { id, name, site_category_id, pages } = action.payload;
+      const { id, name, site_category_id, pages, dark_theme } = action.payload;
 
       const mappedPages = pages.map((page) => ({
         id: page.id,
@@ -147,6 +149,7 @@ export const activeStepSlice = createSlice({
         name,
         site_category_id,
         pages: mappedPages,
+        dark_theme: dark_theme,
       };
 
       state.pages = mappedPages.map((page) => ({
@@ -225,11 +228,10 @@ export const activeStepSlice = createSlice({
       const page = state.pages.find((page) => page.name === action.payload);
 
       if (page) {
-        // Prevent toggling for Home page
         if (page?.name === "Home") {
-          page.selected = true; // Always keep it selected
+          page.selected = true;
         } else {
-          page.selected = !page.selected; // Toggle for other pages
+          page.selected = !page.selected;
         }
       }
 

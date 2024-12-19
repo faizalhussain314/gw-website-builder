@@ -55,7 +55,7 @@ function CustomDesign() {
 
   const sendNonClickable = () => {
     const iframe = document.getElementById("myIframe") as HTMLIFrameElement;
-    console.log("event triggered");
+
     iframe.contentWindow?.postMessage(
       {
         type: "nonClickable",
@@ -93,8 +93,6 @@ function CustomDesign() {
   const onLoadmsg = () => {
     sendNonClickable();
     fetchInitialData();
-
-    console.log("event from react");
   };
   return (
     <CustomizeLayout setLimitReached={setLimitReached}>
@@ -105,7 +103,9 @@ function CustomDesign() {
           src={currentUrl}
           title="website"
           id="myIframe"
-          className="h-full w-full transition-fade shadow-lg rounded-lg"
+          className={`h-full w-full transition-fade shadow-lg rounded-lg ${
+            limitReached && "hidden"
+          }`}
           onLoad={onLoadmsg}
         />
       ) : (
