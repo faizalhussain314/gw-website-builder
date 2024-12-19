@@ -78,7 +78,7 @@ function CustomDesign() {
       if (result && result.templateList) {
         const parsedData = JSON.parse(result.templateList);
         setParsedTemplateList(parsedData);
-
+        console.log("this is parsed Data", parsedData);
         dispatch(setTemplateList(parsedData));
       }
     } catch (error) {
