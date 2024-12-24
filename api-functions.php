@@ -4,6 +4,18 @@
 // Register REST API routes
 add_action('rest_api_init', function () {
     
+    register_rest_route('custom/v1', '/get-userdata', [
+        'methods'  => 'GET',
+        'callback' => 'custom_get_userdata',
+        'permission_callback' => '__return_true', // Allow public access; modify as needed for security
+    ]);
+
+    register_rest_route('custom/v1', '/set-logo-width', array(
+        'methods'  => 'POST',
+        'callback' => 'update_logo_width',
+        'permission_callback' => '__return_true',
+    ));
+    
     register_rest_route('custom/v1', '/check-previous-import', array(
         'methods' => WP_REST_Server::CREATABLE,
         'callback' => 'check_previous_import',
@@ -307,9 +319,11 @@ function delete_all_custom_posts(WP_REST_Request $request) {
             wp_delete_post($post->post_id, true); 
         }
     }
+    
+    $wpdb->query("TRUNCATE TABLE {$table_name}");
 
     // Return a simple success message
-    return new WP_REST_Response('All custom posts deleted successfully.', 200);
+    return new WP_REST_Response('All custom posts deleted successfully.and empty table Imported Posts', 200);
 }
 
 
@@ -327,7 +341,8 @@ function delete_theme_and_plugins(WP_REST_Request $request) {
 
     //start delete uploads 
 
-    $plugin_dir1 = dirname(plugin_dir_path(__FILE__)); // Ensure you're at the main plugin directory
+    $plugin_dir1 = dirname(plugin_dir_path(__FILE__));
+    
     $uploads_dir = $plugin_dir1 . '/uploads/';
 
     if (!file_exists($uploads_dir)) {
@@ -839,8 +854,8 @@ function fetch_html_data($request) {
     $template_name = sanitize_text_field($request->get_param('template_name'));
 
     $query = $wpdb->prepare(
-        "SELECT html_data FROM $table_name WHERE version_name = %s AND page_name = %s",
-        $version_name, $page_name
+        "SELECT html_data FROM $table_name WHERE version_name = %s AND page_name = %s AND template_name = %s",
+        $version_name, $page_name, $template_name
     );
 
     $results = $wpdb->get_results($query, ARRAY_A);
@@ -1224,50 +1239,109 @@ function import_site_logo(WP_REST_Request $request) {
         }
     }
     else{
-        global $wpdb; // Access the WordPress database
+        global $wpdb;
         $table_name = $wpdb->prefix . 'gw_user_form_details';
-    
-        // Retrieve the first templateList from the table
+
         $query = "SELECT templateList FROM $table_name LIMIT 1";
         $result = $wpdb->get_var($query);
-    
+        
         // Decode the JSON data to access dark_theme
         $templateList = json_decode($result, true);
-    
-        $dark_theme = $templateList['dark_theme'] ?? 0; // Default to 0 if not present
-    
+        $dark_theme = $templateList['dark_theme'] ?? 0;
         $text = $image_url;
         $font_size = 20;
         $plugin_dir = plugin_dir_path(__FILE__);
-        $font_file = $plugin_dir. 'fonts/Roboto-Medium.ttf';  // Ensure this font file exists in your directory
-
-        // Calculate the dimensions of the text box
+        $font_file = $plugin_dir . 'fonts/Roboto-Medium.ttf'; // Ensure this font file exists in your directory
+        
+        // Calculate the exact dimensions of the text
         $bbox = imagettfbbox($font_size, 0, $font_file, $text);
-        $width = abs($bbox[4] - $bbox[0]) + 20;  // Add some padding
-        $height = abs($bbox[5] - $bbox[1]) + 20; // Add some padding
-
-        // Create a blank image with true color (required for transparency)
-        $image = imagecreatetruecolor($width, $height);
-
+        
+        // Determine width and height without extra space
+        $text_width = abs($bbox[2] - $bbox[0]);
+        $text_height = abs($bbox[7] - $bbox[1]);
+        
+        // Add padding for top, bottom, and right sides
+        $padding = 20; // Adjust this value to control the amount of white space
+        $canvas_width = $text_width + $padding; // Add padding to the right
+        $canvas_height = $text_height + (2 * $padding); // Add padding to the top and bottom
+        
+        // Create a blank image with the padded dimensions
+        $image = imagecreatetruecolor($canvas_width, $canvas_height);
+        
         // Set transparency settings
-        imagesavealpha($image, true);  // Allows transparency
+        imagesavealpha($image, true); // Allow transparency
         $transparent_color = imagecolorallocatealpha($image, 0, 0, 0, 127); // Fully transparent
-        imagefill($image, 0, 0, $transparent_color);  // Fill the background with the transparent color
-
+        imagefill($image, 0, 0, $transparent_color); // Fill the background with transparency
+        
+        // Set text color based on theme
         if ($dark_theme) {
-            $text_color = imagecolorallocate($image, 255, 255, 255); // White
+            $text_color = imagecolorallocate($image, 255, 255, 255); // White text
         } else {
-            $text_color = imagecolorallocate($image, 0, 0, 0); // Black
+            $text_color = imagecolorallocate($image, 0, 0, 0); // Black text
         }
-
-        // Add text to the image
-        imagettftext($image, $font_size, 0, 10, $height - 10, $text_color, $font_file, $text);
-
+        
+        // Calculate the position to center the text vertically with padding
+        $text_x = 0; // Start at the left edge
+        $text_y = $padding + abs($bbox[5]); // Add top padding to the baseline
+        
+        // Add text to the image with padding
+        imagettftext($image, $font_size, 0, $text_x, $text_y, $text_color, $font_file, $text);
+        
+        // Save the image to a temporary file
         $temp_file = __DIR__ . '/my_image_' . time() . '.png';
-        imagepng($image, $temp_file);  // Save as PNG to preserve transparency
+        imagepng($image, $temp_file); // Save as PNG to preserve transparency
         imagedestroy($image);
-
+        
+        // Upload the image to WordPress
         $image_id = upload_to_wp($temp_file);
+
+        // global $wpdb;
+        // $table_name = $wpdb->prefix . 'gw_user_form_details';
+        
+        // $query = "SELECT templateList FROM $table_name LIMIT 1";
+        // $result = $wpdb->get_var($query);
+        
+        // // Decode the JSON data to access dark_theme
+        // $templateList = json_decode($result, true);
+        // $dark_theme = $templateList['dark_theme'] ?? 0;
+        // $text = $image_url;
+        // $font_size = 20;
+        // $plugin_dir = plugin_dir_path(__FILE__);
+        // $font_file = $plugin_dir . 'fonts/Roboto-Medium.ttf'; // Ensure this font file exists in your directory
+        
+        // // Calculate the exact dimensions of the text
+        // $bbox = imagettfbbox($font_size, 0, $font_file, $text);
+        
+        // // Determine width and height without extra space
+        // $width = abs($bbox[2] - $bbox[0]);  // Width based on the text only
+        // $height = abs($bbox[7] - $bbox[1]); // Height based on the text only
+        
+        // // Create a blank image with the exact dimensions
+        // $image = imagecreatetruecolor($width, $height);
+        
+        // // Set transparency settings
+        // imagesavealpha($image, true); // Allow transparency
+        // $transparent_color = imagecolorallocatealpha($image, 0, 0, 0, 127); // Fully transparent
+        // imagefill($image, 0, 0, $transparent_color); // Fill the background with transparency
+        
+        // // Set text color based on theme
+        // if ($dark_theme) {
+        //     $text_color = imagecolorallocate($image, 255, 255, 255); // White text
+        // } else {
+        //     $text_color = imagecolorallocate($image, 0, 0, 0); // Black text
+        // }
+        
+        // // Add text to the image without any padding
+        // imagettftext($image, $font_size, 0, 0, abs($bbox[5]), $text_color, $font_file, $text);
+        
+        // // Save the image to a temporary file
+        // $temp_file = __DIR__ . '/my_image_' . time() . '.png';
+        // imagepng($image, $temp_file); // Save as PNG to preserve transparency
+        // imagedestroy($image);
+        
+        // // Upload the image to WordPress
+        // $image_id = upload_to_wp($temp_file);
+
         
     }
     // Set the image as the custom logo
@@ -1475,6 +1549,153 @@ function delete_all_styles(WP_REST_Request $request) {
 
 //user flow starts here
 
+// function update_logo_width($request) {
+//     // Get the width parameter from the API request
+//     $width = $request->get_param('width');
+
+//     // Validate the width (ensure it's a number and greater than 0)
+//     if (!is_numeric($width) || $width <= 0) {
+//         return new WP_Error('invalid_width', 'The width must be a positive number.', array('status' => 400));
+//     }
+
+//     // Fetch the existing custom CSS
+//     $existing_css = wp_get_custom_css();
+
+//     // Define the new CSS rule
+//     $new_css = "
+//         .hfe-site-logo-set .hfe-site-logo-img {
+//             width: {$width}px;
+//             max-width: 100%;
+//             height: auto;
+//         }
+//     ";
+
+//     // Replace any existing .hfe-site-logo-set .hfe-site-logo-img rule
+//     $pattern = '/\.hfe-site-logo-set\s*\.hfe-site-logo-img\s*{[^}]*}/';
+//     if (preg_match($pattern, $existing_css)) {
+//         // Replace the existing rule
+//         $updated_css = preg_replace($pattern, trim($new_css), $existing_css);
+//     } else {
+//         // Append the new rule if no existing rule is found
+//         $updated_css = $existing_css . "\n" . $new_css;
+//     }
+
+//     // Save the updated CSS back to the Customizer
+//     wp_update_custom_css_post($updated_css);
+
+//     return array(
+//         'success' => true,
+//         'message' => 'Logo width updated successfully.',
+//         'width'   => $width,
+//     );
+// }
+
+
+function custom_get_userdata() {
+    $api_url = 'https://staging-api.gravitywrite.com/api/get-user-details';
+    $bearer_token = get_option('api_user_token', true);
+
+    // Check if the bearer token exists
+    if (empty($bearer_token)) {
+        return new WP_Error(
+            'no_token',
+            'No token found. Please log in again.',
+            ['status' => 401]
+        );
+    }
+
+    // Set up the request arguments
+    $args = [
+        'headers' => [
+            'Authorization' => 'Bearer ' . $bearer_token,
+        ],
+    ];
+
+    // Perform the request
+    $response = wp_remote_get($api_url, $args);
+
+    // Check for errors in the request
+    if (is_wp_error($response)) {
+        return new WP_Error(
+            'request_failed',
+            'Error fetching data: ' . $response->get_error_message(),
+            ['status' => 500]
+        );
+    }
+
+    // Get the response body and decode it
+    $body = wp_remote_retrieve_body($response);
+    $data = json_decode($body, true);
+
+    // Check if the JSON decoding succeeded
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        return new WP_Error(
+            'json_error',
+            'Error decoding JSON response: ' . json_last_error_msg(),
+            ['status' => 500]
+        );
+    }
+
+    // Transform the data into the required format
+    $transformed_data = [
+        [
+            "id" => "1", // Hardcoded, update if you want a dynamic ID
+            "name" => isset($data['user_name']) ? $data['user_name'] : '',
+            "email" => isset($data['user_email']) ? $data['user_email'] : '',
+            "gravator" => isset($data['gravator']) ? $data['gravator'] : '',
+            "plan_detail" => isset($data['plan_name']) ? $data['plan_name'] : '',
+            "website_used" => isset($data['ai_websites_used']) ? (string) $data['ai_websites_used'] : '0',
+            "website_total" => isset($data['ai_websites_total']) ? (string) $data['ai_websites_total'] : '0',
+        ]
+    ];
+
+    // Return the transformed data
+    return rest_ensure_response($transformed_data);
+}
+
+
+function update_logo_width($request) {
+    // Get the width parameter from the API request
+    $width = $request->get_param('width');
+
+    // Validate the width (ensure it's a number and greater than 0)
+    if (!is_numeric($width) || $width <= 0) {
+        return new WP_Error('invalid_width', 'The width must be a positive number.', array('status' => 400));
+    }
+
+    // Fetch the existing custom CSS
+    $existing_css = wp_get_custom_css();
+
+    // Define the new CSS rule for #template-logo and #footer-logo
+    $new_css = "
+        #template-logo img,
+        #footer-logo img {
+            width: {$width}px;
+            max-width: 100%;
+            height: auto;
+        }
+    ";
+
+    // Replace any existing #template-logo or #footer-logo rules
+    $pattern = '/#template-logo\s*img\s*,\s*#footer-logo\s*img\s*{[^}]*}/';
+    if (preg_match($pattern, $existing_css)) {
+        // Replace the existing rule
+        $updated_css = preg_replace($pattern, trim($new_css), $existing_css);
+    } else {
+        // Append the new rule if no existing rule is found
+        $updated_css = $existing_css . "\n" . $new_css;
+    }
+
+    // Save the updated CSS back to the Customizer
+    wp_update_custom_css_post($updated_css);
+
+    return array(
+        'success' => true,
+        'message' => 'Logo width updated successfully.',
+        'width'   => $width,
+    );
+}
+
 
 function check_previous_import() {
     // Get the value of the option 'is_imported'
@@ -1560,14 +1781,19 @@ function Api_disconnect_handler(WP_REST_Request $request) {
             return;
         }
     
-        $email = $_GET['email'] ?? '';
-        $token = $_GET['wp_token'] ?? '';
-        $fe_token = $_GET['fe_token'] ?? '';
+        // $email = $_GET['email'] ?? '';
+        // $token = $_GET['wp_token'] ?? '';
+        // $fe_token = $_GET['fe_token'] ?? '';
 
-        // Sanitize the email and token
-        $email = sanitize_email($email);
-        $token = sanitize_text_field($token);
-        $fe_token = sanitize_text_field($fe_token);
+        // // Sanitize the email and token
+        // $email = sanitize_email($email);
+        // $token = sanitize_text_field($token);
+        // $fe_token = sanitize_text_field($fe_token);
+        
+        $email = get_option('api_user_email',true);
+        $token = get_option('api_user_token',true);
+        $fe_token =  get_option('api_user_fe_token',true);
+    
 
         if (empty($email) || empty($token)) {
             log_message("Missing email or token in disconnect request.", $log_file_path, 'error',$api_url);
@@ -1575,14 +1801,30 @@ function Api_disconnect_handler(WP_REST_Request $request) {
         }
     
         $api = 'https://staging-api.gravitywrite.com/api/connect-status';
+        // $response = wp_remote_post($api, [
+        //     'method'    => 'POST',
+        //     'headers'   => [
+        //         'Content-Type'  => 'application/json',
+        //         'Authorization' => 'Bearer ' . $token,
+        //     ],
+        //     'body'      => json_encode(['status' => 0]),
+        // ]);
+        
+        $current_domain = home_url();
+        //echo $current_domain;
+
         $response = wp_remote_post($api, [
             'method'    => 'POST',
             'headers'   => [
-                'Content-Type'  => 'application/json',
+                'Content-Type'  => 'application/x-www-form-urlencoded',
                 'Authorization' => 'Bearer ' . $token,
             ],
-            'body'      => json_encode(['status' => 0]),
+            'body'      => http_build_query([
+                'status' => 0,
+                'domain' => $current_domain,
+            ]),
         ]);
+
     
         if (is_wp_error($response)) {
             $error_message = $response->get_error_message();
@@ -1599,7 +1841,10 @@ function Api_disconnect_handler(WP_REST_Request $request) {
             update_option('api_user_email', $email);
             update_option('api_user_token', $token);
             update_option('api_user_fe_token', $fe_token);
-            log_message("Successfully disconnected account and updated options in WordPress.", $log_file_path, 'info',$api_url);
+            global $wpdb;
+            $table_name = $wpdb->prefix . 'gw_user_plan_details'; 
+            $wpdb->query("TRUNCATE TABLE {$table_name}");
+            log_message("Successfully disconnected account and truncate user plan details.", $log_file_path, 'info',$api_url);
         } else {
             log_message("Failed to disconnect. API response status did not indicate disconnection.", $log_file_path, 'warning', $api_url);
         }
@@ -1725,7 +1970,7 @@ function handle_update_count($request) {
     }
 }
 
-function check_word_count($request) {
+function check_word_count_old($request) {
     global $wpdb;
     $plugin_dir = plugin_dir_path(__FILE__);
     $log_dir = $plugin_dir . 'logs';
@@ -1795,8 +2040,133 @@ function check_word_count($request) {
     ];
 }
 
+function check_word_count($request) {
+    global $wpdb;
+    $plugin_dir = plugin_dir_path(__FILE__);
+    $log_dir = $plugin_dir . 'logs';
+    $log_file_path = $log_dir . '/plugin-log.txt';
+
+    // Ensure the logs directory exists
+    if (!file_exists($log_dir)) {
+        mkdir($log_dir, 0755, true);
+    }
+
+    $api_request_url = $request->get_route();
+    $api_url = 'https://staging-api.gravitywrite.com/api/check-word-count';
+    $bearer_token = get_option('api_user_token', true);
+
+    if (empty($bearer_token)) {
+        log_message("Bearer token is missing", $log_file_path, 'error', $api_request_url);
+        return [
+            'status' => false,
+            'message' => 'Bearer token is missing'
+        ];
+    }
+
+    $headers = [
+        'Content-Type'  => 'application/json',
+        'Authorization' => 'Bearer ' . $bearer_token
+    ];
+
+    $response = wp_remote_get($api_url, ['headers' => $headers]);
+    
+    if (is_wp_error($response)) {
+        $error_message = $response->get_error_message(); 
+        log_message("Failed to connect to external API: " . $error_message, $log_file_path, 'error', $api_request_url);
+        return [
+            'status' => false,
+            'message' => 'Failed to connect to external API: ' . $error_message
+        ];
+    }
+
+    $response_body = wp_remote_retrieve_body($response);
+    $response_data = json_decode($response_body, true);
+
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        log_message("Invalid JSON response", $log_file_path, 'error', $api_request_url);
+        return [
+            'status' => false,
+            'message' => 'Invalid JSON response'
+        ];
+    }
+    
+     // Handle various error cases based on API response
+    if (isset($response_data['status']) && $response_data['status'] === false) {
+        if (isset($response_data['wp_status']) && $response_data['wp_status'] == 1) {
+            // Word limit reached error
+            log_message("Word limit reached", $log_file_path, 'error', $api_request_url);
+            return [
+                'status' => false,
+                'message' => 'Word limit reached'
+            ];
+        } else {
+            // Invalid token error
+            log_message("Invalid Bearer token provided", $log_file_path, 'error', $api_request_url);
+            return [
+                'status' => false,
+                'message' => 'Invalid Bearer token provided'
+            ];
+        }
+    }
+
+    // Log success and return the actual API response
+    log_message("Word count checked successfully", $log_file_path, 'success', $api_request_url);
+    return [
+        'status' => isset($response_data['status']) ? $response_data['status'] : '',
+        'wp_status' => isset($response_data['wp_status']) ? $response_data['wp_status'] : '',
+        'message' => 'Word count checked successfully'
+    ];
+}
 
 function check_site_count($request) {
+    global $wpdb;
+    $plugin_dir = plugin_dir_path(__FILE__);
+    $log_dir = $plugin_dir . 'logs';
+    $log_file_path = $log_dir . '/plugin-log.txt';
+
+    if (!file_exists($log_dir)) {
+        mkdir($log_dir, 0755, true);
+    }
+
+    $api_request_url = $request->get_route();
+    $api_url = 'https://staging-api.gravitywrite.com/api/check-site-import-count';
+    $bearer_token = get_option('api_user_token', true);
+
+    if (empty($bearer_token)) {
+        log_message("Bearer token is missing", $log_file_path, 'error', $api_request_url);
+        return new WP_Error('missing_token', 'Bearer token is missing', ['status' => 400]);
+    }
+
+    $headers = [
+        'Content-Type'  => 'application/json',
+        'Authorization' => 'Bearer ' . $bearer_token
+    ];
+
+    $response = wp_remote_get($api_url, ['headers' => $headers]);
+
+    if (is_wp_error($response)) {
+        log_message("Failed to connect to external API", $log_file_path, 'error', $api_request_url);
+        return new WP_Error('api_error', 'Failed to connect to external API', ['status' => 500]);
+    }
+
+    $response_body = wp_remote_retrieve_body($response);
+    $response_data = json_decode($response_body, true);
+
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        log_message("Invalid JSON response", $log_file_path, 'error', $api_request_url);
+        return new WP_Error('json_error', 'Invalid JSON response', ['status' => 500]);
+    }
+
+    // Log success and return the actual API response
+    log_message("Site count checked successfully", $log_file_path, 'success', $api_request_url);
+    return [
+        'status' => isset($response_data['status']) ? $response_data['status'] : '',
+        'wp_status' => isset($response_data['wp_status']) ? $response_data['wp_status'] : '',
+        'message' => 'Site count checked successfully'
+    ];
+}
+
+function check_site_count_old($request) {
     global $wpdb;
     $plugin_dir = plugin_dir_path(__FILE__);
     $log_dir = $plugin_dir . 'logs';
@@ -2086,7 +2456,7 @@ function custom_xml_importer_install_and_activate_theme(WP_REST_Request $request
     $plugin_dir = plugin_dir_path(__FILE__);
     $log_dir = $plugin_dir . 'logs';
     $log_file_path = $log_dir . '/plugin-log.txt';
-     $api_url = $request->get_route(); // Get the API URL
+     $api_url = $request->get_route();
 
     if (!file_exists($log_dir)) {
         mkdir($log_dir, 0755, true);
@@ -2758,12 +3128,18 @@ class GW_Website_Builder {
                                     const baseUrl = window.location.origin;
                                     const redirectUrl = `${baseUrl}/wp-admin/admin.php?page=gravitywrite_settings`;
                                     window.location.href = redirectUrl;
+                                    //alert(response.data.message);
                                 } else {
                                     alert(response.data.message);
                                 }
                             })
                             .fail(function() {
-                                //alert("There was an error disconnecting. Please try again.");
+                                 const baseUrl = window.location.origin;
+                                 const redirectUrl = `${baseUrl}/wp-admin/admin.php?page=gravitywrite_settings`;
+                                    window.location.href = redirectUrl;
+                               let errorMessage = jqXHR.responseJSON?.data?.message || jqXHR.responseText || "Unknown error occurred.";
+                               //alert("Error: " + errorMessage);
+
                             })
                             .always(function() {
                                 // Clean up loading message
@@ -2840,67 +3216,69 @@ class GW_Website_Builder {
         $updated = update_option('gravitywrite_account_key', 'disconnected');
     
         if ($updated !== false) {
-            
-            wp_send_json_success(['message' => 'You have successfully disconnected from GravityWrite.']);
-            if (!is_admin() || 'gravitywrite_settings' !== ($_GET['page'] ?? '')) {
+            $email = get_option('api_user_email', true);
+            $token = get_option('api_user_token', true);
+            $fe_token = get_option('api_user_fe_token', true);
+    
+            if (empty($token)) {
                 return;
             }
-        
-            $email = $_GET['email'] ?? '';
-            $token = $_GET['wp_token'] ?? '';
-            $fe_token = $_GET['fe_token'] ?? '';
-        
-        
-            // Sanitize the email and token
-            $email = sanitize_email($email);
-            $token = sanitize_text_field($token);
-            $fe_token = sanitize_text_field($fe_token);
-        
-            if (empty($email) || empty($token)) {
-                return;
-            }
-        
-            $bearer_token = get_option('api_user_token',true);
-        
+    
             $api_url = 'https://staging-api.gravitywrite.com/api/connect-status';
+            $current_domain = home_url();
+    
             $response = wp_remote_post($api_url, [
                 'method'    => 'POST',
                 'headers'   => [
-                    'Content-Type'  => 'application/json',
+                    'Content-Type'  => 'application/x-www-form-urlencoded',
                     'Authorization' => 'Bearer ' . $token,
                 ],
-                'body'      => json_encode(['status' => 0]),
+                'body'      => http_build_query([
+                    'status' => 0,
+                    'domain' => $current_domain,
+                ]),
             ]);
-        
+    
             if (is_wp_error($response)) {
-                // Handle error in case the request fails
                 $error_message = $response->get_error_message();
-                return;
+                wp_send_json_error(['message' => 'Failed to connect to API: ' . $error_message . '. Token: ' . $token], 500);
             }
-        
-            // Parse the API response
+    
             $response_body = wp_remote_retrieve_body($response);
             $data = json_decode($response_body, true);
-        
+    
             if (isset($data['wp_status']) && $data['wp_status'] === 'Disconnected') {
-                // Update WordPress options if connected
+                // Update options and clean up
                 update_option('gravitywrite_account_key', 'disconnected');
-                update_option('api_user_email', $email);
-                update_option('api_user_token', $token);
-                update_option('api_user_fe_token', $fe_token);
-        
+                update_option('api_user_email', '');
+                update_option('api_user_token', '');
+                update_option('api_user_fe_token', '');
+    
+                // Truncate the table
+                global $wpdb;
+                $table_name = $wpdb->prefix . 'gw_user_plan_details'; 
+                $wpdb->query("TRUNCATE TABLE {$table_name}");
+    
+                wp_send_json_success(['message' => 'Successfully disconnected from GravityWrite And Truncate table User Plan Details']);
+            } else {
+                wp_send_json_error([
+                    'message' => 'Failed to disconnect. API response did not indicate disconnection.',
+                    'response_data' => json_encode($data)
+                ], 500);
             }
-        
-        
         } else {
-            // Send a failure response if the update failed
-            //wp_send_json_error(['message' => 'Failed to disconnect. Please try again.']);
+            wp_send_json_error(['message' => 'Failed to update account status. Please try again.'], 500);
         }
     }
 
+
     public function fetch_gravitywrite_data() {
         $api_url = 'https://staging-api.gravitywrite.com/api/get-user-details';
-        $bearer_token = get_option('api_user_token',true);
+        $bearer_token = get_option('api_user_token', true);
+    
+        if (empty($bearer_token)) {
+            echo 'No token found. Please log in again.';
+        }
     
         $args = [
             'headers' => [
@@ -2909,22 +3287,53 @@ class GW_Website_Builder {
         ];
     
         $response = wp_remote_get($api_url, $args);
-       
-      
     
         if (is_wp_error($response)) {
-            return 'Error fetching data';
+            echo 'Error fetching data: ' . $response->get_error_message();
         }
     
         $body = wp_remote_retrieve_body($response);
-        
         $data = json_decode($body, true);
     
         if (empty($data)) {
-          
             return 'No user data found';
         }
-        
+    
+        $current_page_url = esc_url(add_query_arg([], admin_url($GLOBALS['pagenow']) . '?' . $_SERVER['QUERY_STRING']));
+        // Check for specific error message related to expired token
+        if (isset($data['error']) && $data['error'] === 'Unauthorized' && isset($data['message']) && $data['message'] === 'Invalid or expired wp_token') {
+            // Token is expired or invalid, return a message
+           add_action('admin_notices', function() {
+                echo '<div class="notice notice-error"><p>Your session has expired. Please log in again.</p></div>';
+            });
+            //echo 'Your session has expired. Please log in again.';
+            ?>
+            
+            <div class="wrap">
+                <h1 style="font-size: 24px; font-weight: 600; margin-bottom: 20px;">GravityWrite: Settings</h1>
+                <div style="background: #f9f9f9; padding: 20px; border-radius: 8px;">
+                    <h2 style="font-size: 18px; font-weight: 500;">
+                        <img src="https://plugin.mywpsite.org/wp-content/uploads/logo/Icon-blue.svg" alt="GravityWrite Icon" style="width: 25px; height: 25px; vertical-align: middle; margin-right: 8px;">
+                        Optimize with GravityWrite
+                    </h2>
+                    <p style="font-size: 16px; color: #555; max-width: 1100px;">
+                        Boost your SEO game with our seamless content transfer between GravityWrite Content Editor and WordPress. Refine and perfect your articles effortlessly, ensuring your SEO strategy is never left to luck. Create content that ranks with GravityWrite in WordPress today!
+                    </p>
+
+                    <a href="https://staging.gravitywrite.com/login?callback_url=<?php echo ($current_page_url); ?>&domain=wordpress" style="display: inline-block; margin-top: 20px; padding: 10px 20px; background-color: #2E42FF; color: white; text-decoration: none; border-radius: 5px;">
+                        Log in and integrate with GravityWrite
+                    </a>
+                </div>
+                <p style="margin-top: 20px; font-size: 14px; color: #555;">
+                    In case of questions or troubles, please check our 
+                    <a href="#" style="color: #2E42FF;">documentation</a> or contact our 
+                    <a href="#" style="color: #2E42FF;">support team</a>.
+                </p>
+            </div>
+            <?php
+            return;
+        }
+
         
         $active_status = $data['wp_status'] ? '1' : '0';
         if($active_status == '1'){
@@ -2971,9 +3380,11 @@ class GW_Website_Builder {
                     <div class="view-gw-button">
                         <?php 
                         $token = get_option('api_user_fe_token');
+                        
                         // Get everything after the '|' in the token
                         $token_parts = explode('|', $token);
-                        $cleaned_token = isset($token_parts[1]) ? $token_parts[1] : ''; // Take the part after '|', or use an empty string if not present
+                        $cleaned_token = isset($token_parts[1]) ? $token_parts[1] : '';
+                        //echo $cleaned_token;exit;
                         ?>
                         <a href="https://staging.gravitywrite.com/dashboard?impersonateToken=<?php echo $cleaned_token; ?>" 
                            target="_blank" 
@@ -2990,7 +3401,7 @@ class GW_Website_Builder {
                     <div style="display: flex;justify-content: space-between;align-items: center;margin-top: 15px;margin-bottom: 5px;border-bottom: 2px solid #8080803d;">
                         <h2 style="font-size: 22px; font-weight: 600;"><?php echo esc_html($display_data['plan_name']); ?> 
                             <span style="color: #fff; font-size: 12px; background-color: #00B13C; margin-left: 10px; padding: 4px; border-radius: 5px;">
-                                Active
+                                <?php echo $data['account_status']; ?>
                             </span>
                         </h2>
                         <div class="plan-block">
@@ -3168,7 +3579,7 @@ class GW_Website_Builder {
                    <div style="display: flex;justify-content: space-between;align-items: center;margin-top: 15px;margin-bottom: 5px;border-bottom: 2px solid #8080803d;">
                         <h2 style="font-size: 22px; font-weight: 600;"><?php echo esc_html($data['plan_name']); ?> 
                             <span style="color: #fff; font-size: 12px; background-color: 00B13C; margin-left: 10px; padding: 4px; border-radius: 5px;">
-                                Active
+                                <?php echo $data['account_status']; ?>
                             </span>
                         </h2>
                         <div class="plan-block">
@@ -3357,8 +3768,9 @@ class GW_Website_Builder {
                 #adminmenu, #wpadminbar, #adminmenuback, #adminmenuwrap, #wpfooter , #metform-unsupported-metform-pro-version , #adminmenumain { display: none; }
                 .wrap { margin: 0; }
                 html.wp-toolbar { padding: 0 !important; }
-                #update-nag, .update-nag { display: none !important; }
+                #update-nag, .update-nag, .notice, .e-notice, .dci-global-header { display: none !important; }
                 #wpcontent, #wpbody-content { margin: 0 !important; padding: 0 !important; }
+                
             </style>';
         }
     }

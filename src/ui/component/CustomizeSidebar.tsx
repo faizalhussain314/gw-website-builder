@@ -26,7 +26,8 @@ import { useDebounce } from "use-debounce";
 
 const CustomizeSidebar: React.FC<{
   setLimitReached: React.Dispatch<React.SetStateAction<boolean>>;
-}> = ({ setLimitReached }) => {
+  setPlanExpired: React.Dispatch<React.SetStateAction<boolean>>;
+}> = ({ setLimitReached, setPlanExpired }) => {
   const [selectedColor, setSelectedColor] = useState<SelectedColor>({
     primary: "",
     secondary: "",
@@ -195,6 +196,12 @@ const CustomizeSidebar: React.FC<{
       } else if (response?.data?.status === false) {
         setWordCountLoader(false);
         setLimitReached(true);
+      } else if (
+        response?.data?.status === "pending" ||
+        response?.data?.status === "canceled" ||
+        response?.data?.status === "overdue"
+      ) {
+        setPlanExpired(true);
       }
     } catch (error) {
       console.error("Error while calling the word count API:", error);
@@ -345,7 +352,8 @@ const CustomizeSidebar: React.FC<{
         </Link>
         <button
           onClick={nextPage}
-          className="px-2 py-3 text-white rounded-md tertiary text-sm sm:mt-2 w-full"
+          disabled={loading}
+          className="px-2 py-3 text-white rounded-md tertiary text-sm sm:mt-2 w-full "
         >
           {wordCountLoader ? (
             <div className="flex min-w-[65px] justify-center items-center">

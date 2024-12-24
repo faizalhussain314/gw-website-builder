@@ -12,7 +12,10 @@ const ImportWarning = ({
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-gray-500 backdrop-blur-xl bg-opacity-50 z-50">
       <div className="relative bg-white shadow-lg p-8 sm:p-8 w-full max-w-[500px] pb-6 z-10 rounded-[10px]">
-        <div className="absolute top-5 right-5" onClick={onClose}>
+        <div
+          className="absolute top-5 right-5 cursor-pointer"
+          onClick={onClose}
+        >
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="14"

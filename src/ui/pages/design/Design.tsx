@@ -482,7 +482,7 @@ function Design() {
                     <div className="relative h-14">
                       <div className="absolute bottom-0 flex items-center justify-between w-full px-5 bg-white rounded-b-lg h-14 shadow-template-info">
                         <div className="capitalize zw-base-semibold text-app-heading">
-                          Option {index + 1}
+                          {list.name}
                         </div>
                         <Tooltip
                           placement="top"

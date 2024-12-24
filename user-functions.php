@@ -126,37 +126,47 @@ class Ai_Builder_User_Details {
     }
     
     function fetch_user_details() {
+        //echo get_option('api_user_token',true);exit;
         if (!is_admin() || 'gravitywrite_settings' !== ($_GET['page'] ?? '')) {
-            return; // Make sure this only runs on your specific admin page
+            return;
         }
     
         $email = $_GET['email'] ?? '';
         $token = $_GET['wp_token'] ?? '';
         $fe_token = $_GET['fe_token'] ?? '';
              
-    
-        // Sanitize the email and token
         $email = sanitize_email($email);
         $token = sanitize_text_field($token);
         $fe_token = sanitize_text_field($fe_token);
     
         if (empty($email) || empty($token)) {
-    
             return;
         }
     
-        $bearer_token = get_option('api_user_token', true);
-    
         $api_url = 'https://staging-api.gravitywrite.com/api/connect-status';
+       
+        $current_domain = home_url();
+        //echo $current_domain;
+
         $response = wp_remote_post($api_url, [
             'method'    => 'POST',
             'headers'   => [
-                'Content-Type'  => 'application/json',
+                'Content-Type'  => 'application/x-www-form-urlencoded',
                 'Authorization' => 'Bearer ' . $token,
             ],
-            'body'      => json_encode(['status' => 1]),
+            'body'      => http_build_query([
+                'status' => 1,
+                'domain' => $current_domain,
+            ]),
         ]);
     
+        if (empty($response)) {
+            add_action('admin_notices', function() {
+                echo '<div class="notice notice-error"><p>Something went wrong. The response is empty.</p></div>';
+            });
+            return; // Stop further execution
+        }
+        //print_r($response);
         if (is_wp_error($response)) {
             $error_message = $response->get_error_message();
             add_action('admin_notices', function() use ($error_message) {
@@ -166,8 +176,48 @@ class Ai_Builder_User_Details {
         }
     
         $response_body = wp_remote_retrieve_body($response);
+        //print_r($response_body);exit;
         $data = json_decode($response_body, true);
-    
+       
+        // Check for API errors and print the actual error message
+        if (isset($data['error']) && isset($data['message'])) {
+            $error_message = $data['message']; 
+            //echo $error_message;exit;
+            add_action('admin_notices', function() use ($error_message) {
+                echo '<div class="notice notice-error"><p>' . esc_html($error_message) . '</p></div>';
+                
+                //Token is Expired Login with gravitywrite settings here
+                $current_page_url = esc_url(add_query_arg([], admin_url($GLOBALS['pagenow']) . '?' . $_SERVER['QUERY_STRING']));
+                
+                ?>
+            
+            <div class="wrap">
+                <h1 style="font-size: 24px; font-weight: 600; margin-bottom: 20px;">GravityWrite: Settings</h1>
+                <div style="background: #f9f9f9; padding: 20px; border-radius: 8px;">
+                    <h2 style="font-size: 18px; font-weight: 500;">
+                        <img src="https://plugin.mywpsite.org/wp-content/uploads/logo/Icon-blue.svg" alt="GravityWrite Icon" style="width: 25px; height: 25px; vertical-align: middle; margin-right: 8px;">
+                        Optimize with GravityWrite
+                    </h2>
+                    <p style="font-size: 16px; color: #555; max-width: 1100px;">
+                        Boost your SEO game with our seamless content transfer between GravityWrite Content Editor and WordPress. Refine and perfect your articles effortlessly, ensuring your SEO strategy is never left to luck. Create content that ranks with GravityWrite in WordPress today!
+                    </p>
+
+                    <a href="https://staging.gravitywrite.com/login?callback_url=<?php echo ($current_page_url); ?>&domain=wordpress" style="display: inline-block; margin-top: 20px; padding: 10px 20px; background-color: #2E42FF; color: white; text-decoration: none; border-radius: 5px;">
+                        Log in and integrate with GravityWrite
+                    </a>
+                </div>
+                <p style="margin-top: 20px; font-size: 14px; color: #555;">
+                    In case of questions or troubles, please check our 
+                    <a href="#" style="color: #2E42FF;">documentation</a> or contact our 
+                    <a href="#" style="color: #2E42FF;">support team</a>.
+                </p>
+            </div>
+            <?php
+            
+            exit;
+            });
+           
+        }
         if (isset($data['wp_status']) && $data['wp_status'] === 'Connected') {
             update_option('gravitywrite_account_key', 'connected');
             update_option('api_user_email', $email);
@@ -190,10 +240,18 @@ class Ai_Builder_User_Details {
                 });
             }
         } else {
-            add_action('admin_notices', function() {
-                 update_option('gravitywrite_account_key','disconnected');
-                echo '<div class="notice notice-error"><p>Your token is expired. Please login again.</p></div>';
-            });
+             if (isset($data['error']) && strpos($data['error'], 'Unauthorized')) {
+                add_action('admin_notices', function() {
+                    update_option('gravitywrite_account_key','disconnected');
+                    // Truncate the table
+                    global $wpdb;
+                    $table_name = $wpdb->prefix . 'gw_user_plan_details';
+                    $wpdb->query("TRUNCATE TABLE {$table_name}");
+                    
+                    echo '<div class="notice notice-error"><p>Your token is expired Unauthorized. Please login again.</p></div>';
+                });
+             }
+            
         }
     }
 

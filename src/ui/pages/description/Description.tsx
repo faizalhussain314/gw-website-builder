@@ -256,6 +256,10 @@ function Description() {
   };
 
   const setReduxValue = async () => {
+    // console.log("values", setLoader1, setLoader2);
+    // if (setLoader1 || setLoader2) {
+    //   return;
+    // }
     let errorMessage = "";
 
     const description1WordCount = calculateWordCount(description1);
@@ -589,6 +593,7 @@ function Description() {
           <button
             onClick={setReduxValue}
             className="tertiary px-[30px] py-[15px] text-base text-white sm:mt-2 font-medium rounded-md w-[150px]"
+            disabled={loader1 || loader2 || loading}
           >
             {loading ? (
               <div className="flex min-w-[65px] justify-center items-center">

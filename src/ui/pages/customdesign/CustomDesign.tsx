@@ -7,10 +7,11 @@ import PlumberPageSkeleton from "../../component/PlumberPageSkeleton ";
 import { RootState } from "../../../store/store";
 import { sendIframeMessage } from "../../../core/utils/sendIframeMessage.utils";
 import UpgradeWords from "../../component/dialogs/UpgradeWords";
+import PlanExpired from "../../component/dialogs/PlanExpired";
 
 function CustomDesign() {
   const [parsedTemplateList, setParsedTemplateList] = useState(null);
-
+  const [planExpired, setPlanExpired] = useState(false);
   const dispatch = useDispatch();
   const { getDomainFromEndpoint } = useDomainEndpoint();
   const businessName = useSelector(
@@ -95,8 +96,12 @@ function CustomDesign() {
     fetchInitialData();
   };
   return (
-    <CustomizeLayout setLimitReached={setLimitReached}>
-      {limitReached && <UpgradeWords />} {/* Render popup here */}
+    <CustomizeLayout
+      setLimitReached={setLimitReached}
+      setPlanExpired={setPlanExpired}
+    >
+      {limitReached && <UpgradeWords />}
+      {planExpired && <PlanExpired />}
       {/* Pass setter */}
       {currentUrl ? (
         <iframe

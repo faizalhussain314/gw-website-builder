@@ -39,6 +39,7 @@ import ApiErrorPopup from "../../component/dialogs/ApiErrorPopup.tsx";
 import WordLimit from "../../component/dialogs/WordLimit.tsx";
 import { updateIframeLogo } from "../../../core/utils/changeIframeLogo.ts";
 import ImportWarning from "../../component/dialogs/importWarning.tsx";
+import PlanExpired from "../../component/dialogs/PlanExpired.tsx";
 
 const FinalPreview: React.FC = () => {
   const reduxPages =
@@ -57,7 +58,7 @@ const FinalPreview: React.FC = () => {
   // Default pages if reduxPages is empty
   const defaultPages: Page[] = [
     { name: "Home", status: "", slug: "home", selected: false },
-    { name: "About", status: "", slug: "about", selected: false },
+    { name: "About us", status: "", slug: "about", selected: false },
     { name: "Services", status: "", slug: "service", selected: false },
     { name: "Blog", status: "", slug: "blog", selected: false },
     { name: "Contact Us", status: "", slug: "contact", selected: false },
@@ -68,14 +69,15 @@ const FinalPreview: React.FC = () => {
   // Use reduxPages if it's not empty; otherwise, fallback to defaultPages
   const [pages, setPages] = useState<Page[]>([
     { name: "Home", status: "", slug: "home", selected: false },
-    { name: "About", status: "", slug: "about", selected: false },
-    { name: "Service", status: "", slug: "service", selected: false },
+    { name: "About Us", status: "", slug: "about", selected: false },
+    { name: "Services", status: "", slug: "service", selected: false },
     { name: "Blog", status: "", slug: "blog", selected: false },
     { name: "Contact Us", status: "", slug: "contact-us", selected: false },
   ]);
   const [isOpen, setIsOpen] = useState(false);
   const [viewMode, setViewMode] = useState("desktop");
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [planExpired, setPlanExpired] = useState(false);
   const [isContentGenerating, setIsContentGenerating] = useState(false);
   const [isPageGenerated, setIsPageGenerated] = useState(false);
   const [selectedPage, setSelectedPage] = useState<string | null>("Home");
@@ -397,6 +399,8 @@ const FinalPreview: React.FC = () => {
           json_content:
             pageName === "Home" ||
             pageName === "About" ||
+            pageName === "About Us" ||
+            pageName === "Services" ||
             pageName === "Service"
               ? jsonContent
               : "",
@@ -670,7 +674,7 @@ const FinalPreview: React.FC = () => {
       );
 
       if (fetchResult) {
-        setShowGwLoader(false);
+        // setShowGwLoader(false);
         setwordCountAlert(false);
         return;
       }
@@ -697,7 +701,7 @@ const FinalPreview: React.FC = () => {
             // if (generatedPage[selectedPage] && response?.data.status) {
             //   return;
             // }
-
+            setIsLoading(true);
             if (response?.data?.status === true) {
               const iframe = iframeRef.current;
               const currentPage = pages.find(
@@ -722,7 +726,7 @@ const FinalPreview: React.FC = () => {
             } else if (response?.data?.status === false) {
               setIsContentGenerating(false);
               setwordCountAlert(true);
-              setShowGwLoader(false);
+              // setShowGwLoader(false);
               // setIsLoading(false);
             }
           } catch (error) {
@@ -730,7 +734,7 @@ const FinalPreview: React.FC = () => {
             setapiIssue(true);
           } finally {
             setIsLoading(false);
-            setShowGwLoader(false);
+            // setShowGwLoader(false);
           }
         }
       }
@@ -741,6 +745,7 @@ const FinalPreview: React.FC = () => {
         setShowIframe(false);
         setShowGwLoader(false);
       } else if (selectedPage === "Home" && pages[0].status !== "Generated") {
+        setShowGwLoader(true);
         iframe.contentWindow.postMessage(
           {
             type: "start",
@@ -1060,6 +1065,12 @@ const FinalPreview: React.FC = () => {
             "*"
           );
         }
+      } else if (
+        response?.data?.status === "pending" ||
+        response?.data?.status === "canceled" ||
+        response?.data?.status === "overdue"
+      ) {
+        setPlanExpired(true);
       } else {
         setShowGwLoader(false);
         setIsContentGenerating(false);
@@ -1244,6 +1255,12 @@ const FinalPreview: React.FC = () => {
           setImportLoad(false);
           navigate("/processing", { state: { pageName: selectedPage } });
         }
+      } else if (
+        response?.data?.status === "pending" ||
+        response?.data?.status === "canceled" ||
+        response?.data?.status === "overdue"
+      ) {
+        setPlanExpired(true);
       } else {
         setImportLoad(false);
         setshowImportWarning(true);
@@ -1492,6 +1509,7 @@ const FinalPreview: React.FC = () => {
               isimportLoading={isImportLoading}
             />
           )}
+
           {showUpgradePopup && (
             <UpgradePopup
               onClose={() => setShowUpgradePopup(false)}
@@ -1525,6 +1543,7 @@ const FinalPreview: React.FC = () => {
             {isLoading && !isContentGenerating && <PlumberPageSkeleton />}
 
             {wordCountAlert && <WordLimit />}
+            {planExpired && <PlanExpired />}
 
             {/* Generated Content Iframe */}
             {generatedPage[selectedPage] && isPageGenerated && (
