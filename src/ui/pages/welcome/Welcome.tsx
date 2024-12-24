@@ -6,10 +6,15 @@ import { RootState } from "../../../store/store";
 
 function Welcome() {
   const userDetails = useSelector((state: RootState) => state?.user);
+  const lastStep = useSelector((state: RootState) => state.userData.lastStep);
   const navigate = useNavigate();
 
   const handleRedirection = () => {
-    if (userDetails?.username || userDetails?.username?.trim()?.length > 0) {
+    if (
+      userDetails?.username ||
+      userDetails?.username?.trim()?.length > 0 ||
+      lastStep !== "/"
+    ) {
       navigate("/category");
     } else {
       navigate("/connect-account");

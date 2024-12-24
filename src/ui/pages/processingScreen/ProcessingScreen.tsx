@@ -53,6 +53,8 @@ const ProcessingScreen: React.FC = () => {
   );
   const wp_token = useSelector((state: RootState) => state.user.wp_token);
 
+  const logoWidth = useSelector((state: RootState) => state.userData.logoWidth);
+
   // const url = getDomainFromEndpoint("/wp-json/custom/v1/get-user-token");
 
   const fetchTemplates = async (): Promise<TemplateData | null> => {
@@ -312,6 +314,9 @@ const ProcessingScreen: React.FC = () => {
         fileurl: logoToUse,
         type: logoType,
       });
+
+      setStatus("adjusting logo width");
+      await postData("wp-json/custom/v1/set-logo-width", { width: logoWidth });
     }
 
     await postData("/wp-json/custom/v1/install-elementor-kit", {

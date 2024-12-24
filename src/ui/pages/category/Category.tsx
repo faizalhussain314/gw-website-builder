@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setCategory } from "../../../Slice/activeStepSlice";
 import { useNavigate } from "react-router-dom";
@@ -154,11 +154,30 @@ function Category() {
     window.location.href = "/wp-admin/admin.php?page=gravitywrite_settings";
   };
 
-  useEffect(() => {
-    if (userDetails.generatedSite >= userDetails.max_genration) {
-      setLimitReached(true);
+  const checkSiteCount = useCallback(async () => {
+    const endpoint = getDomainFromEndpoint(
+      "/wp-json/custom/v1/check-site-count"
+    );
+    if (!endpoint) {
+      console.error("Endpoint is not available.");
+      return;
     }
-  }, [userDetails]);
+
+    try {
+      const response = await axios.get(endpoint);
+      if (response?.data?.status === false) {
+        setLimitReached(true);
+      }
+    } catch (error) {
+      console.error("Error checking site count:", error);
+    }
+  }, [setLimitReached, getDomainFromEndpoint]);
+
+  useEffect(() => {
+    if (userDetails.email) {
+      checkSiteCount();
+    }
+  }, [userDetails.email, checkSiteCount]);
 
   useEffect(() => {
     if (location.hash.includes("/category")) {

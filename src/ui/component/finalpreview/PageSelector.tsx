@@ -180,7 +180,7 @@ const PageSelector: React.FC<Props> = ({
   // }, [pageButtonStates]);
 
   const handleToggleButtons = (pageName: string) => {
-    if (selectedPage !== pageName) {
+    if (selectedPage.toLowerCase() !== pageName.toLowerCase()) {
       setPageButtonStates((prev) => ({
         ...prev,
         [pageName]: true,
@@ -227,7 +227,7 @@ const PageSelector: React.FC<Props> = ({
                 <div
                   className="custom-checkbox"
                   onClick={() => {
-                    handleAddPage(page.name);
+                    handleAddPage(page.name.toLowerCase());
                   }}
                 >
                   <input
@@ -347,16 +347,24 @@ const PageSelector: React.FC<Props> = ({
                       <div className="w-full flex items-center gap-4">
                         <button
                           className={`bg-white text-[#1E2022] hover:bg-palatinate-blue-600 hover:text-white rounded px-3 py-1.5 w-full text-[14px] font-[500] ${
-                            isContentGenerating ? "opacity-50" : ""
+                            isContentGenerating || isLoading || showGwLoader
+                              ? "opacity-50"
+                              : ""
                           }`}
                           onClick={() => {
-                            if (isContentGenerating || isLoading) {
+                            if (
+                              isContentGenerating ||
+                              isLoading ||
+                              showGwLoader
+                            ) {
                               showWarningToast();
                             } else {
                               handleNext(page.name);
                             }
                           }}
-                          disabled={isContentGenerating || isLoading}
+                          disabled={
+                            isContentGenerating || isLoading || showGwLoader
+                          }
                         >
                           Keep & Next
                         </button>
@@ -381,7 +389,9 @@ const PageSelector: React.FC<Props> = ({
                         ) : (
                           <button
                             className={`bg-white text-[#1E2022] hover:bg-palatinate-blue-600 hover:text-white rounded px-3 py-1.5 w-full text-[14px] font-[500] ${
-                              isContentGenerating ? "opacity-50" : ""
+                              isContentGenerating || isLoading
+                                ? "opacity-50"
+                                : ""
                             }`}
                             onClick={() => handleSkipClick(page.name)}
                             disabled={isContentGenerating || isLoading}

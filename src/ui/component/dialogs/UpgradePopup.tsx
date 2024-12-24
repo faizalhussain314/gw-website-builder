@@ -33,6 +33,11 @@ const UpgradePopup: React.FC<UpgradePopupProps> = ({ onClose, alertType }) => {
     message = ` You've reached the word limit for your current plan. To unlock more
           words and continue generating content, consider upgrading your word
           limit`;
+  } else if (alertType === "importLimit") {
+    title = "Limit Reached";
+    message = ` You've reached the Template Limit for your current plan. To unlock more
+          template import consider upgrading your word
+          limit`;
   }
 
   const upgradeRedirection = () => {
