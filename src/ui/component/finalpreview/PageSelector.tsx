@@ -108,7 +108,12 @@ const PageSelector: React.FC<Props> = ({
   const handlePageChange = (slug: string, newSelectedValue: boolean) => {
     const currentPage = pages.find((page) => page.slug === slug);
 
-    if (currentPage?.name === "Home") {
+    if (!currentPage) {
+      console.error(`Page with slug ${slug} not found.`);
+      return;
+    }
+
+    if (currentPage.name === "Home") {
       const updatedPages = pages.map((page) =>
         page.slug === slug
           ? { ...page, selected: true, status: "Generated" }
@@ -118,12 +123,36 @@ const PageSelector: React.FC<Props> = ({
       return;
     }
 
+    if (["blog", "contact", "contact-us"].includes(slug)) {
+      const updatedPages = pages.map((page) =>
+        page.slug === slug
+          ? {
+              ...page,
+              selected: newSelectedValue,
+              status:
+                currentPage.status && currentPage.status !== "" ? "" : "Added",
+            }
+          : page
+      );
+      setPages(updatedPages);
+
+      dispatch(
+        updateReduxPage({
+          name: currentPage.name,
+          status:
+            currentPage.status && currentPage.status !== "" ? "" : "Added",
+          selected: newSelectedValue,
+        })
+      );
+      return;
+    }
+
     const updatedPages = pages.map((page) =>
       page.slug === slug
         ? {
             ...page,
             selected: newSelectedValue,
-            status: newSelectedValue === true ? page.status : "",
+            status: newSelectedValue ? page.status : "",
           }
         : page
     );
@@ -133,7 +162,7 @@ const PageSelector: React.FC<Props> = ({
     dispatch(
       updateReduxPage({
         name: currentPage.name,
-        status: newSelectedValue === true ? currentPage.status : "",
+        status: newSelectedValue ? currentPage.status : "",
         selected: newSelectedValue,
       })
     );
@@ -235,17 +264,13 @@ const PageSelector: React.FC<Props> = ({
                     type="checkbox"
                     disabled={page.name === "Home"}
                     className="mr-4 flex items-center w-4 h-4"
-                    checked={
-                      page.name === "Home"
-                        ? true
-                        : page.status &&
-                          page?.status != "Skipped" &&
-                          page?.status != "Not Selected"
-                        ? true
-                        : false
-                    }
-                    onClick={(e: any) => {
-                      handlePageChange(page.slug, e?.target?.checked);
+                    checked={page.selected}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                      // Stop propagation if needed
+                      e.stopPropagation();
+                      console.log("event triggered");
+
+                      handlePageChange(page.slug, e.target?.checked);
                     }}
                   />
                 </div>
