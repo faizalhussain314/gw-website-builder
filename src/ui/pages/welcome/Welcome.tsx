@@ -12,8 +12,7 @@ function Welcome() {
   const handleRedirection = () => {
     if (
       userDetails?.username ||
-      userDetails?.username?.trim()?.length > 0 ||
-      lastStep !== "/"
+      (userDetails?.username?.trim()?.length > 0 && lastStep !== "/")
     ) {
       navigate("/category");
     } else {
