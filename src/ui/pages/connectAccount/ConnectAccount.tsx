@@ -19,7 +19,7 @@ function ConnectAccount() {
     if (userName) {
       navigate("/category");
     } else {
-      window.location.href = `https://staging.gravitywrite.com/login?domain=wordpress-react&callback_url=${callBackUrl}`;
+      window.location.href = `https://app.gravitywrite.com/login?domain=wordpress-react&callback_url=${callBackUrl}`;
     }
   };
   return (
