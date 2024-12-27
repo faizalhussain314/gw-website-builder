@@ -392,11 +392,10 @@ function Design() {
       <div className="flex flex-col justify-between h-full p-10">
         <div className="flex flex-col w-full h-full mx-auto overflow-x-hidden">
           <h1 className="text-3xl font-semibold">
-            Choose the layout for your website
+          Pick a template for your website
           </h1>
           <p className="mt-3 text-base font-normal leading-6 text-app-text text-txt-secondary-500">
-            Select your preferred structure for your website from the options
-            below.
+          Choose the design that best fits your website’s purpose. You can always customize it later!
           </p>
 
           <form

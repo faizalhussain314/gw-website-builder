@@ -287,7 +287,7 @@ function Category() {
               type="text"
               value={inputValue}
               onChange={handleInputChange}
-              placeholder="Enter a keyword to search your business"
+              placeholder="Enter your business category or type (e.g., E-commerce, Restaurant)"
               className={`bg-white rounded-lg w-full pl-11 pr-4 py-3 border placeholder:text-[#A9B0B7] placeholder:!font-normal focus:border-palatinate-blue-500 active:border-palatinate-blue-500 focus:border-2 ${
                 error ? "border-red-500" : "border-[#CDD4DB]"
               } focus:outline-none`}

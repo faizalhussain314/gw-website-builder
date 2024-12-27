@@ -197,11 +197,10 @@ function Contact() {
       >
         <div className="bg-[#F9FCFF] w-full p-10">
           <h1 className="text-txt-black-600 font-semibold text-3xl font-[inter] mb-2.5">
-            How can people get in touch with {businessName} {category}
+            How can customers contact you?
           </h1>
           <span className="text-lg text-txt-secondary-500 max-w-[720px]">
-            People provide the contact information details below. These will be
-            used on the website.
+          Provide the contact details you'd like to display on your website, so customers can easily reach you.
           </span>
 
           <form className="w-full mt-9">

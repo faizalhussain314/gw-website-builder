@@ -330,12 +330,10 @@ function Description() {
         <div className="h-full px-10 pt-10 overflow-x-hidden overflow-y-auto">
           <div className="flex flex-col">
             <h1 className="text-txt-black-600 font-semibold text-3xl font-[inter]">
-              What is {businessName} {category}? Tell us more about the{" "}
-              {category}
+              What is {businessName}? Tell us more about it.
             </h1>
             <span className="mt-2.5 text-lg leading-6 text-txt-secondary-400 max-w-[617px]">
-              Please be as descriptive as you can. Share details such as a brief
-              about the {category}, specialty, menu, etc.
+            Let’s get to know your Business! The more details you share, the better we can tailor your website.
             </span>
           </div>
 
@@ -371,13 +369,14 @@ function Description() {
                 />
               </svg>
               <label className="text-lg font-semibold leading-5">
-                What do you offer/sell? or what services do you provide?
+              What do you offer / sell?
               </label>
             </div>
             <textarea
               // className={getInputClass(des1)}
               className={getInputClass("des1")}
               value={description1}
+              placeholder="We offer healthy and convenient meal options for busy individuals"
               onChange={(e) => {
                 const newValue = e.target.value.trimStart();
 
@@ -480,9 +479,7 @@ function Description() {
                 />
               </svg>
               <label className="text-lg font-semibold max-w-[639px]">
-                What steps do customers need to take to start working with the
-                business? What actions do visitors need to take to work with
-                you?
+                How can someone get started with your business?
               </label>
             </div>
             <textarea
@@ -490,6 +487,7 @@ function Description() {
               //   error && "border-red-500 first-line: rounded-lg"
               // } focus:border-palatinate-blue-500 active:border-palatinate-blue-500 active:outline-palatinate-blue-500 focus:outline-palatinate-blue-500 ml-[50px]`}
               className={getInputClass("des2")}
+              placeholder="Visit our shop, explore our menu, and place your order in-store or online."
               value={description2}
               onChange={(e) => {
                 const newValue = e.target.value.trimStart();
