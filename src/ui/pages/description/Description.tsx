@@ -479,7 +479,7 @@ function Description() {
                 />
               </svg>
               <label className="text-lg font-semibold max-w-[639px]">
-                How can someone get started with your business?
+              What actions do visitors need to take to get started?
               </label>
             </div>
             <textarea
