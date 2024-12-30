@@ -249,8 +249,8 @@ function Category() {
         dispatch(setWebsiteGenerationLimit(parseInt(result[0]?.website_total)));
         dispatch(setEmail(result[0]?.email));
         dispatch(setGravator(result[0]?.gravator));
-        dispatch(setGeneratedSite(parseInt(result[0]?.website_used) || 1));
-        dispatch(setMaxGeneration(parseInt(result[0]?.website_total) || 6));
+        dispatch(setGeneratedSite(parseInt(result[0]?.website_used)));
+        dispatch(setMaxGeneration(parseInt(result[0]?.website_total)));
         setMainLoader(false);
       }
     } catch (error) {
