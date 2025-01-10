@@ -16,7 +16,7 @@ class Ai_Builder_User_Details {
     */
 
     function fetch_user_data_from_api1() {
-        $api_url = 'https://staging-api.gravitywrite.com/api/get-user-details';
+        $api_url = 'https://api.gravitywrite.com/api/get-user-details';
         $bearer_token = get_option('api_user_token', true);
     
         $args = [
@@ -143,7 +143,7 @@ class Ai_Builder_User_Details {
             return;
         }
     
-        $api_url = 'https://staging-api.gravitywrite.com/api/connect-status';
+        $api_url = 'https://api.gravitywrite.com/api/connect-status';
        
         $current_domain = home_url();
         //echo $current_domain;
@@ -202,7 +202,7 @@ class Ai_Builder_User_Details {
                         Boost your SEO game with our seamless content transfer between GravityWrite Content Editor and WordPress. Refine and perfect your articles effortlessly, ensuring your SEO strategy is never left to luck. Create content that ranks with GravityWrite in WordPress today!
                     </p>
 
-                    <a href="https://staging.gravitywrite.com/login?callback_url=<?php echo ($current_page_url); ?>&domain=wordpress" style="display: inline-block; margin-top: 20px; padding: 10px 20px; background-color: #2E42FF; color: white; text-decoration: none; border-radius: 5px;">
+                    <a href="https://app.gravitywrite.com/login?callback_url=<?php echo ($current_page_url); ?>&domain=wordpress" style="display: inline-block; margin-top: 20px; padding: 10px 20px; background-color: #2E42FF; color: white; text-decoration: none; border-radius: 5px;">
                         Log in and integrate with GravityWrite
                     </a>
                 </div>

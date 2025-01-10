@@ -303,12 +303,15 @@ function delete_attachments_by_title_or_filename($title, $filename) {
 function delete_all_custom_posts(WP_REST_Request $request) {
     global $wpdb;
     $table_name = $wpdb->prefix . 'imported_posts';
-
+    $menu_name="Menu";
+    $menu_exists = wp_get_nav_menu_object($menu_name);
+    $menu_id = $menu_exists ? $menu_exists->term_id : wp_create_nav_menu($menu_name);
+    wp_delete_nav_menu_items($menu_id);
     // Selecting all post IDs, their types, and filenames from your custom table
     $posts = $wpdb->get_results("SELECT post_id, post_type, page_name FROM $table_name");
 
     if (empty($posts)) {
-        return new WP_REST_Response('No posts found to delete.', 404);
+        return new WP_REST_Response('No posts found to delete.', 200);
     }
 
     foreach ($posts as $post) {
@@ -343,7 +346,7 @@ function delete_theme_and_plugins(WP_REST_Request $request) {
 
     $plugin_dir1 = dirname(plugin_dir_path(__FILE__));
     
-    $uploads_dir = $plugin_dir1 . '/uploads/';
+    $uploads_dir = $plugin_dir1 . '/uploads';
 
     if (!file_exists($uploads_dir)) {
     	 log_message('Uploads folder does not exist.', $log_file_path, 'error', $api_url);
@@ -1074,38 +1077,84 @@ function regenerate_global_elementor_css(WP_REST_Request $request) {
 
     // Fetch all menu items for the specific menu ID
     $menu_items = wp_get_nav_menu_items($menu_id);
+    $front_page_id = get_option('page_on_front');
 
-    // Remove the existing "Home" menu item
+    // Remove all existing "Home" menu items that don't match the front page
     if (is_array($menu_items)) {
         foreach ($menu_items as $item) {
-            if ($item->title == 'Home') {
+            if ($item->title === 'Home' && $item->object_id != $front_page_id) {
                 wp_delete_post($item->ID, true);
+                log_message('Deleted previous "Home" menu item with ID ' . $item->ID, $log_file_path, 'info', $api_url);
             }
         }
     }
 
-    // Define the new menu item linking to the front page
-    $front_page_id = get_option('page_on_front');
+    // Check if "Home" menu item already exists for the front page
+    $home_item_exists = false;
 
-    // Define the new menu item as the front page
-    $menu_item_data = array(
-        'menu-item-title' => 'Home',    // This can also be get_the_title($front_page_id) to fetch title dynamically
-        'menu-item-object-id' => $front_page_id,
-        'menu-item-object' => 'page',
-        'menu-item-type' => 'post_type',
-        'menu-item-status' => 'publish',
-        'menu-item-position' => 1
-    );
+    if (is_array($menu_items)) {
+        foreach ($menu_items as $item) {
+            if ($item->title === 'Home' && $item->object_id == $front_page_id) {
+                $home_item_exists = true;
+                break; // Exit loop as soon as a match is found
+            }
+        }
+    }
 
-    // Add the new menu item to the specified menu
-    $new_menu_item_id = wp_update_nav_menu_item($menu_id, 0, $menu_item_data);
+    // Add new "Home" menu item if it doesn't exist
+    if (!$home_item_exists) {
+        $menu_item_data = [
+            'menu-item-title' => 'Home',
+            'menu-item-object-id' => $front_page_id,
+            'menu-item-object' => 'page',
+            'menu-item-type' => 'post_type',
+            'menu-item-status' => 'publish',
+            'menu-item-position' => 1
+        ];
 
+        $new_menu_item_id = wp_update_nav_menu_item($menu_id, 0, $menu_item_data);
+
+        if (is_wp_error($new_menu_item_id)) {
+            log_message('Failed to add "Home" menu item.', $log_file_path, 'error', $api_url);
+            return new WP_REST_Response(['success' => false, 'message' => 'Failed to add "Home" menu item'], 500);
+        }
+        log_message('New "Home" menu item added successfully.', $log_file_path, 'success', $api_url);
+    } else {
+        log_message('"Home" menu item already exists.', $log_file_path, 'info', $api_url);
+    }
+	
+	$width = get_option('selected_logo_width', true);
+     // Fetch the existing custom CSS
+    $existing_css = wp_get_custom_css();
+
+    // Define the new CSS rule for #template-logo and #footer-logo
+    $new_css = "
+        #template-logo img,
+        #footer-logo img {
+            width: {$width}px;
+            max-width: 100%;
+            height: auto;
+        }
+    ";
+
+    // Replace any existing #template-logo or #footer-logo rules
+    $pattern = '/#template-logo\s*img\s*,\s*#footer-logo\s*img\s*{[^}]*}/';
+    if (preg_match($pattern, $existing_css)) {
+        // Replace the existing rule
+        $updated_css = preg_replace($pattern, trim($new_css), $existing_css);
+    } else {
+        // Append the new rule if no existing rule is found
+        $updated_css = $existing_css . "\n" . $new_css;
+    }
+
+    // Save the updated CSS back to the Customizer
+    wp_update_custom_css_post($updated_css);
+	
     return new WP_REST_Response([
         'success' => true,
         'message' => 'Elementor files regenerated successfully and menu updated.'
     ], 200);
 }
-
 
 function import_site_logo_old(WP_REST_Request $request) {
     $plugin_dir = plugin_dir_path(__FILE__);
@@ -1592,7 +1641,7 @@ function delete_all_styles(WP_REST_Request $request) {
 
 
 function custom_get_userdata() {
-    $api_url = 'https://staging-api.gravitywrite.com/api/get-user-details';
+    $api_url = 'https://api.gravitywrite.com/api/get-user-details';
     $bearer_token = get_option('api_user_token', true);
 
     // Check if the bearer token exists
@@ -1657,7 +1706,7 @@ function custom_get_userdata() {
 function update_logo_width($request) {
     // Get the width parameter from the API request
     $width = $request->get_param('width');
-
+   
     // Validate the width (ensure it's a number and greater than 0)
     if (!is_numeric($width) || $width <= 0) {
         return new WP_Error('invalid_width', 'The width must be a positive number.', array('status' => 400));
@@ -1688,6 +1737,7 @@ function update_logo_width($request) {
 
     // Save the updated CSS back to the Customizer
     wp_update_custom_css_post($updated_css);
+    update_option('selected_logo_width', $width);
 
     return array(
         'success' => true,
@@ -1800,7 +1850,7 @@ function Api_disconnect_handler(WP_REST_Request $request) {
             return;
         }
     
-        $api = 'https://staging-api.gravitywrite.com/api/connect-status';
+        $api = 'https://api.gravitywrite.com/api/connect-status';
         // $response = wp_remote_post($api, [
         //     'method'    => 'POST',
         //     'headers'   => [
@@ -1908,7 +1958,7 @@ function handle_update_count($request) {
         $template_id = $request->get_param('template_id') ?? '1';
         $is_type = $request->get_param('is_type') ?? 'words';
 
-        $api_url = 'https://staging-api.gravitywrite.com/api/update-count';
+        $api_url = 'https://api.gravitywrite.com/api/update-count';
         $bearer_token = get_option('api_user_token', true);
         log_message("Starting handle_update_count request", $log_file_path, 'info', $api_request_url);
 
@@ -1982,7 +2032,7 @@ function check_word_count_old($request) {
     }
 
     $api_request_url = $request->get_route();
-    $api_url = 'https://staging-api.gravitywrite.com/api/check-word-count';
+    $api_url = 'https://api.gravitywrite.com/api/check-word-count';
     $bearer_token = get_option('api_user_token', true);
 
     // Check if Bearer token is available
@@ -2052,7 +2102,7 @@ function check_word_count($request) {
     }
 
     $api_request_url = $request->get_route();
-    $api_url = 'https://staging-api.gravitywrite.com/api/check-word-count';
+    $api_url = 'https://api.gravitywrite.com/api/check-word-count';
     $bearer_token = get_option('api_user_token', true);
 
     if (empty($bearer_token)) {
@@ -2129,7 +2179,7 @@ function check_site_count($request) {
     }
 
     $api_request_url = $request->get_route();
-    $api_url = 'https://staging-api.gravitywrite.com/api/check-site-import-count';
+    $api_url = 'https://api.gravitywrite.com/api/check-site-import-count';
     $bearer_token = get_option('api_user_token', true);
 
     if (empty($bearer_token)) {
@@ -2176,7 +2226,7 @@ function check_site_count_old($request) {
         mkdir($log_dir, 0755, true);
     }
     $api_request_url = $request->get_route();
-    $api_url = 'https://staging-api.gravitywrite.com/api/check-site-import-count';
+    $api_url = 'https://api.gravitywrite.com/api/check-site-import-count';
     $bearer_token = get_option('api_user_token', true);
 
     if (empty($bearer_token)) {
@@ -2210,7 +2260,7 @@ function check_site_count_old($request) {
 
 
 function fetch_user_data_from_api() {
-    $api_url = 'https://staging-api.gravitywrite.com/api/get-user-details';
+    $api_url = 'https://api.gravitywrite.com/api/get-user-details';
     $bearer_token = get_option('api_user_token', true);
 
     $args = [
@@ -3189,14 +3239,14 @@ class GW_Website_Builder {
                         Boost your SEO game with our seamless content transfer between GravityWrite Content Editor and WordPress. Refine and perfect your articles effortlessly, ensuring your SEO strategy is never left to luck. Create content that ranks with GravityWrite in WordPress today!
                     </p>
 
-                    <a href="https://staging.gravitywrite.com/login?callback_url=<?php echo ($current_page_url); ?>&domain=wordpress" style="display: inline-block; margin-top: 20px; padding: 10px 20px; background-color: #2E42FF; color: white; text-decoration: none; border-radius: 5px;">
+                    <a href="https://app.gravitywrite.com/login?callback_url=<?php echo ($current_page_url); ?>&domain=wordpress" style="display: inline-block; margin-top: 20px; padding: 10px 20px; background-color: #2E42FF; color: white; text-decoration: none; border-radius: 5px;">
                         Log in and integrate with GravityWrite
                     </a>
                 </div>
                 <p style="margin-top: 20px; font-size: 14px; color: #555;">
                     In case of questions or troubles, please check our 
-                    <a href="#" style="color: #2E42FF;">documentation</a> or contact our 
-                    <a href="#" style="color: #2E42FF;">support team</a>.
+                    <a href="https://gravitywrite.com/ai-website-builder" target="_blank" style="color: #2E42FF;">documentation</a> or contact our 
+                    <a href="https://support.gravitywrite.com/en" target="_blank" style="color: #2E42FF;">support team</a>.
                 </p>
             </div>
             <style>
@@ -3224,7 +3274,7 @@ class GW_Website_Builder {
                 return;
             }
     
-            $api_url = 'https://staging-api.gravitywrite.com/api/connect-status';
+            $api_url = 'https://api.gravitywrite.com/api/connect-status';
             $current_domain = home_url();
     
             $response = wp_remote_post($api_url, [
@@ -3273,7 +3323,7 @@ class GW_Website_Builder {
 
 
     public function fetch_gravitywrite_data() {
-        $api_url = 'https://staging-api.gravitywrite.com/api/get-user-details';
+        $api_url = 'https://api.gravitywrite.com/api/get-user-details';
         $bearer_token = get_option('api_user_token', true);
     
         if (empty($bearer_token)) {
@@ -3320,7 +3370,7 @@ class GW_Website_Builder {
                         Boost your SEO game with our seamless content transfer between GravityWrite Content Editor and WordPress. Refine and perfect your articles effortlessly, ensuring your SEO strategy is never left to luck. Create content that ranks with GravityWrite in WordPress today!
                     </p>
 
-                    <a href="https://staging.gravitywrite.com/login?callback_url=<?php echo ($current_page_url); ?>&domain=wordpress" style="display: inline-block; margin-top: 20px; padding: 10px 20px; background-color: #2E42FF; color: white; text-decoration: none; border-radius: 5px;">
+                    <a href="https://app.gravitywrite.com/login?callback_url=<?php echo ($current_page_url); ?>&domain=wordpress" style="display: inline-block; margin-top: 20px; padding: 10px 20px; background-color: #2E42FF; color: white; text-decoration: none; border-radius: 5px;">
                         Log in and integrate with GravityWrite
                     </a>
                 </div>
@@ -3341,7 +3391,6 @@ class GW_Website_Builder {
         }else{
             $active_status = "Disconnected";
         }
-
         $display_data = [
             'account_status' => $active_status,
             'user_name' => $data['user_email'],
@@ -3383,10 +3432,11 @@ class GW_Website_Builder {
                         
                         // Get everything after the '|' in the token
                         $token_parts = explode('|', $token);
-                        $cleaned_token = isset($token_parts[1]) ? $token_parts[1] : '';
-                        //echo $cleaned_token;exit;
+						$cleaned_token = isset($token_parts[1]) && !empty($token_parts[1]) ? $token_parts[1] : $token;
+						//echo $cleaned_token;
+
                         ?>
-                        <a href="https://staging.gravitywrite.com/dashboard?impersonateToken=<?php echo $cleaned_token; ?>" 
+                        <a href="https://app.gravitywrite.com/dashboard?impersonateToken=<?php echo $cleaned_token; ?>" 
                            target="_blank" 
                            style="line-height: 22px; font-size: 16px; font-weight: 500 !important; padding: 12px 35px; background-color: #2e4eff; color: #fff; text-decoration: none; border-radius: 7px;">
                            View GravityWrite
@@ -3401,7 +3451,7 @@ class GW_Website_Builder {
                     <div style="display: flex;justify-content: space-between;align-items: center;margin-top: 15px;margin-bottom: 5px;border-bottom: 2px solid #8080803d;">
                         <h2 style="font-size: 22px; font-weight: 600;"><?php echo esc_html($display_data['plan_name']); ?> 
                             <span style="color: #fff; font-size: 12px; background-color: #00B13C; margin-left: 10px; padding: 4px; border-radius: 5px;">
-                                <?php echo $data['account_status']; ?>
+                                <?php echo ucfirst(strtolower($data['account_status'])); ?>
                             </span>
                         </h2>
                         <div class="plan-block">
@@ -3412,7 +3462,7 @@ class GW_Website_Builder {
                                  <p>Period </p><p><strong><?php echo esc_html($display_data['period']); ?></strong></p>
                             </div>
                         </div>
-                        <a href="https://staging.gravitywrite.com/pricing" target="_blank" style="line-height: 22px;font-size: 16px;font-weight: 500 !important;padding: 12px 35px;background-color: #2e4eff;color: #fff;text-decoration: none;border-radius: 7px;">
+                        <a href="https://gravitywrite.com/pricing" target="_blank" style="line-height: 22px;font-size: 16px;font-weight: 500 !important;padding: 12px 35px;background-color: #2e4eff;color: #fff;text-decoration: none;border-radius: 7px;">
                             <img src="https://plugin.mywpsite.org/wp-content/uploads/logo/Vector.svg" alt="Upgrade Icon" style="width: 20px; height: 20px; vertical-align: middle; margin-right: 8px;">
                             Upgrade
                         </a>
@@ -3579,7 +3629,7 @@ class GW_Website_Builder {
                    <div style="display: flex;justify-content: space-between;align-items: center;margin-top: 15px;margin-bottom: 5px;border-bottom: 2px solid #8080803d;">
                         <h2 style="font-size: 22px; font-weight: 600;"><?php echo esc_html($data['plan_name']); ?> 
                             <span style="color: #fff; font-size: 12px; background-color: 00B13C; margin-left: 10px; padding: 4px; border-radius: 5px;">
-                                <?php echo $data['account_status']; ?>
+                                <?php echo ucfirst(strtolower($data['account_status'])); ?>
                             </span>
                         </h2>
                         <div class="plan-block">

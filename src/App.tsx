@@ -25,11 +25,13 @@ import { RootState } from "./store/store";
 import { fetchWpToken } from "./core/utils/fetchWpToken";
 import ApiErrorPopup from "./ui/component/dialogs/ApiErrorPopup";
 import ApiIssue from "./ui/component/dialogs/ApiIssue";
+import { usePostHog } from "posthog-js/react";
 
 const App = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useDispatch();
+  const posthog = usePostHog();
 
   const { isSessionActive, setSessionActive } = useSessionHandler();
   const { updateLastStep } = useLastStepUpdate();
@@ -44,6 +46,8 @@ const App = () => {
   const { fetchContent, emptyTable } = useFetchContentData();
   const { getDomainFromEndpoint } = useDomainEndpoint();
   const [erros, setErrors] = useState({ titile: "", message: "" });
+
+  const email = useSelector((state: RootState) => state.user.email);
 
   const fetchUserDetails = async () => {
     try {
@@ -159,6 +163,13 @@ const App = () => {
       updateLastStep(location.pathname);
     }
   }, [location.pathname, firstLoad, updateLastStep]);
+
+  // useEffect(() => {
+  //   if (email) {
+  //     posthog?.identify(email, { name: username });
+  //     console.log("post hog user event");
+  //   }
+  // }, [email, username, posthog]);
 
   const handleContinue = () => {
     if (!fetchedData?.lastStep) {
