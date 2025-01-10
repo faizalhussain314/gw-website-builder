@@ -27,11 +27,13 @@ import arrow from "../../../assets/arrow.svg";
 import info from "../../../assets/icons/info.svg";
 import { Tooltip } from "@mui/material";
 import { handleEnterKey } from "../../../core/utils/handleEnterKey";
+import { usePostHog } from "posthog-js/react";
 
 const API_URL = import.meta.env.VITE_API_BACKEND_URL;
 
 function Design() {
   const { activeIndex, handleBoxClick } = useTemplateList();
+  const posthog = usePostHog();
 
   const [templateList, settemplateList] = useState([]);
   const businessName = useSelector(
@@ -392,10 +394,11 @@ function Design() {
       <div className="flex flex-col justify-between h-full p-10">
         <div className="flex flex-col w-full h-full mx-auto overflow-x-hidden">
           <h1 className="text-3xl font-semibold">
-          Pick a template for your website
+            Pick a template for your website
           </h1>
           <p className="mt-3 text-base font-normal leading-6 text-app-text text-txt-secondary-500">
-          Choose the design that best fits your website’s purpose. You can always customize it later!
+            Choose the design that best fits your website’s purpose. You can
+            always customize it later!
           </p>
 
           <form
@@ -452,7 +455,15 @@ function Design() {
                       ? "ring ring-palatinate-blue-600 rounded-lg "
                       : ""
                   } `}
-                  onClick={() => handleTemplateSelection(list?.id, list)}
+                  onClick={() => {
+                    // posthog?.capture("template_selection", {
+                    //   template_id: list?.id,
+                    //   template_name: list?.name,
+                    //   is_premium: list?.is_premium,
+                    //   category: category,
+                    // });
+                    handleTemplateSelection(list?.id, list);
+                  }}
                   onMouseEnter={handleMouseEnter}
                   onMouseLeave={handleMouseLeave}
                 >

@@ -113,15 +113,7 @@ const PageSelector: React.FC<Props> = ({
       return;
     }
 
-    if (currentPage.name === "Home") {
-      const updatedPages = pages.map((page) =>
-        page.slug === slug
-          ? { ...page, selected: true, status: "Generated" }
-          : page
-      );
-      setPages(updatedPages);
-      return;
-    }
+    const isPageGenerated = generatedPageName.includes(currentPage.name);
 
     if (["blog", "contact", "contact-us"].includes(slug)) {
       const updatedPages = pages.map((page) =>
@@ -134,6 +126,7 @@ const PageSelector: React.FC<Props> = ({
             }
           : page
       );
+
       setPages(updatedPages);
 
       dispatch(
@@ -152,7 +145,15 @@ const PageSelector: React.FC<Props> = ({
         ? {
             ...page,
             selected: newSelectedValue,
-            status: newSelectedValue ? page.status : "",
+            status: newSelectedValue
+              ? isPageGenerated
+                ? "Generated"
+                : page.status === "Skipped" || !page.status
+                ? "Added"
+                : page.status
+              : page.status === "Generated" || page.status === "Added"
+              ? "" // Reset status to "" when deselected and status is "Generated" or "Added"
+              : page.status,
           }
         : page
     );
@@ -162,7 +163,15 @@ const PageSelector: React.FC<Props> = ({
     dispatch(
       updateReduxPage({
         name: currentPage.name,
-        status: newSelectedValue ? currentPage.status : "",
+        status: newSelectedValue
+          ? isPageGenerated
+            ? "Generated"
+            : currentPage.status === "Skipped" || !currentPage.status
+            ? "Added"
+            : currentPage.status
+          : currentPage.status === "Generated" || currentPage.status === "Added"
+          ? ""
+          : currentPage.status,
         selected: newSelectedValue,
       })
     );
@@ -241,9 +250,7 @@ const PageSelector: React.FC<Props> = ({
                 : ""
             }`}
             onClick={() => {
-              if (isLoading && !isContentGenerating && !showGwLoader) {
-                showLoadingToast();
-              } else if (isContentGenerating || isLoading || showGwLoader) {
+              if (isContentGenerating || isLoading || showGwLoader) {
                 showWarningToast();
               } else {
                 setShowButton(true);
@@ -266,9 +273,10 @@ const PageSelector: React.FC<Props> = ({
                     className="mr-4 flex items-center w-4 h-4"
                     checked={page.selected}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                      // Stop propagation if needed
+                      if (isContentGenerating || isLoading || showGwLoader) {
+                        return;
+                      }
                       e.stopPropagation();
-                      console.log("event triggered");
 
                       handlePageChange(page.slug, e.target?.checked);
                     }}
@@ -313,7 +321,8 @@ const PageSelector: React.FC<Props> = ({
                 <div
                   onClick={() => {
                     if (isContentGenerating) {
-                      showWarningToast();
+                      // showWarningToast();
+                      return;
                     } else {
                       handlePageClick(page.name);
                     }
@@ -505,9 +514,10 @@ const PageSelector: React.FC<Props> = ({
           onClick={() => {
             if (!isContentGenerating && isHomeGenerated) {
               handleImportSelectedPage();
-            } else {
-              showWarningToast();
             }
+            // else {
+            //   showWarningToast();
+            // }
           }}
           disabled={!isHomeGenerated || isContentGenerating}
         >

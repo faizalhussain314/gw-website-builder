@@ -121,6 +121,9 @@ const FinalPreview: React.FC = () => {
   const Description = useSelector(
     (state: RootState) => state.userData.description1
   );
+  const stepDescription = useSelector(
+    (state: RootState) => state.userData.description2
+  );
   const templateName: string = useSelector(
     (state: RootState) => state.userData.templatename
   );
@@ -717,6 +720,7 @@ const FinalPreview: React.FC = () => {
                     pageName: currentPage?.slug,
                     bussinessname: businessName,
                     description: Description,
+                    stepdescription: stepDescription,
                     template_id: templateList?.id,
                     bearer_token: bearer_token,
                   },
@@ -752,6 +756,7 @@ const FinalPreview: React.FC = () => {
             templateName: templateName,
             pageName: currentPage?.slug,
             bussinessname: businessName,
+            stepdescription: stepDescription,
             description: Description,
             template_id: templateList?.id,
           },
@@ -825,7 +830,7 @@ const FinalPreview: React.FC = () => {
     currentPage: any
   ) => {
     if (isContentGenerating) {
-      showWarningToast();
+      // showWarningToast();
       return;
     }
 
@@ -1059,6 +1064,7 @@ const FinalPreview: React.FC = () => {
               pageName: currentPage?.slug,
               bussinessname: businessName,
               description: Description,
+              stepdescription: stepDescription,
               template_id: templateList?.id,
               bearer_token: bearer_token,
             },
