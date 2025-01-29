@@ -87,11 +87,13 @@ const ImportWarning = ({
               </defs>
             </svg>
 
-            <p className="text-2xl font-semibold text-neutral-950">Warning</p>
+            <p className="text-2xl font-semibold text-neutral-950">
+              All your content will be deleted
+            </p>
           </div>
           <p className="text-xl text-center text-[#4D586B] mt-5">
-            You're about to install a new template it will delete the previously
-            imported page.shall we proceed?
+            This action will permanently delete your changes in the current
+            website Are you sure you want to import new template?
           </p>
           <div className="flex items-center justify-center gap-5 mt-8 w-full">
             <button
@@ -130,7 +132,7 @@ const ImportWarning = ({
                   </svg>
                 </div>
               ) : (
-                "Continue"
+                "Proceed"
               )}
             </button>
           </div>

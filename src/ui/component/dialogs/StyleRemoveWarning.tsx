@@ -84,11 +84,10 @@ function StyleRemoveWarning({
               </defs>
             </svg>
 
-            <p className="text-2xl font-semibold text-neutral-950">Warning</p>
+            <p className="text-2xl font-semibold text-neutral-950">Warning!</p>
           </div>
           <p className="text-xl text-center text-[#4D586B] mt-5">
-            You're about to change templates, which will delete the your
-            selected font and color. Do you want to continue?
+            Your current changes will be lost! Do you want to continue?
           </p>
           <div className="flex items-center justify-center gap-5 mt-8 w-full">
             <button

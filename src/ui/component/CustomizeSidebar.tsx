@@ -264,7 +264,7 @@ const CustomizeSidebar: React.FC<{
         {/* Site Logo Section */}
         <div className="mt-6">
           <label className="block text-base font-semibold mb-2.5">
-            Site Logo
+            Website Logo
           </label>
           <input
             type="file"
@@ -283,7 +283,7 @@ const CustomizeSidebar: React.FC<{
           >
             <img src={uploadLogoIcon} className="w-5" />
             <span>
-              {logoUrl ? extractFileName(logoUrl) : "upload file here"}
+              {logoUrl ? extractFileName(logoUrl) : "upload logo here"}
             </span>
           </button>
 

@@ -35,11 +35,12 @@ function LimitReachedPopup({ onClose, limit }: limitProps) {
 
         <div className="flex items-center gap-x-2.5 w-full justify-center">
           <img src={Caution} alt="Caution" />
-          <h2 className="text-[22px] leading-7 font-semibold">Limit Reached</h2>
+          <h2 className="text-[22px] leading-7 font-semibold">
+            Limit Exceeded!{" "}
+          </h2>
         </div>
         <p className="mt-6 text-lg text-black">
-          Your plan's {limit} templates are over. If you want more templates,
-          upgrade to Pro!
+          To build more websites please upgrade your Plan! Upgrade your plan!
         </p>
 
         <button

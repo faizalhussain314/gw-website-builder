@@ -6,7 +6,7 @@ export const getDomainFromEndpoint = (endpoint: string): string => {
     const baseUrl = currentUrl.substring(0, wpAdminIndex);
     return `${baseUrl}/${endpoint}`;
   } else {
-    return `http://localhost/wordpress/${endpoint}`;
-    // return `https://plugin.mywpsite.org/${endpoint}`;
+    // return `http://localhost/wordpress/${endpoint}`;
+    return `https://plugin.mywpsite.org/${endpoint}`;
   }
 };

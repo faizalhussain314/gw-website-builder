@@ -193,25 +193,29 @@ const PageSelector: React.FC<Props> = ({
 
   const offerButtonRef = useRef<HTMLButtonElement>(null);
   let lastAnimation = "";
+
   useEffect(() => {
-    function bouceAnimate() {
+    if (!afterContact) return;
+
+    function bounceAnimate() {
       const offerBtn = offerButtonRef.current;
-      if (!offerBtn || isContentGenerating !== false) return;
+      if (!offerBtn || isContentGenerating) return;
 
       const currentAnimation = lastAnimation === "bounce" ? "shake" : "bounce";
-      offerBtn?.classList?.add(currentAnimation);
+      offerBtn.classList.add(currentAnimation);
       lastAnimation = currentAnimation;
+
       setTimeout(() => {
-        offerBtn?.classList?.remove(currentAnimation);
+        offerBtn.classList.remove(currentAnimation);
       }, 1500);
     }
 
     const timer = setInterval(() => {
-      bouceAnimate();
-    }, 5000);
+      bounceAnimate();
+    }, 2500);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [afterContact, isContentGenerating]);
 
   // useEffect(() => {
   //   console.log("page button value", pageButtonStates);

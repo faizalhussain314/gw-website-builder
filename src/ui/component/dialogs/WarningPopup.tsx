@@ -81,8 +81,7 @@ function WarningPopup({ onClose, onContinue }: warningProps) {
             <p className="text-2xl font-semibold text-neutral-950">Warning</p>
           </div>
           <p className="text-xl text-center text-[#4D586B] mt-5">
-            You're about to change templates, which will delete the content
-            you've generated. Do you want to continue?
+            Your current changes will be lost! Do you want to continue?
           </p>
           <div className="flex items-center justify-center gap-5 mt-8 w-full">
             <button
@@ -95,7 +94,7 @@ function WarningPopup({ onClose, onContinue }: warningProps) {
               className="flex items-center justify-center px-6 py-4 text-white text-base font-medium rounded-lg tertiary w-full"
               onClick={onContinue}
             >
-              Continue
+              Proceed
             </button>
           </div>
         </div>

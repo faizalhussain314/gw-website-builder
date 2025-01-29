@@ -21,23 +21,18 @@ const UpgradePopup: React.FC<UpgradePopupProps> = ({ onClose, alertType }) => {
     title = "Limit Reached";
     message = "If you want to regenerate more <br /> upgrade to Pro!!!";
   } else if (alertType === "websiteCreation") {
-    title = "Limit Reached";
-    message =
-      "Your 2 free templates are over. If you want more templates, upgrade to Pro!!!";
+    title = "Import Limit Reached";
+    message = "To build more websites please upgrade your Plan!";
   } else if (alertType === "upgradeTemp") {
     title = "Upgrade Required";
     message =
       "This premium template is available for starter and pro users. Please upgrade your plan to access it.";
   } else if (alertType === "wordLimit") {
-    title = "Limit Reached";
-    message = ` You've reached the word limit for your current plan. To unlock more
-          words and continue generating content, consider upgrading your word
-          limit`;
+    title = "Word Usage Limit Reached!";
+    message = `To build more websites please upgrade your Plan!`;
   } else if (alertType === "importLimit") {
-    title = "Limit Reached";
-    message = ` You've reached the Template Limit for your current plan. To unlock more
-          template import consider upgrading your word
-          limit`;
+    title = " Import Limit Exceeded!";
+    message = `  To build more websites please upgrade your Plan!`;
   }
 
   const upgradeRedirection = () => {

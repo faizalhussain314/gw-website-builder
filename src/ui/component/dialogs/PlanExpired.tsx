@@ -4,7 +4,10 @@ import Crown from "../../../assets/crown.svg";
 
 const PlanExpired = () => {
   const upgradeRedirection = () => {
-    window.open("https://gravitywrite.com/pricing", "_blank");
+    window.open(
+      " https://app.gravitywrite.com/credit-based?target=subscription",
+      "_blank"
+    );
   };
 
   return (
@@ -12,19 +15,17 @@ const PlanExpired = () => {
       <div className="bg-white rounded-lg shadow-lg text-center relative max-w-[440px] mx-auto px-7 py-9">
         <div className="w-full flex items-center justify-center gap-x-2.5">
           <img src={Caution} alt="Caution" />
-          <h2 className="text-2xl font-semibold">Your plan is Expired</h2>
+          <h2 className="text-2xl font-semibold">Your Plan is Not Active!</h2>
         </div>
         <p className="mt-6 text-black text-base">
-          Your plan has expired, and access to premium features is currently
-          paused. To continue enjoying uninterrupted services and exclusive
-          benefits, please renew your subscription today. Don’t miss
-          out—reactivate now and stay connected!
+          Please check your Subscription status! For any assistance contact
+          support@gravitywrite.com
         </p>
         <button
           className="mt-8 text-base tertiary text-white flex items-center justify-center gap-2 px-6 py-3 rounded-lg mx-auto"
           onClick={upgradeRedirection}
         >
-          <img src={Crown} alt="Crown" /> Upgrade Plan
+          <img src={Crown} alt="Crown" /> Manage Subscription
         </button>
       </div>
     </div>

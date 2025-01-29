@@ -17,14 +17,12 @@ const ApiErrorPopup: React.FC<ApiErrorPopupProps> = ({ alertType }) => {
     message =
       "There was an issue while generating content. Please try again later!";
   } else if (alertType === "userDetails") {
-    title = "Oops! Error While Store The User Details ";
+    title = "Oops! Error while fetching user details!";
     message =
-      "There was an issue fetching your user details. Please try again!";
+      " An error occurred while fetching your user details. Please try again!";
   } else if (alertType === "word limit") {
-    title = "Word Limit exceeded";
-    message = `You've reached the word limit for your current plan. To unlock more
-          words and continue generating content, consider upgrading your word
-          limit.`;
+    title = "Word Usage Limit Reached!";
+    message = `To build more websites please upgrade your Plan!`;
   }
 
   return (

@@ -28,7 +28,7 @@ const FontSelector: React.FC<FontSelectorProps> = ({
   return (
     <div className="mt-6">
       <div className="flex w-full justify-between items-center mb-2.5">
-        <label className="block text-base font-semibold">Font Pair</label>
+        <label className="block text-base font-semibold">Font Style</label>
         <span
           onClick={() => resetStyles("font")}
           className="text-gray-400 text-base font-medium cursor-pointer hover:text-palatinate-blue-600"

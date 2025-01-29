@@ -42,9 +42,9 @@ const Popup: React.FC<PopupProps> = ({
           Before we hit the final button, let’s quickly double-check everything.
         </p>
 
-        <div className="">
+        <div className="flex">
           <p className="text-base font-semibold">Business Name:</p>
-          <p className="text-base text-[#4D586B]">{businessName}</p>
+          <p className="text-base text-[#4D586B] pl-2">{businessName}</p>
         </div>
 
         <p className="my-4 text-base font-semibold">Business Description:</p>

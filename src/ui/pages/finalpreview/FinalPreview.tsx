@@ -40,6 +40,9 @@ import WordLimit from "../../component/dialogs/WordLimit.tsx";
 import { updateIframeLogo } from "../../../core/utils/changeIframeLogo.ts";
 import ImportWarning from "../../component/dialogs/importWarning.tsx";
 import PlanExpired from "../../component/dialogs/PlanExpired.tsx";
+import { usePostHog } from "posthog-js/react";
+
+const Mode = import.meta.env.VITE_MODE;
 
 const FinalPreview: React.FC = () => {
   const reduxPages =
@@ -139,6 +142,7 @@ const FinalPreview: React.FC = () => {
     Blog: false,
     Contact: false,
   });
+  const posthog = usePostHog();
   // const isFormDetailsLoaded = useSelector(
   //   (state: RootState) => state.userData.isFormDetailsLoaded
   // );
@@ -290,6 +294,25 @@ const FinalPreview: React.FC = () => {
     [getDomainFromEndpoint, templateName]
   );
 
+  const updateIframeSrc = useCallback(
+    (content: string) => {
+      if (content !== currentContent) {
+        setCurrentContent(content);
+
+        const newBlob = new Blob([content], { type: "text/html" });
+        const newBlobUrl = URL.createObjectURL(newBlob);
+
+        setIframeSrc((prevSrc) => {
+          if (prevSrc) {
+            URL.revokeObjectURL(prevSrc);
+          }
+          return newBlobUrl;
+        });
+      }
+    },
+    [currentContent, setCurrentContent, setIframeSrc] // Add dependencies
+  );
+
   // Fetch and store HTML content for each page
   const fetchAndStorePageData = useCallback(
     async (pageName: string, templateName: string, versionName: string) => {
@@ -299,20 +322,27 @@ const FinalPreview: React.FC = () => {
         );
         if (!endpoint) {
           console.error("Endpoint is not available.");
+          return false; // Explicitly return false when endpoint is unavailable
+        }
+
+        setIsLoading(true);
+        if (!pageName || !templateName) {
           return;
         }
-        const currentPageIndex = pages.findIndex(
-          (page) => page.name === selectedPage
-        );
-        setIsLoading(true);
+
         const response = await axios.post(endpoint, {
           version_name: versionName,
           page_name: pageName,
           template_name: templateName,
         });
 
-        if (response.status === 200 && response.data.data) {
-          const rawHtmlContent = response.data.data[0].html_data;
+        if (response.status === 200 && response.data?.data) {
+          const rawHtmlContent = response.data.data[0]?.html_data;
+          if (!rawHtmlContent) {
+            console.error("HTML data is empty or undefined.");
+            return false;
+          }
+
           const cleanedHtmlContent = rawHtmlContent
             .replace(/^"(.*)"$/, "$1")
             .replace(/\\"/g, '"')
@@ -344,15 +374,19 @@ const FinalPreview: React.FC = () => {
           });
 
           storeHtmlContent(pageName, cleanedHtmlContent);
+          return true;
         } else {
           console.error("Failed to store page data:", response);
           return false;
         }
       } catch (error) {
         console.error("Error storing page data:", error);
+        return false;
+      } finally {
+        setIsLoading(false);
       }
     },
-    [getDomainFromEndpoint, selectedPage, storeHtmlContent]
+    [getDomainFromEndpoint, selectedPage, storeHtmlContent, updateIframeSrc]
   );
 
   // useEffect(() => {
@@ -723,6 +757,7 @@ const FinalPreview: React.FC = () => {
                     stepdescription: stepDescription,
                     template_id: templateList?.id,
                     bearer_token: bearer_token,
+                    stagging: Mode === "staging" ? true : false,
                   },
                   "*"
                 );
@@ -759,6 +794,7 @@ const FinalPreview: React.FC = () => {
             stepdescription: stepDescription,
             description: Description,
             template_id: templateList?.id,
+            stagging: Mode === "staging" ? true : false,
           },
           "*"
         );
@@ -768,29 +804,6 @@ const FinalPreview: React.FC = () => {
 
     if (!isContentGenerating) {
       setIsLoading(false);
-    }
-  };
-
-  const updateIframeSrc = (content: string) => {
-    // const selectedTemplatePage = templateList?.pages?.find(
-    //   (page: any) => page.slug === pageSlug
-    // );
-
-    // if (selectedTemplatePage) {
-    //   setIframeSrc(selectedTemplatePage.iframe_url);
-    // }
-
-    if (content !== currentContent) {
-      setCurrentContent(content);
-      const newBlob = new Blob([content], { type: "text/html" });
-      const newBlobUrl = URL.createObjectURL(newBlob);
-
-      setIframeSrc((prevSrc) => {
-        if (prevSrc) {
-          URL.revokeObjectURL(prevSrc);
-        }
-        return newBlobUrl;
-      });
     }
   };
 
@@ -1003,9 +1016,9 @@ const FinalPreview: React.FC = () => {
       prevPages.map((page) => {
         if (page.name === pageName) {
           // Debugging log to check if the condition matches
-          console.log(
-            `Updating ${pageName}: status=${status}, selected=${selected}`
-          );
+          // console.log(
+          //   `Updating ${pageName}: status=${status}, selected=${selected}`
+          // );
           return { ...page, status, selected };
         }
         return page;
@@ -1067,16 +1080,23 @@ const FinalPreview: React.FC = () => {
               stepdescription: stepDescription,
               template_id: templateList?.id,
               bearer_token: bearer_token,
+              stagging: Mode === "staging" ? true : false,
             },
             "*"
           );
         }
+        console.log("mode", Mode);
       } else if (
         response?.data?.status === "pending" ||
         response?.data?.status === "canceled" ||
         response?.data?.status === "overdue"
       ) {
         setPlanExpired(true);
+      } else if (
+        response?.data?.status === false &&
+        response?.data?.message.length >= 0
+      ) {
+        setapiIssue(true);
       } else {
         setShowGwLoader(false);
         setIsContentGenerating(false);
@@ -1209,6 +1229,9 @@ const FinalPreview: React.FC = () => {
           showSuccessToast();
         }
       } else if (event.data.type === "oldNewContent") {
+        posthog?.capture("Genearted Page", {
+          Generatedpage: event?.data?.pageName || selectedPage,
+        });
         const pageName = event.data.pageName || selectedPage || "";
         const wordCount = calculateWordCount(event.data.content);
         handleOldNewContent(pageName, event.data.content, wordCount);
@@ -1233,6 +1256,10 @@ const FinalPreview: React.FC = () => {
   }, [Color, fontFamily, selectedPage, storeHtmlContent, handleOldNewContent]);
 
   const handleImportSelectedPage = async () => {
+    // posthog?.capture("import selected page", {
+    //   installedTemplate: templateList.name,
+    // });
+    // console.log(`import selected page ${templateList.name}`);
     setImportLoad(true);
 
     try {
@@ -1258,7 +1285,11 @@ const FinalPreview: React.FC = () => {
         if (confirmResponse?.data?.value === true) {
           setshowImportWarningDialouge(true);
         } else {
+          posthog?.capture("import selected page", {
+            installedTemplate: templateList.name,
+          });
           setImportLoad(false);
+
           navigate("/processing", { state: { pageName: selectedPage } });
         }
       } else if (
@@ -1280,7 +1311,9 @@ const FinalPreview: React.FC = () => {
 
   const handleContinueImport = async () => {
     setIsImportLoading(true);
-
+    posthog?.capture("import selected page", {
+      installedTemplate: templateList.name,
+    });
     try {
       await axios.delete(
         getDomainFromEndpoint("/wp-json/custom/v1/delete-theme-and-plugins")
