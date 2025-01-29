@@ -42,10 +42,10 @@ const SignOut: React.FC<SignOutProps> = ({ onClose, Signout, cancel }) => {
 
         <div className="flex items-center gap-x-2.5 w-full justify-center">
           <img src={Caution} alt="Caution" />
-          <h2 className="text-[22px] leading-7 font-semibold">Sign Out</h2>
+          <h2 className="text-[22px] leading-7 font-semibold">SignOut!</h2>
         </div>
         <p className="mt-5 mb-9 text-[#656567] text-lg">
-          Are you sure you want to sign out? Your account will be disconnected.
+          You will now be logged out. Do you want to proceed?
         </p>
 
         <div className="mt-6 flex gap-4 w-full items-center">
@@ -59,7 +59,7 @@ const SignOut: React.FC<SignOutProps> = ({ onClose, Signout, cancel }) => {
             className="tertiary w-full px-6 py-3.5 text-base text-white font-medium rounded-lg"
             onClick={handleSignout}
           >
-            {isLoading ? "Signing out..." : "Sign out"}
+            {isLoading ? "Signing out..." : "Signout"}
           </button>
         </div>
       </div>

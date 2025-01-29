@@ -45,7 +45,8 @@ function Description() {
   const [showWordCount, setShowWordCount] = useState(false);
   const [description1Error, setDescription1Error] = useState<boolean>(false);
   const [description2Error, setDescription2Error] = useState<boolean>(false);
-
+  const [previousDescription, setpreviousDescription] =
+    useState<boolean>(false);
   useEffect(() => {
     const fetchInitialDescriptions = async () => {
       const result = await getDescriptions(getDomainFromEndpoint);
@@ -145,7 +146,9 @@ function Description() {
         businessName,
         category,
         type,
-        type === 2 ? description1 : undefined
+        description1 || "", // Ensure a default empty string is passed
+        description2 || "", // Ensure a default empty string is passed
+        type === 2 ? description1 : description2 // Pass previous content correctly
       );
 
       const decoder = new TextDecoder("utf-8");
@@ -172,17 +175,14 @@ function Description() {
                 setLoader1(false);
                 setLoader2(false);
 
-                // Hide word count after 7000ms
                 // Inside `handleAIWrite` function
-                setVisibleWordCount(type); // Show word count for the current description
+                setVisibleWordCount(type);
 
                 setTimeout(() => {
                   if (visibleWordCount === type) {
-                    setVisibleWordCount(null); // Hide the word count after 7000ms
+                    setVisibleWordCount(null);
                   }
                 }, 7000);
-
-                // Ensure this logic works for both description1 and description2
 
                 return;
               }
@@ -268,15 +268,15 @@ function Description() {
     if (!description1.trim() && !description2.trim()) {
       setDescription1Error(true);
       setDescription2Error(true);
-      errorMessage = "Both descriptions are required.";
+      errorMessage = "Descriptions are required.";
     } else if (description1.length <= 28) {
       setDescription1Error(true);
       setDescription2Error(false);
-      errorMessage = "Services description must have at least 28 characters.";
+      errorMessage = "Description must have atleast 28 characters ";
     } else if (description2.length <= 28) {
       setDescription2Error(true);
       setDescription1Error(false);
-      errorMessage = "Step description must have at least 28 characters.";
+      errorMessage = "Description must have atleast 28 characters ";
     } else {
       setDescription1Error(false);
       setDescription2Error(false);
@@ -297,11 +297,11 @@ function Description() {
       "bg-white px-4 py-2.5 border h-[100px] border-[rgba(205,212,219,1)] w-[96%] mt-5 rounded-lg placeholder:font-normal text-[#5f5f5f] focus:border-palatinate-blue-500 active:border-palatinate-blue-500 active:outline-palatinate-blue-500 focus:outline-palatinate-blue-500 ml-[50px]";
 
     if (descriptionType === "des1" && description1Error) {
-      base += " border-red-500"; // Add red border for description1 errors
+      base += " border-red-500";
     }
 
     if (descriptionType === "des2" && description2Error) {
-      base += " border-red-500"; // Add red border for description2 errors
+      base += " border-red-500";
     }
 
     return base;
@@ -333,7 +333,8 @@ function Description() {
               What is {businessName}? Tell us more about it.
             </h1>
             <span className="mt-2.5 text-lg leading-6 text-txt-secondary-400 max-w-[617px]">
-            Let’s get to know your Business! The more details you share, the better we can tailor your website.
+              Let’s get to know your Business! The more details you share, the
+              better we can tailor your website.
             </span>
           </div>
 
@@ -369,7 +370,7 @@ function Description() {
                 />
               </svg>
               <label className="text-lg font-semibold leading-5">
-              What do you offer / sell?
+                What do you offer / sell?
               </label>
             </div>
             <textarea
@@ -382,21 +383,18 @@ function Description() {
 
                 setDescription1(newValue);
                 dispatch(setDescriptionOne(newValue));
-                const wordCount = calculateWordCount(newValue);
 
-                if (newValue) {
-                  setDescription1Error(false);
-                  if (!description2.trim()) {
-                    setError("Step description is required.");
-                  } else if (description1.length <= 28) {
-                    setError(
-                      "Services description must have at least 28 characters."
-                    );
-                    setDescription1Error(true);
-                  } else {
-                    setError(null);
-                  }
-                }
+                // if (newValue) {
+                //   setDescription1Error(false);
+                //   if (!description1.trim()) {
+                //     setError("1 Description is required.");
+                //   } else if (description1.length <= 28) {
+                //     setError("Description must have at least 28 characters.");
+                //     setDescription1Error(true);
+                //   } else {
+                //     setError(null);
+                //   }
+                // }
               }}
             />
             {/* AI Write Button for Description 1 */}
@@ -457,6 +455,9 @@ function Description() {
                 </div> */}
               </div>
             </div>
+            {description1Error && error && (
+              <div className="text-red-500 mt-4 ml-[50px]">{error}</div>
+            )}
             {/* Description 2 */}
             <div className="flex items-center gap-6 mt-6">
               <svg
@@ -479,7 +480,7 @@ function Description() {
                 />
               </svg>
               <label className="text-lg font-semibold max-w-[639px]">
-              What actions do visitors need to take to get started?
+                What actions do visitors need to take to get started?
               </label>
             </div>
             <textarea
@@ -493,21 +494,18 @@ function Description() {
                 const newValue = e.target.value.trimStart();
                 setDescription2(newValue);
                 dispatch(setDescriptionTwo(newValue));
-                const wordCount = calculateWordCount(newValue);
 
-                if (newValue) {
-                  setDescription2Error(false);
-                  if (!description1.trim()) {
-                    setError("Services description is required.");
-                  } else if (description2.length <= 28) {
-                    setError(
-                      "Step description must have at least 28 characters."
-                    );
-                    setDescription2Error(true);
-                  } else {
-                    setError(null);
-                  }
-                }
+                // if (newValue) {
+                //   setDescription2Error(false);
+                //   if (!description2.trim()) {
+                //     setError(" 2 Description is required.");
+                //   } else if (description2.length <= 28) {
+                //     setError("Description must have at least 28 characters.");
+                //     setDescription2Error(true);
+                //   } else {
+                //     setError(null);
+                //   }
+                // }
               }}
             />
             {/* AI Write Button for Description 2 */}
@@ -575,7 +573,7 @@ function Description() {
               </div>
             </div>
 
-            {error && (
+            {description2Error && error && (
               <div className="text-red-500 mt-4 ml-[50px]">{error}</div>
             )}
           </form>

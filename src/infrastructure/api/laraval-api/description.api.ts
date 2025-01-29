@@ -10,14 +10,34 @@ export const fetchDescriptionStream = async (
   businessName: string,
   category: string | null,
   type: 1 | 2,
+  description1: string,
+  description2: string,
   previousDescription?: string
 ): Promise<ReadableStreamDefaultReader> => {
-  let url = `${API_URL}ai/builder/description?businessName=${businessName}&category=${category}&type=${type}`;
-  if (type === 2 && previousDescription) {
-    url += `&description1=${encodeURIComponent(previousDescription)}`;
+  let url = `${API_URL}ai/builder/description?businessName=${encodeURIComponent(
+    businessName
+  )}&category=${encodeURIComponent(category ?? "")}&type=${type}`;
+
+  console.log(
+    "previous description",
+    previousDescription.length >= 0,
+    type === 2
+  );
+  console.log("type === 1 && description1", description1);
+
+  if (type === 2 && previousDescription.length >= 0) {
+    url += `&description1=${encodeURIComponent(
+      description1
+    )}&userContent=${encodeURIComponent(description2)}`;
+    console.log("first block type === 2 && previousDescription");
+  } else if (type === 1 && description1) {
+    url += `&userContent=${encodeURIComponent(description1)}`;
+    // if (previousDescription) {
+    //   url += `&previousContent=${encodeURIComponent(previousDescription)}`;
+    //   console.log("2nd block", type === 1 && description1);
+    // }
   }
 
-  // Fetch wp_token from Redux or API
   let wp_token = store.getState().user.wp_token;
 
   if (!wp_token) {
@@ -32,7 +52,6 @@ export const fetchDescriptionStream = async (
 
   console.log("Using Bearer token:", wp_token);
 
-  // Make API call with Bearer token
   const response = await fetch(url, {
     method: "GET",
     headers: {

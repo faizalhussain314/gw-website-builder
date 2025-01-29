@@ -20,8 +20,7 @@ const ContinuePopup: React.FC<ContinuePopup> = ({
   if (alertType === "regenerate") {
     message = "If you want to regenerate more <br /> upgrade to Pro!!!";
   } else if (alertType === "websiteCreation") {
-    message =
-      "You have existing data. Do you want to continue or create from scratch?";
+    message = "Your existing changes will be lost. How do you want to proceed?";
   }
 
   return (

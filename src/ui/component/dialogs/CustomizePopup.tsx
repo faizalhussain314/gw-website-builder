@@ -28,8 +28,7 @@ const CustomizePopup: React.FC<CustomizePopup> = ({
   if (alertType === "regenerate") {
     message = "If you want to regenerate more <br /> upgrade to Pro!!!";
   } else if (alertType === "websiteCreation") {
-    message =
-      "You’ll lose customisations, and generated words will count towards your usage. Do You want to Proceed?";
+    message = " Your current changes will be lost! Do you want to continue?";
   }
 
   return (

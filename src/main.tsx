@@ -14,10 +14,12 @@ const options = {
   api_host: process.env.REACT_APP_PUBLIC_POSTHOG_HOST,
 };
 
-posthog.init(process.env.REACT_APP_PUBLIC_POSTHOG_KEY, {
-  api_host: process.env.REACT_APP_PUBLIC_POSTHOG_HOST,
-  debug: true,
+posthog.init(import.meta.env.VITE_PUBLIC_POSTHOG_KEY, {
+  api_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST,
+  // debug: true,
 });
+// console.log("PostHog Key:", import.meta.env.VITE_PUBLIC_POSTHOG_KEY);
+// console.log("PostHog Host:", import.meta.env.VITE_PUBLIC_POSTHOG_HOST);
 
 root.render(
   <PostHogProvider client={posthog}>

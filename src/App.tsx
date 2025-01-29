@@ -201,6 +201,16 @@ const App = () => {
     fetchData();
   }, [username, dispatch, getDomainFromEndpoint]);
 
+  useEffect(() => {
+    if (email) {
+      // Identify sends an event, so you want may want to limit how often you call it
+      posthog?.identify(username, {
+        email: email,
+      });
+      // posthog?.group("plan", user.company_id);
+    }
+  }, [posthog, email, username]);
+
   return (
     <div className="relative">
       {/* {apiErrorPopup && <ApiIssue />} */}
