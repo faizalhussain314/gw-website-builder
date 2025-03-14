@@ -103,6 +103,8 @@ const useFetchContentData = () => {
         dispatch(setlastStep(data.lastStep || ""));
       }
 
+      console.log("create type for this data's", data);
+
       return data;
     } catch (error) {
       console.error("Error fetching content:", error);

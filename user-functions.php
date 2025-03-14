@@ -228,6 +228,8 @@ class Ai_Builder_User_Details {
             $user_data = $this->fetch_user_data_from_api1();
     
             if ($user_data) {
+                // $template_name = null;
+                // notify_plugin_activation($template_name);
                 $result = $this->save_user_data_to_database1($user_data);
                 if ($result === false) {
                     add_action('admin_notices', function() {

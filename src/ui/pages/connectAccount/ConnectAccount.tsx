@@ -6,6 +6,8 @@ import useDomainEndpoint from "../../../hooks/useDomainEndpoint";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../store/store";
 
+const Mode = import.meta.env.VITE_MODE;
+
 function ConnectAccount() {
   const navigate = useNavigate();
   const { getDomainFromEndpoint } = useDomainEndpoint();
@@ -19,8 +21,11 @@ function ConnectAccount() {
     if (userName) {
       navigate("/category");
     } else {
-      window.location.href = `https://app.gravitywrite.com/login?domain=wordpress-react&callback_url=${callBackUrl}`;
-      // window.location.href = `https://staging.gravitywrite.com/login?domain=wordpress-react&callback_url=${callBackUrl}`;
+      if (Mode == "staging") {
+        window.location.href = `https://react-dev.gravitywrite.com/login?domain=wordpress-react&callback_url=${callBackUrl}`;
+      } else {
+        window.location.href = `https://app.gravitywrite.com/login?domain=wordpress-react&callback_url=${callBackUrl}`;
+      }
     }
   };
   return (

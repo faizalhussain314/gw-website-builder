@@ -10,16 +10,19 @@ import { PostHogProvider } from "posthog-js/react";
 import posthog from "posthog-js";
 
 const root = ReactDOM.createRoot(document.getElementById("root")!);
-const options = {
-  api_host: process.env.REACT_APP_PUBLIC_POSTHOG_HOST,
-};
+const POSTHOG_KEY = import.meta.env.VITE_PUBLIC_POSTHOG_KEY || "";
+const POSTHOG_HOST = import.meta.env.VITE_PUBLIC_POSTHOG_HOST;
 
-posthog.init(import.meta.env.VITE_PUBLIC_POSTHOG_KEY, {
-  api_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST,
-  // debug: true,
-});
-// console.log("PostHog Key:", import.meta.env.VITE_PUBLIC_POSTHOG_KEY);
-// console.log("PostHog Host:", import.meta.env.VITE_PUBLIC_POSTHOG_HOST);
+if (POSTHOG_KEY) {
+  posthog.init(POSTHOG_KEY, {
+    api_host: POSTHOG_HOST,
+    // debug: true,
+  });
+} else {
+  console.error("No PostHog key found, skipping PostHog initialization.");
+}
+console.log("PostHog Key:", POSTHOG_KEY);
+console.log("PostHog Host:", POSTHOG_HOST);
 
 root.render(
   <PostHogProvider client={posthog}>

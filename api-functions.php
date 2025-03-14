@@ -3,11 +3,17 @@
 
 // Register REST API routes
 add_action('rest_api_init', function () {
+
+    register_rest_route('custom/v1', '/plugin-activate', array(
+        'methods' => 'POST',
+        'callback' => 'handle_plugin_activation',
+        'permission_callback' => '__return_true',
+    ));
     
     register_rest_route('custom/v1', '/get-userdata', [
         'methods'  => 'GET',
         'callback' => 'custom_get_userdata',
-        'permission_callback' => '__return_true', // Allow public access; modify as needed for security
+        'permission_callback' => '__return_true', 
     ]);
 
     register_rest_route('custom/v1', '/set-logo-width', array(
@@ -1639,6 +1645,119 @@ function delete_all_styles(WP_REST_Request $request) {
 //     );
 // }
 
+function notify_plugin_activation($template_name) {
+    global $wpdb;
+
+    $plugin_dir = plugin_dir_path(__FILE__);
+    $log_dir = $plugin_dir . 'logs';
+    $log_file_path = $log_dir . '/plugin-log.txt';
+
+    // Create the logs directory if it doesn't exist
+    if (!file_exists($log_dir)) {
+        mkdir($log_dir, 0755, true);
+    }
+    $api_url = 'https://api.gravitywrite.com/api/plugin-activation-details';
+    // Get the current site domain
+    $current_domain = get_site_url();
+    $parsed_url = parse_url($current_domain);
+    $domain = isset($parsed_url['host']) ? $parsed_url['host'] : '';
+
+    // Check if template_name is provided
+    if (empty($template_name)) {
+        $template_name = null; // Set template_name to null if not provided
+        $log_message = "Template name is not provided. Proceeding with null value. Domain: $current_domain.";
+        log_message($log_message, $log_file_path, 'info', $api_url);
+    }
+
+    // Retrieve the token from options
+    $token = get_option('api_user_token', true);
+
+    // Check if token is available
+    if (empty($token)) {
+        $log_message = "Authorization token is not available. Domain: $current_domain.";
+        log_message($log_message, $log_file_path, 'error', $current_domain);
+        return;
+    }
+
+    //$api_url = 'https://api.gravitywrite.com/api/plugin-activation-details';
+    $data = array(
+        'domain' => $current_domain,
+        'template' => $template_name,
+    );
+
+    // Send POST request to the API with the Bearer token
+    $response = wp_remote_post($api_url, array(
+        'method'  => 'POST',
+        'body'    => json_encode($data),
+        'headers' => array(
+            'Content-Type'  => 'application/json',
+            'Authorization' => 'Bearer ' . $token,
+        ),
+        'timeout' => 15,
+    ));
+
+    // Handle the response and log messages
+    if (is_wp_error($response)) {
+        $error_message = $response->get_error_message();
+        $log_message = "Error sending activation API request. Domain: $current_domain. Template: " . ($template_name ?? 'null') . ". API URL: $api_url. Error: $error_message";
+        log_message($log_message, $log_file_path, 'error', $api_url);
+    } else {
+        $response_body = wp_remote_retrieve_body($response);
+        $log_message = "Activation API Response. Domain: $current_domain. Template: " . ($template_name ?? 'null') . ". API URL: $api_url. Response: $response_body";
+        log_message($log_message, $log_file_path, 'success', $api_url);
+    }
+}
+
+
+function handle_plugin_activation($request) {
+    $plugin_dir = plugin_dir_path(__FILE__);
+    $log_dir = $plugin_dir . 'logs';
+    $log_file_path = $log_dir . '/plugin-log.txt';
+
+    // Create the logs directory if it doesn't exist
+    if (!file_exists($log_dir)) {
+        mkdir($log_dir, 0755, true);
+    }
+
+    // Get the API route
+    $api_url = $request->get_route();
+
+    // Get JSON parameters from the request
+    $params = $request->get_json_params();
+
+    // Extract the domain and template_name parameters
+    $domain = $params['domain'] ?? null;
+    $template_name = $params['template_name'] ?? null;
+
+    // Check if the domain is provided
+    if (!$domain) {
+        $message = 'Domain not provided.';
+        log_message($message, $log_file_path, 'error', $api_url);
+        return new WP_REST_Response(
+            array('status' => 'error', 'message' => 'Domain not provided'), 
+            400
+        );
+    }
+
+    // Check if the template_name is null
+    if (!$template_name) {
+        $message = "Template name not provided but proceeding. Domain: $domain.";
+        log_message($message, $log_file_path, 'info', $api_url);
+        // Continue processing without template_name
+        $template_name = 'null'; 
+    }
+
+    // Log the success message
+    $message = "Plugin activated on domain: $domain with template: $template_name";
+    log_message("Domain and Template Received Successfully: $message", $log_file_path, 'success', $api_url);
+
+    // Return a success response
+    return new WP_REST_Response(
+        array('status' => 'success', 'message' => 'Domain and template received successfully', 'template_name' => $template_name), 
+        200
+    );
+}
+
 
 function custom_get_userdata() {
     $api_url = 'https://api.gravitywrite.com/api/get-user-details';
@@ -1786,7 +1905,6 @@ function get_logged_user_token() {
     return rest_ensure_response($response);
 }
 
-
 function api_fetch_user_details(WP_REST_Request $request) {
     $email = $request->get_param('email');
     $token = $request->get_param('wp_token');
@@ -1802,12 +1920,14 @@ function api_fetch_user_details(WP_REST_Request $request) {
     $user_data = fetch_user_data_from_api();
     if ($user_data) {
         $result = save_user_data_to_database($user_data);
+        // $template_name = null;
+        // notify_plugin_activation($template_name);
+
         update_option('gravitywrite_account_key', 'connected');
         return new WP_REST_Response($result, 200);
     }
     return new WP_REST_Response('Error fetching or saving data', 500);
 }
-
 
 function Api_disconnect_handler(WP_REST_Request $request) {
     $plugin_dir = plugin_dir_path(__FILE__);
@@ -3323,6 +3443,8 @@ class GW_Website_Builder {
 
 
     public function fetch_gravitywrite_data() {
+        // $template_name = null;
+        // notify_plugin_activation($template_name);
         $api_url = 'https://api.gravitywrite.com/api/get-user-details';
         $bearer_token = get_option('api_user_token', true);
     
@@ -3504,19 +3626,7 @@ class GW_Website_Builder {
                         </div>
 
     
-                        <div style="margin-bottom: 20px;font-size: medium;">
-                            <span>Image Usage</span>
-                            <span class="right-text">
-                                <span class="used"><?php echo esc_html($display_data['images_used']); ?></span> used of <?php echo esc_html($display_data['images_total']); ?> Images
-                            </span>
-                            <div style="background-color: #f0f0f0; border-radius: 5px; height: 8px; width: 100%; margin-top: 10px;">
-                                <?php 
-                                $images_used_percent = ($display_data['images_used'] / $display_data['images_total']) * 100;
-                                $images_used_percent = $images_used_percent > 100 ? 100 : $images_used_percent; // Cap the percentage at 100%
-                                ?>
-                                <div style="background: linear-gradient(110deg, #963FFF -4.83%, #2E42FF 91.64%); width: <?php echo $images_used_percent; ?>%; height: 8px; border-radius: 5px;"></div>
-                            </div>
-                        </div>
+                       <!-- removed image section here -->
 
                     </div>
                 </div>
@@ -3677,14 +3787,7 @@ class GW_Website_Builder {
                            
                         </div>
     
-                        <div style="margin-bottom: 20px;font-size: medium;">
-                            <span>Image Usage</span>
-                              <span class="right-text"><span class="used"><?php echo esc_html($data['images_used']); ?></span> used of <?php echo esc_html($data['images_total']); ?> Images</span>
-                            <div style="background-color: #f0f0f0; border-radius: 5px; height: 8px; width: 100%; margin-top: 10px;">
-                                <div style="background: linear-gradient(110deg, #963FFF -4.83%, #2E42FF 91.64%); width: <?php echo (esc_html($data['images_used']) / esc_html($data['images_total'])) * 100; ?>%; height: 8px; border-radius: 5px;"></div>
-                            </div>
-                          
-                        </div>
+                      <!-- removed image section here  -->
                     </div>
                 </div>
             </div>
@@ -4364,6 +4467,16 @@ add_action('rest_api_init', function () {
  *
  * @return WP_REST_Response|WP_Error
  */
+
+function get_template_name() {
+    global $wpdb;
+    
+    $table_name = $wpdb->prefix . 'generated_content';
+    $template_name = $wpdb->get_var("SELECT template_name FROM $table_name LIMIT 1");
+    
+    return $template_name;
+}
+
 function myplugin_empty_tables(WP_REST_Request $request) {
     global $wpdb;
 
@@ -4378,6 +4491,9 @@ function myplugin_empty_tables(WP_REST_Request $request) {
     if (!file_exists($log_dir)) {
         mkdir($log_dir, 0755, true);
     }
+
+    $template_name = get_template_name();
+    notify_plugin_activation($template_name);
 
     $tables_to_empty = array(
         $wpdb->prefix . 'gw_user_form_details', 

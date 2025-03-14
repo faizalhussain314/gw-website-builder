@@ -3,7 +3,6 @@ import axios from "axios";
 import store from "../../../store/store";
 import { fetchWpToken } from "../../../core/utils/fetchWpToken";
 import { Dispatch } from "redux";
-// import useDomainEndpoint from "../../../hooks/useDomainEndpoint";
 
 const API_URL = import.meta.env.VITE_API_BACKEND_URL;
 

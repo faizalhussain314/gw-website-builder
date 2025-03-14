@@ -17,6 +17,7 @@ import WordLimit from "../../component/dialogs/WordLimit";
 import UpgradePopup from "../../component/dialogs/UpgradePopup";
 import arrow from "../../../assets/arrow.svg";
 import { handleEnterKey } from "../../../core/utils/handleEnterKey";
+import { useDebounce } from "use-debounce";
 
 function Description() {
   const dispatch = useDispatch();
@@ -47,35 +48,73 @@ function Description() {
   const [description2Error, setDescription2Error] = useState<boolean>(false);
   const [previousDescription, setpreviousDescription] =
     useState<boolean>(false);
+  const [debouncedDescription1] = useDebounce(description1, 500);
+  const [debouncedDescription2] = useDebounce(description2, 500);
+  const reduxDescription1 = useSelector(
+    (state: RootState) => state.userData.description1
+  );
+  const reduxDescription2 = useSelector(
+    (state: RootState) => state.userData.description2
+  );
+
   useEffect(() => {
-    const fetchInitialDescriptions = async () => {
-      const result = await getDescriptions(getDomainFromEndpoint);
-      if (result) {
-        if (result.description1) {
-          setDescription1(result.description1);
-          dispatch(setDescriptionOne(result.description1));
+    // If Redux already has the descriptions, use them.
+    if (reduxDescription1 || reduxDescription2) {
+      if (reduxDescription1) setDescription1(reduxDescription1);
+      if (reduxDescription2) setDescription2(reduxDescription2);
+    } else {
+      // Otherwise, fetch from the API.
+      const fetchInitialDescriptions = async () => {
+        const result = await getDescriptions(getDomainFromEndpoint);
+        if (result) {
+          if (result.description1) {
+            setDescription1(result.description1);
+            dispatch(setDescriptionOne(result.description1));
+          }
+          if (result.description2) {
+            setDescription2(result.description2);
+            dispatch(setDescriptionTwo(result.description2));
+          }
         }
-        if (result.description2) {
-          setDescription2(result.description2);
-          dispatch(setDescriptionTwo(result.description2));
-        }
-      }
-    };
+      };
 
-    fetchInitialDescriptions();
-  }, [dispatch, getDomainFromEndpoint]);
+      fetchInitialDescriptions();
+    }
+  }, [reduxDescription1, reduxDescription2, dispatch, getDomainFromEndpoint]);
+
+  const handleChangeDescription1 = (e) => {
+    const newValue = e.target.value.trimStart();
+    setDescription1(newValue);
+  };
+
+  const handleChangeDescription2 = (e) => {
+    const newValue = e.target.value.trimStart();
+    setDescription2(newValue);
+  };
+
+  // Remove these useEffects
+  useEffect(() => {
+    if (debouncedDescription1) {
+      updateDescriptions(
+        "description1",
+        debouncedDescription1,
+        getDomainFromEndpoint
+      );
+      dispatch(setDescriptionOne(debouncedDescription1));
+    }
+  }, [debouncedDescription1, dispatch, getDomainFromEndpoint]);
 
   useEffect(() => {
-    if (description1 && !isAIWriting[1]) {
-      updateDescriptions("description1", description1, getDomainFromEndpoint);
+    if (debouncedDescription2) {
+      updateDescriptions(
+        "description2",
+        debouncedDescription2,
+        getDomainFromEndpoint
+      );
+      dispatch(setDescriptionTwo(debouncedDescription2));
     }
-  }, [description1, isAIWriting, getDomainFromEndpoint]);
+  }, [debouncedDescription2, dispatch, getDomainFromEndpoint]);
 
-  useEffect(() => {
-    if (description2 && !isAIWriting[2]) {
-      updateDescriptions("description2", description2, getDomainFromEndpoint);
-    }
-  }, [description2, isAIWriting, getDomainFromEndpoint]);
   const [visibleWordCount, setVisibleWordCount] = useState<1 | 2 | null>(null);
 
   const validateFields = () => {
@@ -111,7 +150,15 @@ function Description() {
     setError(null);
 
     if (type === 2 && !description1) {
-      setError("Description 1 is required before generating Description 2.");
+      setError("Description  is required ");
+      setDescription1Error(true);
+      setLoader1(false);
+      setLoader2(false);
+      return;
+    } else if (type === 2 && description1.length <= 25) {
+      setError("Description must have atleast 25 characters");
+      setDescription1Error(true);
+      setDescription2Error(false);
       setLoader1(false);
       setLoader2(false);
       return;
@@ -195,6 +242,7 @@ function Description() {
                   const newDescription = prev + deltaContent;
                   completeDescription = newDescription;
                   dispatch(setDescriptionOne(newDescription));
+                  setDescription1(newDescription);
                   return newDescription;
                 });
               } else {
@@ -206,7 +254,8 @@ function Description() {
                     if (visibleWordCount === type) {
                       setVisibleWordCount(null);
                     }
-                  }, 7000);
+                  }, 1000);
+                  setDescription2(newDescription);
                   return newDescription;
                 });
               }
@@ -248,6 +297,8 @@ function Description() {
 
       if (updateResponse.status !== 200) {
         console.error("Failed to update word count:", updateResponse.data);
+        //faizal
+
         return;
       }
     } catch (error) {
@@ -269,19 +320,42 @@ function Description() {
       setDescription1Error(true);
       setDescription2Error(true);
       errorMessage = "Descriptions are required.";
-    } else if (description1.length <= 28) {
+    } else if (description1.trim() && !description2.trim()) {
+      setDescription1Error(false);
+      setDescription2Error(true);
+      errorMessage = "Description is required.";
+    } else if (!description1.trim() && description2.trim()) {
       setDescription1Error(true);
       setDescription2Error(false);
-      errorMessage = "Description must have atleast 28 characters ";
-    } else if (description2.length <= 28) {
+      errorMessage = "Description is required.";
+    } else if (!description2.trim()) {
+      setDescription2Error(true);
+      errorMessage = "Description is required.";
+    } else if (description1.length <= 25) {
+      setDescription1Error(true);
+      setDescription2Error(false);
+      errorMessage = "Description must have atleast 25 characters ";
+    } else if (description2.length <= 25) {
       setDescription2Error(true);
       setDescription1Error(false);
-      errorMessage = "Description must have atleast 28 characters ";
+      errorMessage = "Description must have atleast 25 characters ";
     } else {
       setDescription1Error(false);
       setDescription2Error(false);
       setError(null);
       setLoading(true);
+
+      await updateDescriptions(
+        "description1",
+        description1,
+        getDomainFromEndpoint
+      );
+      await updateDescriptions(
+        "description2",
+        description2,
+        getDomainFromEndpoint
+      );
+
       dispatch(setDescriptionOne(description1));
       dispatch(setDescriptionTwo(description2));
       setLoading(false);
@@ -374,29 +448,20 @@ function Description() {
               </label>
             </div>
             <textarea
-              // className={getInputClass(des1)}
               className={getInputClass("des1")}
               value={description1}
               placeholder="We offer healthy and convenient meal options for busy individuals"
-              onChange={(e) => {
-                const newValue = e.target.value.trimStart();
-
-                setDescription1(newValue);
-                dispatch(setDescriptionOne(newValue));
-
-                // if (newValue) {
-                //   setDescription1Error(false);
-                //   if (!description1.trim()) {
-                //     setError("1 Description is required.");
-                //   } else if (description1.length <= 28) {
-                //     setError("Description must have at least 28 characters.");
-                //     setDescription1Error(true);
-                //   } else {
-                //     setError(null);
-                //   }
-                // }
-              }}
+              onChange={handleChangeDescription1}
+              onKeyDown={(event) =>
+                handleEnterKey({
+                  event,
+                  callback: setReduxValue, // This is triggered when only Enter is pressed
+                  value: description1,
+                  setValue: setDescription1,
+                })
+              }
             />
+
             {/* AI Write Button for Description 1 */}
             <div className="mt-2 flex items-center gap-2 text-app-secondary hover:text-app-accent-hover cursor-pointer ml-[50px]">
               <div
@@ -490,23 +555,15 @@ function Description() {
               className={getInputClass("des2")}
               placeholder="Visit our shop, explore our menu, and place your order in-store or online."
               value={description2}
-              onChange={(e) => {
-                const newValue = e.target.value.trimStart();
-                setDescription2(newValue);
-                dispatch(setDescriptionTwo(newValue));
-
-                // if (newValue) {
-                //   setDescription2Error(false);
-                //   if (!description2.trim()) {
-                //     setError(" 2 Description is required.");
-                //   } else if (description2.length <= 28) {
-                //     setError("Description must have at least 28 characters.");
-                //     setDescription2Error(true);
-                //   } else {
-                //     setError(null);
-                //   }
-                // }
-              }}
+              onChange={handleChangeDescription2}
+              onKeyDown={(event) =>
+                handleEnterKey({
+                  event,
+                  callback: setReduxValue, // This is triggered when only Enter is pressed
+                  value: description2,
+                  setValue: setDescription2,
+                })
+              }
             />
             {/* AI Write Button for Description 2 */}
             <div className="mt-2 flex items-center gap-2 text-app-secondary hover:text-app-accent-hover cursor-pointer ml-[50px]">

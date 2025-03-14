@@ -7,7 +7,6 @@ import { RootState } from "../../../store/store";
 import MainLayout from "../../Layouts/MainLayout";
 import { CategoryList } from "../../../types/Category.type";
 import useDomainEndpoint from "../../../hooks/useDomainEndpoint";
-import { getCategoryDetails } from "../../../infrastructure/api/wordpress-api/category/getCategoryDetails.api";
 import { updateCategoryDetails } from "../../../infrastructure/api/wordpress-api/category/updateCategoryDetails.api.ts";
 import LimitReachedPopup from "../../component/dialogs/LimitReachedPopup.tsx";
 import axios from "axios";
@@ -41,7 +40,6 @@ function Category() {
   const [loading, setLoading] = useState(false);
   const [mainLoader, setMainLoader] = useState(false);
   const [apiError, setApiError] = useState(false);
-  const [erros, setErrors] = useState({ titile: "", message: "" });
   const wp_token = useSelector((state: RootState) => state.user.wp_token);
 
   useEffect(() => {
@@ -97,6 +95,9 @@ function Category() {
     );
 
     if (isValidCategory) {
+      if (selectedCategory == inputValue) {
+        navigate("/name");
+      }
       setError(null);
       setLoading(true);
       try {
@@ -124,27 +125,6 @@ function Category() {
     handleCategoryChange(category);
     setShowDropdown(false);
   };
-  // const getContent = async () => {
-  //   const url = getDomainFromEndpoint("wp-json/custom/v1/get-form-details");
-
-  //   try {
-  //     const response = await fetch(url, {
-  //       method: "POST",
-  //       headers: {
-  //         "Content-Type": "application/json",
-  //       },
-  //       body: JSON.stringify({
-  //         fields: ["category"],
-  //       }),
-  //     });
-
-  //     const result = await response.json();
-  //     return result;
-  //   } catch (error) {
-  //     console.error("Error making API call:", error);
-  //     return null;
-  //   }
-  // };
 
   const handleClose = () => {
     // if (userDetails.generatedSite >= userDetails.max_genration) {
@@ -179,47 +159,7 @@ function Category() {
     }
   }, [userDetails.email, checkSiteCount]);
 
-  useEffect(() => {
-    if (location.hash.includes("/category")) {
-      const queryParams = new URLSearchParams(location.hash.split("?")[1]);
-      const wp_token = queryParams.get("wp_token");
-      const fe_token = queryParams.get("fe_token");
-      const email = queryParams.get("email");
-
-      if (wp_token && fe_token && email) {
-        setMainLoader(true);
-        sendTokenAndEmailToBackend(wp_token, fe_token, email);
-      } else {
-        console.error("Missing token or email in URL");
-      }
-    }
-  }, [location]);
-
-  const sendTokenAndEmailToBackend = async (
-    wp_token: string,
-    fe_token: string,
-    email: string
-  ) => {
-    try {
-      const endpoint = getDomainFromEndpoint(
-        "wp-json/custom/v1/user-details-react"
-      );
-
-      const response = await axios.post(endpoint, {
-        email: email,
-        wp_token: wp_token,
-        fe_token: fe_token,
-      });
-
-      await fetchUserDetails();
-    } catch (error) {
-      console.error("Error sending data to backend:", error);
-      setApiError(true);
-    }
-  };
-
-  // Function to fetch user details
-  const fetchUserDetails = async () => {
+  const fetchUserDetails = useCallback(async () => {
     try {
       const url = getDomainFromEndpoint(
         "/wp-json/custom/v1/get-gwuser-details"
@@ -256,7 +196,48 @@ function Category() {
     } catch (error) {
       console.error("Error fetching user details:", error);
     }
-  };
+  }, [dispatch, getDomainFromEndpoint]);
+  const sendTokenAndEmailToBackend = useCallback(
+    async (wp_token: string, fe_token: string, email: string) => {
+      try {
+        const endpoint = getDomainFromEndpoint(
+          "wp-json/custom/v1/user-details-react"
+        );
+
+        const response = await axios.post(endpoint, {
+          email: email,
+          wp_token: wp_token,
+          fe_token: fe_token,
+        });
+
+        console.log(response);
+
+        await fetchUserDetails();
+      } catch (error) {
+        console.error("Error sending data to backend:", error);
+        setApiError(true);
+      }
+    },
+    [getDomainFromEndpoint, fetchUserDetails] // Dependencies array
+  );
+
+  useEffect(() => {
+    if (location.hash.includes("/category")) {
+      const queryParams = new URLSearchParams(location.hash.split("?")[1]);
+      const wp_token = queryParams.get("wp_token");
+      const fe_token = queryParams.get("fe_token");
+      const email = queryParams.get("email");
+
+      if (wp_token && fe_token && email) {
+        setMainLoader(true);
+        sendTokenAndEmailToBackend(wp_token, fe_token, email);
+      } else {
+        console.error("Missing token or email in URL");
+      }
+    }
+  }, [sendTokenAndEmailToBackend]);
+
+  // Function to fetch user details
 
   useEffect(() => {
     setInputValue(selectedCategory || "");
@@ -287,7 +268,7 @@ function Category() {
               type="text"
               value={inputValue}
               onChange={handleInputChange}
-              placeholder="Enter your business category or type (e.g., E-commerce, Restaurant)"
+              placeholder="Enter your business category or type (e.g., Education, Restaurant)"
               className={`bg-white rounded-lg w-full pl-11 pr-4 py-3 border placeholder:text-[#A9B0B7] placeholder:!font-normal focus:border-palatinate-blue-500 active:border-palatinate-blue-500 focus:border-2 ${
                 error ? "border-red-500" : "border-[#CDD4DB]"
               } focus:outline-none`}

@@ -51,7 +51,6 @@ const ProcessingScreen: React.FC = () => {
   const templateName = useSelector(
     (state: RootState) => state.userData.templatename
   );
-  const wp_token = useSelector((state: RootState) => state.user.wp_token);
 
   const logoWidth = useSelector((state: RootState) => state.userData.logoWidth);
 
@@ -356,6 +355,18 @@ const ProcessingScreen: React.FC = () => {
     setStatus("Changing the contact details");
     await postData("/wp-json/custom/v1/replace-user-content", {});
 
+    for (let i = 0; i < selectedPagesToInstall.length; i++) {
+      const page = selectedPagesToInstall[i];
+      if (page.slug === "blog" || page.slug === "contact-us") {
+        continue;
+      }
+      setStatus(`Updating images for page: ${page.name}`);
+      await postData("wp-json/elementor-image-update/v1/update-images/", {
+        page_name: page.name,
+      });
+      // ... progress calculation
+    }
+
     setStatus("Applying color, font, and logo changes");
     await postData("/wp-json/custom/v1/update-style-changes", {});
 
@@ -364,6 +375,9 @@ const ProcessingScreen: React.FC = () => {
 
     setStatus("Emptying tables");
     await postData("/wp-json/custom/v1/empty-tables", {}, "DELETE");
+
+    setStatus("importing animation");
+    await postData("/wp-json/custom/v1/install-animation", {});
 
     setProgress(100);
     dispatch(clearUserData());

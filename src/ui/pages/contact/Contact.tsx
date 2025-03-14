@@ -17,10 +17,7 @@ function Contact() {
   const ContactFormRedux = useSelector(
     (state: RootState) => state.userData.contactform
   );
-  const businessName = useSelector(
-    (state: RootState) => state.userData.businessName
-  );
-  const category = useSelector((state: RootState) => state.userData.category);
+
   const [loading, setLoading] = useState(false);
   const fetchCustomContent = useFetchCustomContentData();
 
@@ -91,10 +88,6 @@ function Contact() {
       [name]: proccessedvalue,
     }));
   };
-
-  useEffect(() => {
-    fetchCustomContent(["contactform"]);
-  }, [fetchCustomContent]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -173,16 +166,8 @@ function Contact() {
       !formError.phoneNumber &&
       !!formData.address;
 
-    setIsFormValid(isValid); // `isValid` is now always a boolean
+    setIsFormValid(isValid);
   }, [formData, formError]);
-
-  // useEffect(() => {
-  //   const isValid =
-  //     validateEmail() &&
-  //     validatePhoneNumber(formData.phoneNumber) &&
-  //     formData.address;
-  //   setIsFormValid(isValid);
-  // }, [formData.email, formData.phoneNumber, formData.address]);
 
   return (
     <MainLayout>
@@ -191,7 +176,7 @@ function Contact() {
         onKeyDown={(event) =>
           handleEnterKey({
             event,
-            callback: handleSubmit,
+            callback: () => handleSubmit(event),
           })
         }
       >
@@ -200,7 +185,8 @@ function Contact() {
             How can customers contact you?
           </h1>
           <span className="text-lg text-txt-secondary-500 max-w-[720px]">
-          Provide the contact details you'd like to display on your website, so customers can easily reach you.
+            Provide the contact details you'd like to display on your website,
+            so customers can easily reach you.
           </span>
 
           <form className="w-full mt-9">

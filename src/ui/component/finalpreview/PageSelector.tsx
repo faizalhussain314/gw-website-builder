@@ -70,6 +70,8 @@ const PageSelector: React.FC<Props> = ({
   const showLoadingToast = () => {
     toast.warn("please wait until the page loads");
   };
+  const selectedPagesCount = pages.filter((page) => page.selected).length;
+  const buttonText = selectedPagesCount > 1 ? "Pages" : "Page";
 
   const dispatch = useDispatch();
 
@@ -77,10 +79,36 @@ const PageSelector: React.FC<Props> = ({
   const isHomeGenerated = pages.some(
     (page) => page.name === "Home" && page.status === "Generated"
   );
+  const allPagesUpdated = pages.every(
+    (page) =>
+      page.status === "Generated" ||
+      page.status === "Skipped" ||
+      page.status === "Added" ||
+      page.status === "Not Selected"
+  );
+
+  const currentPage = pages.find((page) => page.name === selectedPage);
+  const isBlogOrContactPage =
+    currentPage &&
+    ["blog", "contact", "contact us"].includes(currentPage.name.toLowerCase());
+
+  const showKeepAndNext =
+    currentPage &&
+    ([
+      "Generated",
+      "Not Selected",
+      "Blog",
+      "Contact",
+      "Contact Us",
+      "Home",
+    ].includes(currentPage.status) ||
+      generatedPageName.includes(selectedPage));
 
   const handlePageClick = (pageName: string) => {
     togglePage(pageName);
   };
+
+  const [nextPage, setNextPage] = useState("");
 
   const handleSkipClick = (pageName: string) => {
     if (isContentGenerating || isLoading) {
@@ -238,7 +266,7 @@ const PageSelector: React.FC<Props> = ({
   return (
     <div className="p-5">
       <h2 className="text-xl font-semibold">
-        Select Pages to Import (
+        Select {buttonText} to Import (
         {pages.findIndex((page) => page.name === selectedPage) + 1}/
         {pages.length})
       </h2>
@@ -475,60 +503,101 @@ const PageSelector: React.FC<Props> = ({
       </div>
       <div className="flex flex-col items-center justify-center absolute bottom-0 w-[85%] mb-4">
         <div className="mb-4 w-full flex justify-between">
-          {/* <button
-            className={`w-full py-3 px-6 rounded-md mr-2 border-2 ${
-              previousClicked
-                ? "border-palatinate-blue-500 text-palatinate-blue-500"
-                : "border-[#88898A] text-[#88898A]"
-            }`}
-            onClick={() => {
-              if (isContentGenerating) {
-                showWarningToast();
-              } else {
-                handlePrevious();
-              }
-            }}
-          >
-            Previous
-          </button>
-          <button
-            className={`bg-white w-full text-palatinate-blue-500 border-palatinate-blue-500 border-2 py-3 px-8 rounded-md ${
-              isContentGenerating ? "opacity-50" : ""
-            }`}
-            onClick={() => {
-              if (isContentGenerating) {
-                showWarningToast();
-              } else {
-                handleNext();
-              }
-            }}
-            disabled={isContentGenerating}
-          >
-            Next
-          </button> */}
+          {/* Optional Previous/Next buttons (if any) */}
         </div>
 
-        <button
-          className={`tertiary w-full text-white py-3 px-8  mb-4 flex items-center justify-center outline-none rounded-lg font-medium text-center tracking-tight transition duration-300 ease-in-out ${
-            !isContentGenerating && isHomeGenerated
-              ? "opacity-100"
-              : "opacity-50"
-          }`}
-          ref={offerButtonRef}
-          onClick={() => {
-            if (!isContentGenerating && isHomeGenerated) {
-              handleImportSelectedPage();
-            }
-            // else {
-            //   showWarningToast();
-            // }
-          }}
-          disabled={!isHomeGenerated || isContentGenerating}
-        >
-          <span className="flex items-center gap-1.5 w-[80%] mx-auto justify-center">
-            Import Selected Page
-          </span>
-          {importLoad && (
+        <button className="w-full">
+          {currentPage && (
+            <div>
+              {allPagesUpdated ? (
+                // After Contact: Show "Import Selected Page" instead of "Keep & Next"
+                <button
+                  className=" tertiary w-full py-3 px-8 mb-4 rounded-lg flex items-center gap-1.5 mx-auto justify-center"
+                  onClick={() => {
+                    if (isContentGenerating || isLoading || showGwLoader) {
+                      showWarningToast();
+                    } else {
+                      handleImportSelectedPage(); // You may need to pass the page data if necessary
+                    }
+                  }}
+                  disabled={isContentGenerating || isLoading || showGwLoader}
+                >
+                  Import Selected {buttonText}{" "}
+                  <span>
+                    {" "}
+                    {importLoad && (
+                      <div className="flex">
+                        {" "}
+                        <svg
+                          className="animate-spin h-5 w-5 text-white"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          ></circle>
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                          ></path>
+                        </svg>
+                      </div>
+                    )}
+                  </span>
+                </button>
+              ) : // Default behavior: Show "Keep & Next" or "Generate Page"
+              isBlogOrContactPage || showKeepAndNext ? (
+                <button
+                  className={`tertiary py-3 px-8 mb-4 rounded-lg w-full flex items-center gap-1.5 mx-auto justify-center ${
+                    !isContentGenerating && isHomeGenerated
+                      ? "opacity-100"
+                      : "opacity-50"
+                  } ${
+                    isContentGenerating || isLoading || showGwLoader
+                      ? "opacity-50"
+                      : ""
+                  } `}
+                  onClick={() => {
+                    if (isContentGenerating || isLoading || showGwLoader) {
+                      showWarningToast();
+                    } else {
+                      handleNext(currentPage.name);
+                    }
+                  }}
+                  disabled={isContentGenerating || isLoading || showGwLoader}
+                >
+                  Keep &amp; Next
+                </button>
+              ) : (
+                <button
+                  className={`tertiary py-3 px-8 mb-4 rounded-lg w-full flex items-center gap-1.5 mx-auto justify-center ${
+                    !isContentGenerating && isHomeGenerated
+                      ? "opacity-100"
+                      : "opacity-50"
+                  } ${
+                    isContentGenerating || isLoading || showGwLoader
+                      ? "opacity-50"
+                      : ""
+                  } `}
+                  onClick={(e) => {
+                    e.stopPropagation(); // Prevent triggering the main onClick
+                    handleGeneratePage();
+                  }}
+                  disabled={isContentGenerating || isLoading || showGwLoader}
+                >
+                  Generate Page
+                </button>
+              )}
+            </div>
+          )}
+          {/* {importLoad && (
             <div className="flex">
               {" "}
               <svg
@@ -552,11 +621,67 @@ const PageSelector: React.FC<Props> = ({
                 ></path>
               </svg>
             </div>
-          )}
+          )} */}
         </button>
+
+        {/* Underlined Import Selected Page button is hidden afterContact is true */}
+        {allPagesUpdated ? null : (
+          <button
+            className={`w-full text-white flex flex-col items-center justify-center outline-none rounded-lg font-medium text-center tracking-tight transition duration-300 ease-in-out ${
+              !isContentGenerating && isHomeGenerated
+                ? "opacity-100"
+                : "opacity-50"
+            } ${
+              isContentGenerating || isLoading || showGwLoader
+                ? "opacity-50"
+                : ""
+            }`}
+            ref={offerButtonRef}
+            onClick={() => {
+              if (!isContentGenerating && isHomeGenerated) {
+                handleImportSelectedPage();
+              }
+            }}
+            disabled={!isHomeGenerated || isContentGenerating || showGwLoader}
+          >
+            <span className="flex items-center gap-1.5 w-[80%] mx-auto justify-center text-xs mt-1 underline text-[#165CFF]">
+              Import Selected {buttonText}{" "}
+              <span>
+                {" "}
+                {importLoad && (
+                  <div className="flex">
+                    {" "}
+                    <svg
+                      className="animate-spin h-5 w-5 text-[#165CFF]"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                      ></path>
+                    </svg>
+                  </div>
+                )}
+              </span>
+            </span>
+          </button>
+        )}
       </div>
     </div>
   );
 };
 
 export default PageSelector;
+
+// className={` text-white flex flex-col items-center justify-center outline-none rounded-lg font-medium text-center tracking-tight transition duration-300 ease-in-out `}

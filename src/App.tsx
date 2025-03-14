@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import ContinuePopup from "./ui/component/dialogs/ContinuePopup";
@@ -19,13 +19,11 @@ import {
 } from "./Slice/userSlice";
 import useDomainEndpoint from "./hooks/useDomainEndpoint";
 import axios from "axios";
-// import useFetchWpToken from "./hooks/useFetchContentData";
 import { useSelector } from "react-redux";
 import { RootState } from "./store/store";
 import { fetchWpToken } from "./core/utils/fetchWpToken";
-import ApiErrorPopup from "./ui/component/dialogs/ApiErrorPopup";
-import ApiIssue from "./ui/component/dialogs/ApiIssue";
 import { usePostHog } from "posthog-js/react";
+import { UserDetails } from "./types/UserDetails";
 
 const App = () => {
   const navigate = useNavigate();
@@ -37,19 +35,17 @@ const App = () => {
   const { updateLastStep } = useLastStepUpdate();
 
   const [showPopup, setShowPopup] = useState(false);
-  const [fetchedData, setFetchedData] = useState<any>(null);
+  const [fetchedData, setFetchedData] = useState<UserDetails>(null);
   const [firstLoad, setFirstLoad] = useState(true);
   const [isRefresh, setIsRefresh] = useState(false);
-  const [apiErrorPopup, setapiErrorPopup] = useState(false);
   const username = useSelector((state: RootState) => state.user.username);
 
   const { fetchContent, emptyTable } = useFetchContentData();
   const { getDomainFromEndpoint } = useDomainEndpoint();
-  const [erros, setErrors] = useState({ titile: "", message: "" });
 
   const email = useSelector((state: RootState) => state.user.email);
 
-  const fetchUserDetails = async () => {
+  const fetchUserDetails = useCallback(async () => {
     try {
       const url = getDomainFromEndpoint(
         "/wp-json/custom/v1/get-gwuser-details"
@@ -89,21 +85,12 @@ const App = () => {
         const status = error.response?.status;
         const message = error.response?.data?.message;
 
-        // if (
-        //   status === 404 &&
-        //   message === "No details found in the user details table." &&
-        //   location.pathname !== "/"
-        // ) {
-        //   console.error("User not logged in:", message);
-        //   navigate("/connect-account");
-        // } else {
-        //   console.error("Error fetching user details:", error.message);
-        // }
+        console.error("unexpected error:", status, message);
       } else {
         console.error("Unexpected error:", error);
       }
     }
-  };
+  }, [getDomainFromEndpoint, dispatch]);
 
   useEffect(() => {
     if (performance.navigation.type === 1) {
@@ -156,6 +143,8 @@ const App = () => {
     isRefresh,
     setSessionActive,
     fetchUserDetails,
+    location.pathname,
+    username,
   ]);
 
   useEffect(() => {
@@ -163,13 +152,6 @@ const App = () => {
       updateLastStep(location.pathname);
     }
   }, [location.pathname, firstLoad, updateLastStep]);
-
-  // useEffect(() => {
-  //   if (email) {
-  //     posthog?.identify(email, { name: username });
-  //     console.log("post hog user event");
-  //   }
-  // }, [email, username, posthog]);
 
   const handleContinue = () => {
     if (!fetchedData?.lastStep) {
@@ -192,7 +174,7 @@ const App = () => {
     const fetchData = async () => {
       if (username) {
         // Fetch token only if username exists
-        const token = await fetchWpToken(dispatch, getDomainFromEndpoint);
+        await fetchWpToken(dispatch, getDomainFromEndpoint);
       } else {
         console.log("Username is empty, skipping token fetch.");
       }

@@ -13,7 +13,7 @@ import ProcessingScreen from "../ui/pages/processingScreen/ProcessingScreen";
 import FinalPreview from "../ui/pages/finalpreview/FinalPreview";
 import CustomDesign from "../ui/pages/customdesign/CustomDesign";
 import Success from "../ui/pages/successPage/Success";
-import Test from "../test/Test";
+import Test from "../backupcode/Test";
 
 const AppRoutes = () => (
   <Routes>

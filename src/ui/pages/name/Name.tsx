@@ -26,6 +26,7 @@ function Name() {
 
   useEffect(() => {
     const fetchInitialName = async () => {
+      if (category) return;
       const content = await getBusinessName(getDomainFromEndpoint);
       if (content && content.businessName) {
         setName(content.businessName);
@@ -34,7 +35,7 @@ function Name() {
     };
 
     fetchInitialName();
-  }, [dispatch, getDomainFromEndpoint]);
+  }, [category, dispatch, getDomainFromEndpoint]); // runs on mount and if these change
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newName = event.target.value;
@@ -46,6 +47,10 @@ function Name() {
 
   const handleClick = async () => {
     if (name) {
+      if (name.trim() === (initialName || "").trim()) {
+        navigate("/description");
+        return;
+      }
       setLoading(true);
       try {
         await updateBusinessName(name, getDomainFromEndpoint);
@@ -73,10 +78,11 @@ function Name() {
         <div className="p-[40px] w-full">
           <div className="flex flex-col">
             <h1 className="text-txt-black-600 font-semibold leading-[38px] tracking-[-0.9px] text-3xl mb-2.5">
-            What is the name of your {category} website?
+              What is the name of your {category} website?
             </h1>
             <span className="text-lg tracking-[-0.54px] font-normal leading-[26px] text-txt-secondary-500">
-            Provide the name of your Business or Website. This will be used as the main title for your site.
+              Provide the name of your Business or Website. This will be used as
+              the main title for your site.
             </span>
             <form
               onSubmit={(e) => e.preventDefault()}

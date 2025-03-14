@@ -23,6 +23,8 @@ import { uploadLogo } from "../../core/utils/customizesidebar/logoUploadUtils";
 import uploadLogoIcon from "../../assets/icons/uploadfile.svg";
 import axios from "axios";
 import { useDebounce } from "use-debounce";
+import { cancelLogoChange } from "../../core/utils/customizesidebar/cancelLogoChange";
+import { nextPage } from "../../core/utils/customizesidebar/pageUtils";
 
 const CustomizeSidebar: React.FC<{
   setLimitReached: React.Dispatch<React.SetStateAction<boolean>>;
@@ -32,6 +34,7 @@ const CustomizeSidebar: React.FC<{
     primary: "",
     secondary: "",
   });
+
   const fontCombinations = useSelector(
     (state: RootState) => state.userData.style.fonts || null
   );
@@ -49,9 +52,8 @@ const CustomizeSidebar: React.FC<{
     (state: RootState) => state.userData.templateList.dark_theme
   );
 
-  const [logoSize, setLogoSize] = useState<number>(150);
-
   const [loading, setLoading] = useState(false);
+  const [isRemoving, setIsRemoving] = useState(false);
   const [wordCountLoader, setWordCountLoader] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -59,7 +61,6 @@ const CustomizeSidebar: React.FC<{
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  // const [limitReached, setLimitReached] = useState(true);
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -91,7 +92,7 @@ const CustomizeSidebar: React.FC<{
       setLogoUrl,
       storeContent
     );
-  }, [dispatch, getDomainFromEndpoint]);
+  }, [dispatch, getDomainFromEndpoint, storeContent]);
 
   useEffect(() => {
     if (businessName) {
@@ -105,6 +106,7 @@ const CustomizeSidebar: React.FC<{
       );
     }
   }, [businessName, darkTheme]);
+
   const handleFontChange = async (fontCombination: SelectedFont) => {
     setSelectedFont(fontCombination);
     dispatch(setFont(fontCombination));
@@ -182,31 +184,36 @@ const CustomizeSidebar: React.FC<{
     }
   };
 
-  const nextPage = async () => {
-    setWordCountLoader(true);
+  const handleNextPage = async () => {
+    await nextPage(
+      setWordCountLoader,
+      setLimitReached,
+      setPlanExpired,
+      navigate
+    );
+  };
+
+  const handleCancelLogoChange = async () => {
+    setIsRemoving(true);
+    setSuccessMessage("Please wait, removing logo...");
+    setError(null);
     try {
-      const endpoint = getDomainFromEndpoint(
-        "wp-json/custom/v1/check-word-count"
+      await cancelLogoChange(
+        businessName,
+        setLogoUrl,
+        dispatch,
+        setSuccessMessage,
+        setError
       );
 
-      const response = await axios.get(endpoint);
-
-      if (response?.data?.status === true) {
-        navigate("/final-preview");
-      } else if (response?.data?.status === false) {
-        setWordCountLoader(false);
-        setLimitReached(true);
-      } else if (
-        response?.data?.status === "pending" ||
-        response?.data?.status === "canceled" ||
-        response?.data?.status === "overdue"
-      ) {
-        setPlanExpired(true);
+      if (inputRef.current) {
+        inputRef.current.value = "";
       }
-    } catch (error) {
-      console.error("Error while calling the word count API:", error);
-      setWordCountLoader(false);
+      setSuccessMessage("Logo removed successfully");
+    } catch (err) {
+      setError("Error while removing logo");
     }
+    setIsRemoving(false);
   };
 
   useEffect(() => {
@@ -273,6 +280,7 @@ const CustomizeSidebar: React.FC<{
             ref={inputRef}
             name={extractFileName(logoUrl)}
             // value={logoUrl}
+            // disabled={loading || isRemoving}
             placeholder={extractFileName(logoUrl)}
           />
           <button
@@ -295,21 +303,67 @@ const CustomizeSidebar: React.FC<{
             <p className="text-sm text-green-500 mt-2">{successMessage}</p>
           )}
           {logoUrl && (
-            <div className="bg-white p-2.5 mt-2.5 border border-[#DFEAF6] rounded-md shadow-lg">
+            <div className="relative bg-white p-2.5 mt-2.5 border border-[#DFEAF6] rounded-md shadow-lg">
+              {/* Cancel Button (Circular Badge) */}
+              <button
+                onClick={handleCancelLogoChange}
+                className="absolute top-2 right-2 flex items-center justify-center w-4 h-4 p-2 text-xs bg-red-500 text-white rounded-full z-10"
+                title="Cancel"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  className="size-6 text-white bg-white"
+                >
+                  <path
+                    fill-rule="evenodd"
+                    d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25Zm-1.72 6.97a.75.75 0 1 0-1.06 1.06L10.94 12l-1.72 1.72a.75.75 0 1 0 1.06 1.06L12 13.06l1.72 1.72a.75.75 0 1 0 1.06-1.06L13.06 12l1.72-1.72a.75.75 0 1 0-1.06-1.06L12 10.94l-1.72-1.72Z"
+                    clip-rule="evenodd"
+                  />
+                </svg>
+                X
+              </button>
+
               <img
                 src={logoUrl}
                 alt="Uploaded Logo"
                 className="mt-2 h-6 cursor-pointer"
               />
-              <div className="h-8 mt-4 custom-slider">
-                <Slider
-                  aria-label="Logo Size"
-                  value={value}
-                  onChange={handleChange}
-                  min={10}
-                  max={200}
-                />
-              </div>
+              {isRemoving ? (
+                <div className="flex items-center justify-center mt-2">
+                  <svg
+                    className="w-5 h-5 text-red-500 animate-spin"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                    ></path>
+                  </svg>
+                </div>
+              ) : (
+                <div className="h-8 mt-4 custom-slider relative">
+                  <Slider
+                    aria-label="Logo Size"
+                    value={value}
+                    onChange={handleChange}
+                    min={10}
+                    max={200}
+                  />
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -351,7 +405,7 @@ const CustomizeSidebar: React.FC<{
           </button>
         </Link>
         <button
-          onClick={nextPage}
+          onClick={handleNextPage}
           disabled={loading}
           className="px-2 py-3 text-white rounded-md tertiary text-sm sm:mt-2 w-full "
         >

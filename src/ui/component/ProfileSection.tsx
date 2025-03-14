@@ -8,14 +8,13 @@ import { useSelector } from "react-redux";
 import { RootState } from "../../store/store";
 import useDomainEndpoint from "../../hooks/useDomainEndpoint";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
 import { useClickOutside } from "../../hooks/useClickOutside";
 import SignOut from "./dialogs/SignOut";
 
 const ProfileSection: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { getDomainFromEndpoint } = useDomainEndpoint();
-  const navigate = useNavigate();
+
   const [logOut, setlogOut] = useState(false);
 
   /** when user click outside then this hook will be exicuted*/
@@ -32,6 +31,13 @@ const ProfileSection: React.FC = () => {
     (userDetails.generatedSite / userDetails.max_genration) * 100,
     100
   );
+
+  const upgradeAccount = () => {
+    window.open(
+      "https://app.gravitywrite.com/credit-based?target=subscription",
+      "_blank"
+    );
+  };
 
   const handleLogOut = async () => {
     try {
@@ -119,7 +125,7 @@ const ProfileSection: React.FC = () => {
             </div>
             <div className="flex items-center justify-center px-4 my-5">
               <button
-                onClick={toggleMenu}
+                onClick={upgradeAccount}
                 className="flex items-center justify-center w-full gap-2 px-4 py-3 text-base text-white rounded-lg tertiary"
               >
                 <img src={CrownIcon} />

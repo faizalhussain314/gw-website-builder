@@ -110,6 +110,7 @@ const FinalPreview: React.FC = () => {
   const [showImportWarningDialouge, setshowImportWarningDialouge] =
     useState(false);
   const [isImportLoading, setIsImportLoading] = useState(false);
+  const [updateCountError, setupdateCountError] = useState(false);
   const contactDetails = useSelector(
     (state: RootState) => state.userData.contactform
   );
@@ -130,13 +131,16 @@ const FinalPreview: React.FC = () => {
   const templateName: string = useSelector(
     (state: RootState) => state.userData.templatename
   );
+
   const fontFamily = useSelector((state: RootState) => state.userData.font);
   const Color = useSelector((state: RootState) => state.userData.color);
+
   const logoUrl = useSelector((state: RootState) => state.userData.logo);
   const logoWidth = useSelector((state: RootState) => state.userData.logoWidth);
   const templateList = useSelector(
     (state: RootState) => state.userData.templateList
   );
+
   const bearer_token = useSelector((state: RootState) => state.user.wp_token);
   const [loadedPages, setLoadedPages] = useState<{ [key: string]: boolean }>({
     Blog: false,
@@ -148,6 +152,11 @@ const FinalPreview: React.FC = () => {
   // );
 
   const currentPages = useSelector((state: RootState) => state.userData.pages);
+
+  const initialColor = useSelector((state: RootState) => ({
+    primaryColor: state.userData.style.defaultColor.primary,
+    secondaryColor: state.userData.style.defaultColor.secondary,
+  }));
 
   const navigate = useNavigate();
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -177,10 +186,11 @@ const FinalPreview: React.FC = () => {
     toast.warn("Please wait while content is being generated.");
   };
 
-  const showSuccessToast = () => {
+  const showSuccessToast = useCallback(() => {
     toast.success("Content generation complete!");
+    console.log("selected page from react", selectedPage);
     updatePageStatus(selectedPage!, "Generated", true);
-  };
+  }, [selectedPage]);
 
   useEffect(() => {
     const fetchGeneratedPageStatus = async () => {
@@ -226,44 +236,6 @@ const FinalPreview: React.FC = () => {
     fetchGeneratedPageStatus();
   }, [getDomainFromEndpoint]);
 
-  // Ensure the effect runs when fetchGeneratedPageStatus is updated
-
-  // Fetch the list of already generated pages
-  // const fetchGeneratedPages = useCallback(async () => {
-  //   try {
-  //     const endpoint = getDomainFromEndpoint(
-  //       "/wp-json/custom/v1/get-html-data-details"
-  //     );
-  //     if (!endpoint) {
-  //       console.error("Endpoint is not available.");
-  //       return;
-  //     }
-
-  //     const response = await axios.post(endpoint);
-
-  //     if (response.status === 200) {
-  //       setGeneratedPagesList(response.data);
-  //       response.data.forEach(
-  //         (page: {
-  //           page_name: string;
-  //           template_name: string;
-  //           version_name: string;
-  //         }) => {
-  //           fetchAndStorePageData(
-  //             page.page_name,
-  //             page.template_name,
-  //             page.version_name
-  //           );
-  //         }
-  //       );
-  //     } else {
-  //       console.error("Failed to fetch generated pages:", response);
-  //     }
-  //   } catch (error) {
-  //     console.error("Error fetching generated pages:", error);
-  //   }
-  // }, [getDomainFromEndpoint]);
-
   const storeHtmlContent = useCallback(
     async (pageName: string, htmlContent: string) => {
       try {
@@ -275,20 +247,16 @@ const FinalPreview: React.FC = () => {
           return;
         }
 
+        console.log("event triggered store content event triggered from api");
+
         const response = await axios.post(endpoint, {
           version_name: "5.5",
           page_name: pageName,
           template_name: templateName,
           html_data: JSON.stringify(htmlContent),
         });
-
-        // if (response.status === 200) {
-        //   console.log("HTML content stored successfully:", response.data);
-        // } else {
-        //   console.error("Failed to store HTML content:", response);
-        // }
       } catch (error) {
-        // console.error("Error storing HTML content:", error);
+        console.error("Error storing HTML content:", error);
       }
     },
     [getDomainFromEndpoint, templateName]
@@ -373,7 +341,7 @@ const FinalPreview: React.FC = () => {
             return updatedPages;
           });
 
-          storeHtmlContent(pageName, cleanedHtmlContent);
+          // storeHtmlContent(pageName, cleanedHtmlContent);
           return true;
         } else {
           console.error("Failed to store page data:", response);
@@ -386,7 +354,7 @@ const FinalPreview: React.FC = () => {
         setIsLoading(false);
       }
     },
-    [getDomainFromEndpoint, selectedPage, storeHtmlContent, updateIframeSrc]
+    [getDomainFromEndpoint, selectedPage, updateIframeSrc]
   );
 
   // useEffect(() => {
@@ -403,6 +371,9 @@ const FinalPreview: React.FC = () => {
         const updateCountEndpoint = getDomainFromEndpoint(
           "/wp-json/custom/v1/update-count"
         );
+
+        console.log("storeoldnew started");
+
         if (!updateCountEndpoint) {
           console.error("Update count endpoint is not available.");
           return;
@@ -415,9 +386,13 @@ const FinalPreview: React.FC = () => {
           sitecount: 0,
           is_type: "words",
         });
-
+        console.log("updateResponse.status", updateResponse.status);
         if (updateResponse.status !== 200) {
-          console.error("Failed to update word count:", updateResponse.data);
+          setapiIssue(true);
+          console.error(
+            "Failed to update word count(issue on gravitywrite api):",
+            updateResponse.data
+          );
           return;
         }
 
@@ -444,10 +419,10 @@ const FinalPreview: React.FC = () => {
         });
 
         if (saveResponse.status === 200) {
-          // console.log(
-          //   "Old and new content stored successfully:",
-          //   saveResponse.data
-          // );
+          console.log(
+            "Old and new content stored successfully:",
+            saveResponse.data
+          );
         } else {
           console.error(
             "Failed to store old and new content:",
@@ -455,10 +430,14 @@ const FinalPreview: React.FC = () => {
           );
         }
       } catch (error) {
-        console.error("Error in storeOldNewContent function:", error);
+        setapiIssue(true);
+        console.error(
+          "Failed to update word count(issue on gravitywrite api):",
+          error
+        );
       }
     },
-    [getDomainFromEndpoint, templateName]
+    [getDomainFromEndpoint, templateList.id, templateName]
   );
 
   const handleOldNewContent = useCallback(
@@ -524,7 +503,7 @@ const FinalPreview: React.FC = () => {
     const currentPageIndex = pages.findIndex(
       (page) => page.name === currentPage
     );
-    let arrayVal = rearrangeArray(pages, currentPageIndex);
+    const arrayVal = rearrangeArray(pages, currentPageIndex);
 
     if (arrayVal?.length > 0) {
       const nextPage = arrayVal.find(
@@ -757,6 +736,9 @@ const FinalPreview: React.FC = () => {
                     stepdescription: stepDescription,
                     template_id: templateList?.id,
                     bearer_token: bearer_token,
+                    primaryColor: Color.primary || initialColor.primaryColor,
+                    secondaryColor:
+                      Color.secondary || initialColor.secondaryColor,
                     stagging: Mode === "staging" ? true : false,
                   },
                   "*"
@@ -794,7 +776,10 @@ const FinalPreview: React.FC = () => {
             stepdescription: stepDescription,
             description: Description,
             template_id: templateList?.id,
+            primaryColor: Color.primary || initialColor.primaryColor,
+            secondaryColor: Color.secondary || initialColor.secondaryColor,
             stagging: Mode === "staging" ? true : false,
+            color: Color,
           },
           "*"
         );
@@ -1080,12 +1065,13 @@ const FinalPreview: React.FC = () => {
               stepdescription: stepDescription,
               template_id: templateList?.id,
               bearer_token: bearer_token,
+              primaryColor: Color.primary || initialColor.primaryColor,
+              secondaryColor: Color.secondary || initialColor.secondaryColor,
               stagging: Mode === "staging" ? true : false,
             },
             "*"
           );
         }
-        console.log("mode", Mode);
       } else if (
         response?.data?.status === "pending" ||
         response?.data?.status === "canceled" ||
@@ -1197,7 +1183,7 @@ const FinalPreview: React.FC = () => {
           setShowGwLoader(false);
         }
       } else if (event.data.type === "generatedContent") {
-        const pageName = event.data.pageName || selectedPage || "";
+        const pageName = selectedPage || "";
         const htmlContent = event.data.content;
         // const PageList = [...pages];
         const currentPageIndex = pages.findIndex(
@@ -1221,21 +1207,25 @@ const FinalPreview: React.FC = () => {
           };
           return updatedPages;
         });
-
-        // Store the HTML content
         storeHtmlContent(pageName, htmlContent);
+        // showSuccessToast();
+        // Store the HTML content
 
-        if (!event.data.isGenerating) {
-          showSuccessToast();
-        }
+        // if (!event.data.isGenerating) {
+        //   showSuccessToast();
+        // }
       } else if (event.data.type === "oldNewContent") {
         posthog?.capture("Genearted Page", {
           Generatedpage: event?.data?.pageName || selectedPage,
         });
+        if (updateCountError) {
+          return;
+        }
         const pageName = event.data.pageName || selectedPage || "";
         const wordCount = calculateWordCount(event.data.content);
         handleOldNewContent(pageName, event.data.content, wordCount);
       } else if (event.data.type === "streamingError") {
+        setupdateCountError(true);
         setapiIssue(true);
       }
     };
@@ -1253,7 +1243,18 @@ const FinalPreview: React.FC = () => {
     return () => {
       window.removeEventListener("message", receiveMessage);
     };
-  }, [Color, fontFamily, selectedPage, storeHtmlContent, handleOldNewContent]);
+  }, [
+    Color,
+    fontFamily,
+    selectedPage,
+    storeHtmlContent,
+    handleOldNewContent,
+    pages,
+    dispatch,
+    showSuccessToast,
+    posthog,
+    updateCountError,
+  ]);
 
   const handleImportSelectedPage = async () => {
     // posthog?.capture("import selected page", {
@@ -1387,7 +1388,7 @@ const FinalPreview: React.FC = () => {
         fetchGeneratedPageStatus();
       }
     }
-  }, [validReduxPages]);
+  }, [fetchGeneratedPageStatus, validReduxPages]);
 
   const deleteGeneratedPage = async () => {
     setButtonLoader(true);
@@ -1437,6 +1438,63 @@ const FinalPreview: React.FC = () => {
       window.removeEventListener("beforeunload", handleBeforeUnload);
     };
   }, [isContentGenerating, showGwLoader]);
+
+  useEffect(() => {
+    const receiveMessage = async (event: MessageEvent) => {
+      // Check for the oldNewImages message from the iframe
+      if (event.data.type === "oldNewImages") {
+        console.log("image event recevied", event.data.images);
+        try {
+          const saveImageEndpoint = getDomainFromEndpoint(
+            "/wp-json/custom/v1/save-generated-image"
+          );
+          if (!saveImageEndpoint) {
+            console.error("Save image endpoint is not available.");
+            return;
+          }
+
+          console.log(
+            "image data from react",
+            "pagename",
+            selectedPage,
+            event.data.images
+          );
+
+          const cleanedImageMapping = Object.values(event.data.images).reduce<
+            Record<string, string>
+          >(
+            (acc, mapping) => ({
+              ...acc,
+              ...(mapping as Record<string, string>),
+            }),
+            {}
+          );
+
+          // Post the cleaned image data to the API.
+          const saveResponse = await axios.post(saveImageEndpoint, {
+            version_name: "5.5",
+            page_name: selectedPage, // or use selectedPage if needed
+            template_name: templateName,
+            json_content: cleanedImageMapping,
+          });
+
+          if (saveResponse.status === 200) {
+            console.log("Image data saved successfully:", saveResponse.data);
+            showSuccessToast();
+          } else {
+            console.error("Failed to save image data:", saveResponse.data);
+          }
+        } catch (error) {
+          console.error("Error saving image data:", error);
+        }
+      }
+    };
+
+    window.addEventListener("message", receiveMessage);
+    return () => {
+      window.removeEventListener("message", receiveMessage);
+    };
+  }, [getDomainFromEndpoint, selectedPage, showSuccessToast, templateName]);
 
   return (
     <div className="h-screen flex font-[inter] w-screen">

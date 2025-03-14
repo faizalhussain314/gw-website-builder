@@ -28,6 +28,7 @@ export const savePagesToDB = async (
       page_slug: pageslug,
       selected: selectedvalue,
     });
+
     // console.log("Pages stored successfully:", response.data);
   } catch (error) {
     console.error("Error storing pages:", error);
