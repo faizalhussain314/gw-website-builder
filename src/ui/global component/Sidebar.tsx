@@ -1,5 +1,4 @@
 import Stepper from "../component/SideStepper";
-import GravityWriteLogo from "../../assets/logo.svg";
 import MenuIcon from "../../assets/menu.svg";
 import { useState } from "react";
 import ProfileSection from "../component/ProfileSection";

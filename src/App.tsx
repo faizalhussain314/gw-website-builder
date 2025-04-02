@@ -35,7 +35,7 @@ const App = () => {
   const { updateLastStep } = useLastStepUpdate();
 
   const [showPopup, setShowPopup] = useState(false);
-  const [fetchedData, setFetchedData] = useState<UserDetails>(null);
+  const [fetchedData, setFetchedData] = useState<UserDetails | null>(null);
   const [firstLoad, setFirstLoad] = useState(true);
   const [isRefresh, setIsRefresh] = useState(false);
   const username = useSelector((state: RootState) => state.user.username);

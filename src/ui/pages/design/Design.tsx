@@ -1,6 +1,10 @@
-import React, { useLayoutEffect, useState, useEffect } from "react";
+import React, {
+  useLayoutEffect,
+  useState,
+  useEffect,
+  useCallback,
+} from "react";
 import MainLayout from "../../Layouts/MainLayout";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { RootState } from "../../../store/store";
 import { useSelector, useDispatch } from "react-redux";
 import { Link } from "react-router-dom";
@@ -8,9 +12,7 @@ import useTemplateList from "../../../hooks/useTemplateList";
 import axios from "axios";
 import { saveSelectedTemplate } from "../../../infrastructure/api/wordpress-api/desgin/saveSelectedtemplate";
 import useDomainEndpoint from "../../../hooks/useDomainEndpoint";
-import { useDebounce } from "use-debounce";
 import {
-  setCategory,
   setTemplateId,
   setTemplatename,
   setTemplateList,
@@ -22,20 +24,18 @@ import Popup from "../../component/dialogs/Popup";
 import StyleRemoveWarning from "../../component/dialogs/StyleRemoveWarning";
 import useStoreContent from "../../../hooks/useStoreContent ";
 import UpgradePopup from "../../component/dialogs/UpgradePopup";
-import { fetchWpToken } from "../../../core/utils/fetchWpToken";
 import arrow from "../../../assets/arrow.svg";
 import info from "../../../assets/icons/info.svg";
 import { Tooltip } from "@mui/material";
 import { handleEnterKey } from "../../../core/utils/handleEnterKey";
-import { usePostHog } from "posthog-js/react";
+import { Template } from "../../../types/design.type";
 
 const API_URL = import.meta.env.VITE_API_BACKEND_URL;
 
 function Design() {
   const { activeIndex, handleBoxClick } = useTemplateList();
-  const posthog = usePostHog();
 
-  const [templateList, settemplateList] = useState([]);
+  const [templateList, settemplateList] = useState<Template[]>([]);
   const businessName = useSelector(
     (state: RootState) => state.userData.businessName
   );
@@ -45,38 +45,33 @@ function Design() {
   const description2 = useSelector(
     (state: RootState) => state.userData.description2
   );
-  const [fetchedTemplateId, setFetchedTemplateId] = useState<number | null>(
-    null
-  );
+
   const activeTemplate = useSelector(
     (state: RootState) => state.userData.templateList
   );
 
-  const [selectedTemplateId, setSelectedTemplateId] = useState<number | null>(
-    null
-  ); // Store the selected template's ID for highlighting
   const category =
     useSelector((state: RootState) => state.userData.category) || "";
-  const [text, setText] = useState(category);
-  const [debouncedValue] = useDebounce(text, 300);
+  // const [text, setText] = useState(category);
 
-  const templateIdFromRedux = useSelector(
-    (state: RootState) => state.userData.templateid
-  );
-  const [showValidationError, setshowValidationError] = useState(false);
-  const [showPopup, setShowPopup] = useState(false);
-  const [showError, setshowError] = useState(false);
+  const [showValidationError, setshowValidationError] =
+    useState<boolean>(false);
+  const [showPopup, setShowPopup] = useState<boolean>(false);
+  const [showError, setshowError] = useState<boolean>(false);
 
   const dispatch = useDispatch();
   const { getDomainFromEndpoint } = useDomainEndpoint();
-  const [hasFetched, setHasFetched] = useState(false);
-  const [warning, setWarning] = useState(false);
-  const [templateChange, setTemplateChange] = useState(false);
+  const [hasFetched, setHasFetched] = useState<boolean>(false);
+  const [warning, setWarning] = useState<boolean>(false);
   const previousTemplate = useSelector(
     (state: RootState) => state.userData.templateList
   );
-  const [token, setToken] = useState("");
-  const [newTemplate, setNewTemplate] = useState(null);
+  // const [token, setToken] = useState("");
+
+  const [newTemplate, setNewTemplate] = useState<{
+    index: number;
+    template: Template;
+  } | null>(null);
 
   const storeContent = useStoreContent();
 
@@ -85,9 +80,9 @@ function Design() {
     setShowPopup(false);
   };
 
-  const previousSelectedTemplate = useSelector(
-    (state: RootState) => state?.userData?.templateList
-  );
+  // const previousSelectedTemplate = useSelector(
+  //   (state: RootState) => state?.userData?.templateList
+  // );
   const previousFont = useSelector((state: RootState) => state?.userData?.font);
   const wp_token = useSelector((state: RootState) => state.user.wp_token);
   const previousColor = useSelector(
@@ -96,12 +91,12 @@ function Design() {
   const userDetails = useSelector((state: RootState) => state.user);
   const [upgradePopup, setUpgradepopup] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    e.preventDefault();
-    setText(e.target.value); // Set the input text for debounce
-  };
+  // const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   e.preventDefault();
+  //   setText(e.target.value); // Set the input text for debounce
+  // };
 
-  const fetchTemplateList = async () => {
+  const fetchTemplateList = useCallback(async (): Promise<void> => {
     // Ensure wp_token exists before making the API call
     if (!wp_token) {
       console.error("Token is not available, skipping API call.");
@@ -114,22 +109,26 @@ function Design() {
           Authorization: `Bearer ${wp_token}`,
         },
       });
-      const templates = response.data?.data || [];
+      const templates: Template[] = response.data?.data || [];
       setshowError(false);
       settemplateList(templates);
-    } catch (error) {
-      if (error.response?.status === 401) {
-        console.error("Error fetching templates: Unauthorized (401)");
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        if (error.response?.status === 401) {
+          console.error("Error fetching templates: Unauthorized (401)");
+        } else {
+          console.error(
+            "Error fetching templates:",
+            error.response?.status || error.message
+          );
+        }
       } else {
-        console.error(
-          "Error fetching templates:",
-          error.response?.status || error.message
-        );
+        console.error("An unexpected error occurred:", error);
       }
 
       setshowError(true); // Show error if the API call fails
     }
-  };
+  }, [wp_token]);
 
   // API call to fetch templates based on category (debounced)
   // useLayoutEffect(() => {
@@ -173,11 +172,15 @@ function Design() {
   //   fetchTemplates();
   //   // }
   // }, [debouncedValue, dispatch]);
-  const applyTemplateSelection = async (index: number, template: any) => {
-    setSelectedTemplateId(template.id);
+  const applyTemplateSelection = async (
+    index: number,
+    template: Template
+  ): Promise<void> => {
+    // setSelectedTemplateId(template.id);
     dispatch(setTemplateId(template.id));
     dispatch(setTemplatename(template.name));
     dispatch(setTemplateList(template));
+
     dispatch(setStyle(template.styles));
 
     // Save the selected template via API call
@@ -194,7 +197,7 @@ function Design() {
     handleBoxClick(index, template, template.id); // Restore handleBoxClick usage
   };
 
-  const fetchSelectedTemplate = async () => {
+  const fetchSelectedTemplate = useCallback(async () => {
     if (!hasFetched) {
       try {
         const endpoint = getDomainFromEndpoint(
@@ -205,12 +208,10 @@ function Design() {
         });
 
         const data = response.data;
-
         const parsedTemplate = JSON.parse(data.templateList);
         if (parsedTemplate.name) {
           setshowValidationError(true);
         }
-        setSelectedTemplateId(parsedTemplate.id);
 
         dispatch(setTemplateId(parsedTemplate.id));
         dispatch(setTemplatename(parsedTemplate.name));
@@ -222,7 +223,14 @@ function Design() {
       }
       setHasFetched(true);
     }
-  };
+  }, [
+    hasFetched,
+    dispatch,
+    getDomainFromEndpoint,
+    setshowValidationError,
+    handleBoxClick,
+    setHasFetched,
+  ]);
 
   useLayoutEffect(() => {
     const handleMouseEnter = (iframe: HTMLIFrameElement) => {
@@ -261,20 +269,20 @@ function Design() {
     };
   }, [templateList]);
 
-  const handleMouseEnter = (event: any) => {
+  const handleMouseEnter = (event: React.MouseEvent<HTMLDivElement>): void => {
     const iframe = event.currentTarget.querySelector("iframe");
     if (iframe) {
-      iframe.contentWindow.postMessage(
+      iframe?.contentWindow?.postMessage(
         { type: "scroll", scrollAmount: 20 },
         "*"
       );
     }
   };
 
-  const handleMouseLeave = (event: any) => {
+  const handleMouseLeave = (event: React.MouseEvent<HTMLDivElement>): void => {
     const iframe = event.currentTarget.querySelector("iframe");
     if (iframe) {
-      iframe.contentWindow.postMessage(
+      iframe?.contentWindow?.postMessage(
         { type: "stopScrolling", scrollAmount: 40 },
         "*"
       );
@@ -283,9 +291,9 @@ function Design() {
 
   useEffect(() => {
     fetchTemplateList();
-  }, []);
+  }, [fetchTemplateList]);
 
-  const handleTemplateSelection = async (index: number, template: any) => {
+  const handleTemplateSelection = async (index: number, template: Template) => {
     if (userDetails.plan == "Free" && template.is_premium) {
       setUpgradepopup(true);
       return;
@@ -307,7 +315,13 @@ function Design() {
 
   useEffect(() => {
     fetchSelectedTemplate();
-  }, [hasFetched, getDomainFromEndpoint, templateList, handleBoxClick]);
+  }, [
+    hasFetched,
+    getDomainFromEndpoint,
+    templateList,
+    handleBoxClick,
+    fetchSelectedTemplate,
+  ]);
 
   // Handle template selection
   // const handleTemplateSelect = (template) => {
@@ -315,10 +329,10 @@ function Design() {
   //   console.log("Selected Template:", template); // You can use this state later
   // };
   const handleContinue = () => {
-    if (templateChange) {
-      setWarning(true);
-      return;
-    }
+    // if (templateChange) {
+    //   setWarning(true);
+    //   return;
+    // }
     if (!activeTemplate?.name) {
       setshowValidationError(true);
     } else {
@@ -357,7 +371,7 @@ function Design() {
     } else {
       console.error("Token not available, waiting for Redux update.");
     }
-  }, [wp_token]); // Depend on wp_token from Redux
+  }, [fetchTemplateList, wp_token]); // Depend on wp_token from Redux
 
   // const handlePopOverClose = () =>{
 
@@ -436,7 +450,7 @@ function Design() {
                   className="w-full h-12 px-3 border rounded-md shadow-sm outline-none placeholder:zw-placeholder zw-input border-app-border focus:border-app-secondary  pl-11 false"
                   value={category}
                   disabled
-                  onChange={handleSearch}
+                  // onChange={handleSearch}
                   placeholder="Search categories..."
                 />
               </div>
@@ -447,7 +461,7 @@ function Design() {
               <div className="text-center ">No templates found</div>
             )}
             <div className="flex flex-wrap items-start justify-start p-1 gap-x-6 gap-y-8">
-              {templateList.map((list, index: number) => (
+              {templateList.map((list: Template, index: number) => (
                 <div
                   key={index}
                   className={`w-[310px] h-auto rounded-t-xl rounded-b-lg ${

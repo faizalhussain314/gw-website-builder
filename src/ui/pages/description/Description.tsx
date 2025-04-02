@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import MainLayout from "../../Layouts/MainLayout";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../../../store/store";
@@ -13,7 +12,6 @@ import useDomainEndpoint from "../../../hooks/useDomainEndpoint";
 import { getDescriptions } from "../../../infrastructure/api/wordpress-api/description/getDescriptions.api";
 import { updateDescriptions } from "../../../infrastructure/api/wordpress-api/description/updateDescriptions.api";
 import axios from "axios";
-import WordLimit from "../../component/dialogs/WordLimit";
 import UpgradePopup from "../../component/dialogs/UpgradePopup";
 import arrow from "../../../assets/arrow.svg";
 import { handleEnterKey } from "../../../core/utils/handleEnterKey";
@@ -35,19 +33,14 @@ function Description() {
   const [loader1, setLoader1] = useState<boolean>(false);
   const [loader2, setLoader2] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [isAIWriting, setIsAIWriting] = useState<{ [key: number]: boolean }>({
-    1: false,
-    2: false,
-  });
+
   const templateList = useSelector(
     (state: RootState) => state.userData.templateList
   );
   const [wordLimitError, setwordLimitError] = useState(false);
-  const [showWordCount, setShowWordCount] = useState(false);
   const [description1Error, setDescription1Error] = useState<boolean>(false);
   const [description2Error, setDescription2Error] = useState<boolean>(false);
-  const [previousDescription, setpreviousDescription] =
-    useState<boolean>(false);
+
   const [debouncedDescription1] = useDebounce(description1, 500);
   const [debouncedDescription2] = useDebounce(description2, 500);
   const reduxDescription1 = useSelector(
@@ -82,19 +75,25 @@ function Description() {
     }
   }, [reduxDescription1, reduxDescription2, dispatch, getDomainFromEndpoint]);
 
-  const handleChangeDescription1 = (e) => {
-    const newValue = e.target.value.trimStart();
+  const handleChangeDescription1 = (
+    e: React.ChangeEvent<HTMLTextAreaElement>
+  ) => {
+    const target = e.target as HTMLTextAreaElement;
+    const newValue = target.value.trimStart();
     setDescription1(newValue);
   };
 
-  const handleChangeDescription2 = (e) => {
-    const newValue = e.target.value.trimStart();
+  const handleChangeDescription2 = (
+    e: React.ChangeEvent<HTMLTextAreaElement>
+  ) => {
+    const target = e.target as HTMLTextAreaElement;
+    const newValue = target.value.trimStart();
     setDescription2(newValue);
   };
 
   // Remove these useEffects
   useEffect(() => {
-    if (debouncedDescription1) {
+    if (!loader1 && debouncedDescription1) {
       updateDescriptions(
         "description1",
         debouncedDescription1,
@@ -102,10 +101,10 @@ function Description() {
       );
       dispatch(setDescriptionOne(debouncedDescription1));
     }
-  }, [debouncedDescription1, dispatch, getDomainFromEndpoint]);
+  }, [debouncedDescription1, dispatch, getDomainFromEndpoint, loader1]);
 
   useEffect(() => {
-    if (debouncedDescription2) {
+    if (!loader2 && debouncedDescription2) {
       updateDescriptions(
         "description2",
         debouncedDescription2,
@@ -113,29 +112,9 @@ function Description() {
       );
       dispatch(setDescriptionTwo(debouncedDescription2));
     }
-  }, [debouncedDescription2, dispatch, getDomainFromEndpoint]);
+  }, [debouncedDescription2, dispatch, getDomainFromEndpoint, loader2]);
 
   const [visibleWordCount, setVisibleWordCount] = useState<1 | 2 | null>(null);
-
-  const validateFields = () => {
-    let isValid = true;
-
-    if (!description1.trim()) {
-      setDescription1Error(true);
-      isValid = false;
-    } else {
-      setDescription1Error(false);
-    }
-
-    if (!description2.trim()) {
-      setDescription2Error(true);
-      isValid = false;
-    } else {
-      setDescription2Error(false);
-    }
-
-    return isValid;
-  };
 
   const handleAIWrite = async (type: 1 | 2) => {
     if (type === 1) {
@@ -183,7 +162,6 @@ function Description() {
       return;
     }
 
-    setIsAIWriting((prev) => ({ ...prev, [type]: true }));
     setVisibleWordCount(type);
 
     try {
@@ -195,7 +173,8 @@ function Description() {
         type,
         description1 || "", // Ensure a default empty string is passed
         description2 || "", // Ensure a default empty string is passed
-        type === 2 ? description1 : description2 // Pass previous content correctly
+        type === 1 ? description1 : description2
+        // Pass previous content correctly
       );
 
       const decoder = new TextDecoder("utf-8");
@@ -218,7 +197,6 @@ function Description() {
                 const wordCount = completeDescription.split(/\s+/).length;
                 await updateWordCountAPI(completeDescription, type, wordCount);
 
-                setIsAIWriting((prev) => ({ ...prev, [type]: false }));
                 setLoader1(false);
                 setLoader2(false);
 
@@ -242,6 +220,7 @@ function Description() {
                   const newDescription = prev + deltaContent;
                   completeDescription = newDescription;
                   dispatch(setDescriptionOne(newDescription));
+
                   setDescription1(newDescription);
                   return newDescription;
                 });
@@ -267,7 +246,7 @@ function Description() {
       }
     } catch (error) {
       console.error("Error fetching streaming data:", error);
-      setIsAIWriting((prev) => ({ ...prev, [type]: false }));
+
       setLoader1(false);
       setLoader2(false);
     }
@@ -312,9 +291,6 @@ function Description() {
     //   return;
     // }
     let errorMessage = "";
-
-    const description1WordCount = calculateWordCount(description1);
-    const description2WordCount = calculateWordCount(description2);
 
     if (!description1.trim() && !description2.trim()) {
       setDescription1Error(true);
@@ -381,13 +357,6 @@ function Description() {
     return base;
   };
 
-  const calculateWordCount = (text: string) => {
-    return text
-      .trim()
-      .split(/\s+/)
-      .filter((word) => word.length > 0).length;
-  };
-
   return (
     <MainLayout>
       {wordLimitError && (
@@ -451,7 +420,9 @@ function Description() {
               className={getInputClass("des1")}
               value={description1}
               placeholder="We offer healthy and convenient meal options for busy individuals"
-              onChange={handleChangeDescription1}
+              onChange={(e) => {
+                handleChangeDescription1(e);
+              }}
               onKeyDown={(event) =>
                 handleEnterKey({
                   event,
@@ -555,7 +526,9 @@ function Description() {
               className={getInputClass("des2")}
               placeholder="Visit our shop, explore our menu, and place your order in-store or online."
               value={description2}
-              onChange={handleChangeDescription2}
+              onChange={(e) => {
+                handleChangeDescription2(e);
+              }}
               onKeyDown={(event) =>
                 handleEnterKey({
                   event,

@@ -245,12 +245,7 @@ function Category() {
 
   return (
     <MainLayout>
-      {limitReached && (
-        <LimitReachedPopup
-          onClose={handleClose}
-          limit={userDetails.max_genration}
-        />
-      )}
+      {limitReached && <LimitReachedPopup onClose={handleClose} />}
 
       {mainLoader && <ThreeDotLoader />}
       {apiError && <ApiErrorPopup alertType="userDetails" />}

@@ -1,6 +1,3 @@
-import { Dispatch, SetStateAction } from "react";
-// import { RootState } from "../../../store/store";
-// import { Font } from "../../../types/activeStepSlice.type";
 import {
   GetDomainFromEndpoint,
   SetLogoUrl,

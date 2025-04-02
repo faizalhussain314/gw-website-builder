@@ -1,5 +1,4 @@
 import React, { ReactNode } from "react";
-import Header from "../global component/Header";
 
 interface IntroLayoutProps {
   children: ReactNode;

@@ -6,10 +6,9 @@ import { useClickOutside } from "../../../hooks/useClickOutside";
 
 type limitProps = {
   onClose: () => void;
-  limit: number;
 };
 
-function LimitReachedPopup({ onClose, limit }: limitProps) {
+function LimitReachedPopup({ onClose }: limitProps) {
   const upgradePlan = () => {
     window.open("https://gravitywrite.com/pricing", "_blank");
   };

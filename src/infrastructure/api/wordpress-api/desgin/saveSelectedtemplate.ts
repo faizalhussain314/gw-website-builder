@@ -1,17 +1,12 @@
 // File: src/infrastructure/api/wordpress-api/updateDescriptions.api.ts
 
-type GetDomainFromEndpointType = (endpoint: string) => string;
+import { Template } from "../../../../types/design.type";
 
 // Function to update descriptions in the database
 export const saveSelectedTemplate = async (
-  template: any,
-  //   getDomainFromEndpoint: GetDomainFromEndpointType
+  template: Template,
   endpoint: string
 ) => {
-  // const endpoint = getDomainFromEndpoint(
-  //   "/wp-json/custom/v1/update-form-details"
-  // );
-
   const formData = {
     templateList: template,
     templateid: template.id,

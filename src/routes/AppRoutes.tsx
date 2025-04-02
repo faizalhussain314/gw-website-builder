@@ -6,7 +6,6 @@ import ConnectAccount from "../ui/pages/connectAccount/ConnectAccount";
 import Category from "../ui/pages/category/Category";
 import Name from "../ui/pages/name/Name";
 import Description from "../ui/pages/description/Description";
-import Images from "../ui/pages/image/Images";
 import Contact from "../ui/pages/contact/Contact";
 import Design from "../ui/pages/design/Design";
 import ProcessingScreen from "../ui/pages/processingScreen/ProcessingScreen";
@@ -24,7 +23,6 @@ const AppRoutes = () => (
     <Route path="/category" element={<Category />} />
     <Route path="/name" element={<Name />} />
     <Route path="/description" element={<Description />} />
-    <Route path="/image" element={<Images />} />
     <Route path="/contact" element={<Contact />} />
     <Route path="/design" element={<Design />} />
     <Route path="/processing" element={<ProcessingScreen />} />

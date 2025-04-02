@@ -13,9 +13,7 @@ import { RootState } from "../../../store/store";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import UpgradePopup from "../../component/dialogs/UpgradePopup";
-import { Link, useNavigate } from "react-router-dom";
-import useIframeMessage from "../../../hooks/useIframeMessage";
-import { ChangeLogoMessage } from "../../../types/iframeMessages.type";
+import { useNavigate } from "react-router-dom";
 import ViewModeSwitcher from "../../component/finalpreview/ViewModeSwitcher";
 import PageSelector from "../../component/finalpreview/PageSelector";
 import CloseIcon from "@mui/icons-material/Close";
@@ -24,7 +22,6 @@ import { Page } from "../../../types/page.type";
 import PlumberPageSkeleton from "../../component/PlumberPageSkeleton ";
 import GwLoader from "../../component/loader/gwLoader";
 import useDomainEndpoint from "../../../hooks/useDomainEndpoint";
-// import usePageData from "../../../hooks/usePageData";
 import { savePagesToDB } from "../../../infrastructure/api/wordpress-api/final-preview/savePagesApi.api";
 import {
   setColor,
@@ -41,31 +38,29 @@ import { updateIframeLogo } from "../../../core/utils/changeIframeLogo.ts";
 import ImportWarning from "../../component/dialogs/importWarning.tsx";
 import PlanExpired from "../../component/dialogs/PlanExpired.tsx";
 import { usePostHog } from "posthog-js/react";
+import {
+  ApiPage,
+  GeneratedPageState,
+} from "../../../types/generatedContent.type.ts";
+import { checkImageCount } from "../../../infrastructure/api/wordpress-api/final-preview/checkImageCount.api.ts";
+import ImagLimitWarning from "../../component/dialogs/ImageLimitWarning.tsx";
 
 const Mode = import.meta.env.VITE_MODE;
 
 const FinalPreview: React.FC = () => {
-  const reduxPages =
-    useSelector((state: RootState) => state.userData?.templateList.pages) || [];
+  const reduxPages = useSelector(
+    (state: RootState) => state.userData?.templateList.pages
+  );
 
   const validReduxPages: Page[] = useMemo(() => {
-    if (!reduxPages.length) return [];
-    return reduxPages.map((page) => ({
+    const pages = reduxPages || [];
+    return pages.map((page) => ({
       name: page.title,
-      status: "", // Set a default status for each page
+      status: "",
       slug: page.slug,
-      selected: false, // Default selected state
+      selected: false,
     }));
   }, [reduxPages]);
-
-  // Default pages if reduxPages is empty
-  const defaultPages: Page[] = [
-    { name: "Home", status: "", slug: "home", selected: false },
-    { name: "About us", status: "", slug: "about", selected: false },
-    { name: "Services", status: "", slug: "service", selected: false },
-    { name: "Blog", status: "", slug: "blog", selected: false },
-    { name: "Contact Us", status: "", slug: "contact", selected: false },
-  ];
 
   const dispatch = useDispatch();
 
@@ -85,11 +80,10 @@ const FinalPreview: React.FC = () => {
   const [isPageGenerated, setIsPageGenerated] = useState(false);
   const [selectedPage, setSelectedPage] = useState<string | null>("Home");
   const [showGwLoader, setShowGwLoader] = useState(false);
-  const [oldNewContent, setOldNewContent] = useState<Record<string, any>>({});
-  const [generatedPagesList, setGeneratedPagesList] = useState<Page[]>([]);
-  const [generatedPage, setGeneratedPage] = useState<any>({});
+  const [generatedPage, setGeneratedPage] = useState<GeneratedPageState>({
+    spinner: false,
+  });
   const [generatedPageName, setGeneratedPageName] = useState<string[]>([]);
-  const [pageContents, setPageContents] = useState<any>({});
   const [showPopup, setShowPopup] = useState(false);
   const [resetPopup, setresetPopup] = useState(false);
   const [previousClicked, setPreviousClicked] = useState(false);
@@ -97,16 +91,14 @@ const FinalPreview: React.FC = () => {
   const [iframeSrc, setIframeSrc] = useState<string>("");
   const [currentContent, setCurrentContent] = useState<string>("");
   const [showUpgradePopup, setShowUpgradePopup] = useState(false);
-  const [showIframe, setShowIframe] = useState(true);
   const [Loaded, setLoaded] = useState(false);
-  const [contentForBackend, setContentForBackend] = useState<any[]>([]);
   const [findIndex, setfindIndex] = useState<number>();
   const [importLoad, setImportLoad] = useState(false);
   const [apiIssue, setapiIssue] = useState(false);
   const [wordCountAlert, setwordCountAlert] = useState(false);
   const [afterContact, setAfterContact] = useState(false);
-  const [showRefreshWarning, setShowRefreshWarning] = useState(false);
   const [showImportWarning, setshowImportWarning] = useState(false);
+  const [showImageWarning, setshowImageWarning] = useState(false);
   const [showImportWarningDialouge, setshowImportWarningDialouge] =
     useState(false);
   const [isImportLoading, setIsImportLoading] = useState(false);
@@ -131,7 +123,9 @@ const FinalPreview: React.FC = () => {
   const templateName: string = useSelector(
     (state: RootState) => state.userData.templatename
   );
-
+  const template_id: number = useSelector(
+    (state: RootState) => state.userData.templateid
+  );
   const fontFamily = useSelector((state: RootState) => state.userData.font);
   const Color = useSelector((state: RootState) => state.userData.color);
 
@@ -142,14 +136,8 @@ const FinalPreview: React.FC = () => {
   );
 
   const bearer_token = useSelector((state: RootState) => state.user.wp_token);
-  const [loadedPages, setLoadedPages] = useState<{ [key: string]: boolean }>({
-    Blog: false,
-    Contact: false,
-  });
+
   const posthog = usePostHog();
-  // const isFormDetailsLoaded = useSelector(
-  //   (state: RootState) => state.userData.isFormDetailsLoaded
-  // );
 
   const currentPages = useSelector((state: RootState) => state.userData.pages);
 
@@ -160,7 +148,6 @@ const FinalPreview: React.FC = () => {
 
   const navigate = useNavigate();
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  const { sendMessage, sendMessageToIframe } = useIframeMessage(iframeRef);
   const { getDomainFromEndpoint } = useDomainEndpoint();
 
   const toggleDropdown = () => {
@@ -177,18 +164,15 @@ const FinalPreview: React.FC = () => {
     setIsOpen(false);
   };
 
-  const changeLogo = (logoUrl: string) => {
-    const message: ChangeLogoMessage = { type: "changeLogo", logoUrl };
-    sendMessageToIframe(message);
-  };
-
   const showWarningToast = () => {
     toast.warn("Please wait while content is being generated.");
   };
 
   const showSuccessToast = useCallback(() => {
+    setIsContentGenerating(false);
+    setIsLoading(false);
     toast.success("Content generation complete!");
-    console.log("selected page from react", selectedPage);
+
     updatePageStatus(selectedPage!, "Generated", true);
   }, [selectedPage]);
 
@@ -249,7 +233,7 @@ const FinalPreview: React.FC = () => {
 
         console.log("event triggered store content event triggered from api");
 
-        const response = await axios.post(endpoint, {
+        await axios.post(endpoint, {
           version_name: "5.5",
           page_name: pageName,
           template_name: templateName,
@@ -290,12 +274,13 @@ const FinalPreview: React.FC = () => {
         );
         if (!endpoint) {
           console.error("Endpoint is not available.");
-          return false; // Explicitly return false when endpoint is unavailable
+          return false;
         }
 
         setIsLoading(true);
         if (!pageName || !templateName) {
-          return;
+          console.error("page name is not available ");
+          return false;
         }
 
         const response = await axios.post(endpoint, {
@@ -318,30 +303,30 @@ const FinalPreview: React.FC = () => {
             .replace(/\\t/g, "")
             .replace(/\\\\/g, "");
 
-          setGeneratedPage((prevPages: any) => {
-            const updatedPages = {
-              ...prevPages,
-              spinner: false,
-              [pageName]: {
-                0: cleanedHtmlContent,
-              },
-            };
-            updatePageStatus(pageName, "Generated", true);
-            if (GwLoader) {
+          setGeneratedPage(
+            (prevPages: GeneratedPageState): GeneratedPageState => {
+              const updatedPages = {
+                ...prevPages,
+                spinner: false,
+                [pageName]: {
+                  0: cleanedHtmlContent,
+                },
+              };
+              updatePageStatus(pageName, "Generated", true);
+
               setShowGwLoader(false);
+
+              if (selectedPage === pageName) {
+                updateIframeSrc(cleanedHtmlContent);
+
+                setShowGwLoader(false);
+                setIsPageGenerated(true);
+              }
+
+              return updatedPages;
             }
+          );
 
-            if (selectedPage === pageName) {
-              updateIframeSrc(cleanedHtmlContent);
-              setShowIframe(false);
-              setShowGwLoader(false);
-              setIsPageGenerated(true);
-            }
-
-            return updatedPages;
-          });
-
-          // storeHtmlContent(pageName, cleanedHtmlContent);
           return true;
         } else {
           console.error("Failed to store page data:", response);
@@ -357,14 +342,10 @@ const FinalPreview: React.FC = () => {
     [getDomainFromEndpoint, selectedPage, updateIframeSrc]
   );
 
-  // useEffect(() => {
-  //   fetchGeneratedPages();
-  // }, [fetchGeneratedPages]);
-
   const storeOldNewContent = useCallback(
     async (
       pageName: string,
-      jsonContent: Record<string, any>,
+      jsonContent: Record<string, string>,
       wordCount: number
     ) => {
       try {
@@ -399,6 +380,7 @@ const FinalPreview: React.FC = () => {
         const saveContentEndpoint = getDomainFromEndpoint(
           "/wp-json/custom/v1/save-generated-data"
         );
+
         if (!saveContentEndpoint) {
           console.error("Save content endpoint is not available.");
           return;
@@ -441,73 +423,22 @@ const FinalPreview: React.FC = () => {
   );
 
   const handleOldNewContent = useCallback(
-    (pageName: string, content: Record<string, any>, wordCount: number) => {
-      // Store old and new content for the selected page
-      setOldNewContent((prevContent) => ({
-        ...prevContent,
-        [pageName]: content,
-      }));
-
-      // Store the old and new content in the backend
+    (pageName: string, content: Record<string, string>, wordCount: number) => {
       storeOldNewContent(pageName, content, wordCount);
     },
     [storeOldNewContent]
   );
 
-  const handlePageStatusUpdate = async (
-    pageName: string,
-    newStatus: string,
-    isSelected: boolean
-  ) => {
-    try {
-      const endpoint = getDomainFromEndpoint(
-        "/wp-json/custom/v1/save-generated-page-status"
-      );
-      if (!endpoint) {
-        console.error("Endpoint is not available.");
-        return;
-      }
-
-      if (!pageName) {
-        return;
-      }
-      const updatedPages = pages.map((page) =>
-        page.name === pageName
-          ? { ...page, status: newStatus, selected: isSelected }
-          : page
-      );
-
-      setPages(updatedPages);
-
-      // Dispatch to update Redux
-      dispatch(
-        updateReduxPage({
-          name: pageName,
-          status: newStatus,
-          selected: isSelected,
-        })
-      );
-
-      // Save status to DB
-      await axios.post(endpoint, {
-        page_name: pageName,
-        page_status: newStatus,
-        selected: isSelected ? "1" : "0",
-      });
-    } catch (error) {
-      console.error("Error updating page status:", error);
-    }
-  };
-
-  const selectNextPage = (currentPage: any) => {
+  const selectNextPage = (currentPage: string) => {
     const currentPageIndex = pages.findIndex(
       (page) => page.name === currentPage
     );
+    console.log("currentPage", currentPage);
     const arrayVal = rearrangeArray(pages, currentPageIndex);
 
     if (arrayVal?.length > 0) {
       const nextPage = arrayVal.find(
-        (page) =>
+        (page: Page) =>
           page.status !== "Generated" &&
           page.status !== "Skipped" &&
           page.status !== "Added"
@@ -522,7 +453,7 @@ const FinalPreview: React.FC = () => {
     } else if (arrayVal?.length > 0) {
       setAfterContact(false);
       const nextPage = arrayVal.find(
-        (page) =>
+        (page: Page) =>
           page.status !== "Generated" &&
           page.status !== "Skipped" &&
           page.status !== "Added"
@@ -533,11 +464,9 @@ const FinalPreview: React.FC = () => {
     }
   };
 
-  // Example usage
-  // handlePageStatusUpdate("Home", "Generated", true); // Correct usage
-
   const fetchGeneratedPageStatus = useCallback(async () => {
     try {
+      // Build the API endpoint URL
       const endpoint = getDomainFromEndpoint(
         "/wp-json/custom/v1/get-generated-page-status"
       );
@@ -546,20 +475,21 @@ const FinalPreview: React.FC = () => {
         return;
       }
 
+      // Make the API request
       const response = await axios.post(endpoint);
 
+      // Check for a successful response
       if (response.status === 200) {
-        const { data } = response.data;
+        const { data } = response.data; // assuming response.data.data contains the array
         if (data && Array.isArray(data)) {
+          // Update local state by merging the API data with existing pages
           setPages((prevPages) => {
-            // Merge existing pages with API response data
             const updatedPages = prevPages.map((page) => {
               const matchingPage = data.find(
-                (apiPage: any) => apiPage.page_name === page.name
+                (apiPage: ApiPage) => apiPage.page_name === page.name
               );
               if (matchingPage) {
-                // Dispatch the Redux action to update the status and selection in the store
-
+                // Dispatch Redux action to update the page in the global store
                 dispatch(
                   updateReduxPage({
                     name: page.name,
@@ -568,16 +498,16 @@ const FinalPreview: React.FC = () => {
                   })
                 );
 
+                // Return the updated page object
                 return {
                   ...page,
                   status: matchingPage.page_status,
                   selected: matchingPage.selected === "1",
                 };
               }
-
-              return page; // If no match, return the original page
+              // Return the original page if no matching API record is found
+              return page;
             });
-
             return updatedPages;
           });
         }
@@ -587,24 +517,18 @@ const FinalPreview: React.FC = () => {
     } catch (error) {
       console.error("Error fetching generated page status:", error);
     }
-  }, [getDomainFromEndpoint, dispatch]); // Ensure dispatch is included in the dependencies
+  }, [getDomainFromEndpoint, dispatch]);
 
-  // useEffect(() => {
-  //   // if (isFormDetailsLoaded) {
-  //   fetchGeneratedPageStatus(); // Call the API only when form details are loaded
-  //   // }
-  // }, []);
-
-  // useEffect(() => {
-  //   fetchGeneratedPageStatus(); // Fetch the status when the component mounts
-  // }, [fetchGeneratedPageStatus]);
-
-  const updateContactDetails = (email, phone, address) => {
+  const updateContactDetails = (
+    email: string,
+    phone: string,
+    address: string
+  ) => {
     if (iframeRef.current) {
       if (!email || !phone || !address) {
         return;
       }
-      iframeRef.current.contentWindow.postMessage(
+      iframeRef?.current?.contentWindow?.postMessage(
         {
           type: "updateContactDetails",
           email,
@@ -621,10 +545,24 @@ const FinalPreview: React.FC = () => {
 
   const onLoadMsg = async () => {
     setwordCountAlert(false);
+    setIsContentGenerating(false);
     setIsLoading(true);
     setLoaded(true);
 
     const iframe = iframeRef.current;
+
+    if (!selectedPage || !templateName) {
+      console.warn("Required parameters not available. Waiting for values...");
+      // Optionally, you could set a state flag to retry when these values update.
+      return;
+    }
+
+    // Ensure that the pages state has been updated with a page matching selectedPage.
+    if (!pages.find((page) => page.name === selectedPage)) {
+      // Await updating local pages via the status API
+      await fetchGeneratedPageStatus();
+    }
+
     const currentPage = pages.find((page) => page.name === selectedPage);
 
     const currentPageIndex = pages.findIndex(
@@ -632,9 +570,9 @@ const FinalPreview: React.FC = () => {
     );
 
     updateContactDetails(
-      contactDetails?.email,
-      contactDetails?.phoneNumber,
-      contactDetails?.address
+      contactDetails?.email || "",
+      contactDetails?.phoneNumber || "",
+      contactDetails?.address || ""
     );
 
     setfindIndex(currentPageIndex);
@@ -642,26 +580,15 @@ const FinalPreview: React.FC = () => {
 
     if (!iframe) return;
 
-    if (
-      selectedPage === "Blog" ||
-      selectedPage === "Contact" ||
-      selectedPage === "Contact Us"
-    ) {
-      setLoadedPages((prev) => ({
-        ...prev,
-        [selectedPage]: true,
-      }));
-    }
-
     if (fontFamily) {
-      iframe.contentWindow.postMessage(
+      iframe?.contentWindow?.postMessage(
         { type: "changeFont", font: fontFamily },
         "*"
       );
     }
 
     if (Color.primary && Color.secondary) {
-      iframe.contentWindow.postMessage(
+      iframe?.contentWindow?.postMessage(
         {
           type: "changeGlobalColors",
           primaryColor: Color.primary,
@@ -677,12 +604,20 @@ const FinalPreview: React.FC = () => {
       sendIframeMessage("bussinessName", businessName);
     }
 
-    if (selectedPage && generatedPage[selectedPage]) {
-      const existingContent = generatedPage[selectedPage][0];
+    if (
+      selectedPage &&
+      generatedPage[selectedPage] &&
+      Array.isArray(generatedPage[selectedPage])
+    ) {
+      const existingContent = (generatedPage[selectedPage] as string[])[0];
       updateIframeSrc(existingContent);
-      setShowIframe(false);
     } else if (selectedPage && !generatedPage[selectedPage]) {
       setwordCountAlert(false);
+      console.log("selectedpage", selectedPage, templateName);
+
+      if (!selectedPage && !templateName) {
+        return;
+      }
       const fetchResult = await fetchAndStorePageData(
         selectedPage,
         templateName,
@@ -698,7 +633,7 @@ const FinalPreview: React.FC = () => {
       if (!fetchResult) {
         if (selectedPage === "Home" && pages[0].status !== "Generated") {
           setShowPopup(false);
-          setIsLoading(true);
+          setIsLoading(false);
           setShowGwLoader(true);
           try {
             const endpoint = getDomainFromEndpoint(
@@ -714,11 +649,35 @@ const FinalPreview: React.FC = () => {
 
             const response = await axios.get(endpoint);
 
-            // if (generatedPage[selectedPage] && response?.data.status) {
-            //   return;
-            // }
-            setIsLoading(true);
+            // setIsLoading(true);
             if (response?.data?.status === true) {
+              const imageCount = await checkImageCount(
+                selectedPage,
+                template_id,
+                setapiIssue
+              );
+
+              console.log("imageCount", imageCount);
+
+              if (!imageCount) {
+                setIsLoading(false);
+
+                console.log(
+                  "image count is exceeded",
+                  imageCount,
+                  isContentGenerating,
+                  isLoading,
+                  showGwLoader
+                );
+
+                setIsContentGenerating(false);
+
+                setshowImageWarning(true);
+
+                return;
+              } else {
+                console.log("image count was available");
+              }
               const iframe = iframeRef.current;
               const currentPage = pages.find(
                 (page) => page.name === selectedPage
@@ -726,7 +685,7 @@ const FinalPreview: React.FC = () => {
 
               if (currentPage && currentPage.status !== "Generated") {
                 setShowGwLoader(true);
-                iframe.contentWindow.postMessage(
+                iframe?.contentWindow?.postMessage(
                   {
                     type: "start",
                     templateName: templateName,
@@ -763,11 +722,11 @@ const FinalPreview: React.FC = () => {
       if (selectedPage && generatedPage[selectedPage] && isPageGenerated) {
         const existingContent = generatedPage[selectedPage][0];
         updateIframeSrc(existingContent);
-        setShowIframe(false);
+
         setShowGwLoader(false);
       } else if (selectedPage === "Home" && pages[0].status !== "Generated") {
         setShowGwLoader(true);
-        iframe.contentWindow.postMessage(
+        iframe?.contentWindow?.postMessage(
           {
             type: "start",
             templateName: templateName,
@@ -804,28 +763,18 @@ const FinalPreview: React.FC = () => {
 
     if (existingContent) {
       updateIframeSrc(existingContent[0]);
-      setShowIframe(false);
+
       setIsPageGenerated(true);
       setShowGwLoader(false);
     } else {
-      setShowIframe(true);
       setIsPageGenerated(false);
       setIsLoading(true);
-
-      // Dynamically update the iframe source based on the page slug from template
-      // const selectedTemplatePage = templateList?.pages?.find(
-      //   (templatePage) => templatePage.slug === page
-      // );
-
-      // if (selectedTemplatePage) {
-      //   setIframeSrc(selectedTemplatePage.iframe_url); // Use iframe URL from the selected template page
-      // }
     }
   };
 
   const handlePageNavigation = (
     action: "next" | "skip" | "add",
-    currentPage: any
+    currentPage: string
   ) => {
     if (isContentGenerating) {
       // showWarningToast();
@@ -947,10 +896,8 @@ const FinalPreview: React.FC = () => {
         const nextPageContent = generatedPage[updatedPages[nextPageIndex].name];
         if (nextPageContent) {
           updateIframeSrc(nextPageContent[0]);
-          setShowIframe(false);
         } else {
           setIsLoading(true);
-          setShowIframe(true);
           setIsPageGenerated(false);
 
           const iframe: null | HTMLIFrameElement = iframeRef.current;
@@ -967,14 +914,12 @@ const FinalPreview: React.FC = () => {
         setSelectedPage(updatedPages[nextPageIndex].name);
 
         const nextPageContent = generatedPage[updatedPages[nextPageIndex].name];
-        setShowIframe(true);
+
         setIsPageGenerated(false);
         setIsLoading(true);
         if (nextPageContent) {
           updateIframeSrc(nextPageContent[0]);
-          setShowIframe(false);
         } else {
-          setShowIframe(true);
           setIsPageGenerated(false);
           setIsLoading(true);
           const iframe: null | HTMLIFrameElement = iframeRef.current;
@@ -1000,10 +945,6 @@ const FinalPreview: React.FC = () => {
     setPages((prevPages) =>
       prevPages.map((page) => {
         if (page.name === pageName) {
-          // Debugging log to check if the condition matches
-          // console.log(
-          //   `Updating ${pageName}: status=${status}, selected=${selected}`
-          // );
           return { ...page, status, selected };
         }
         return page;
@@ -1051,11 +992,28 @@ const FinalPreview: React.FC = () => {
       const response = await axios.get(endpoint);
 
       if (response?.data?.status === true) {
+        const imageCount = await checkImageCount(
+          selectedPage,
+          template_id,
+          setapiIssue
+        );
+
+        if (!imageCount) {
+          console.log("image count is exeed");
+          setIsContentGenerating(false);
+          setIsLoading(false);
+          setshowImageWarning(true);
+
+          return;
+        } else {
+          console.log("image count was available");
+        }
+
         const iframe = iframeRef.current;
         const currentPage = pages.find((page) => page.name === selectedPage);
 
         if (currentPage && currentPage.status !== "Generated") {
-          iframe.contentWindow.postMessage(
+          iframe?.contentWindow?.postMessage(
             {
               type: "start",
               templateName: templateName,
@@ -1124,12 +1082,13 @@ const FinalPreview: React.FC = () => {
       if (iframe) {
         iframe.src = `${currentUrl}${prevPageSlug}`;
       }
-      setShowIframe(true);
+
       setIsLoading(true);
       setIsPageGenerated(false);
     }
   };
-  const rearrangeArray = (array, startIndex) => {
+  const rearrangeArray = (array: Page[], startIndex: number) => {
+    console.log("rearrangeArray", array);
     if (startIndex < 0 || startIndex >= array.length) {
       throw new Error("Index out of bounds");
     }
@@ -1171,13 +1130,11 @@ const FinalPreview: React.FC = () => {
     const receiveMessage = (event: MessageEvent) => {
       if (event.data.type === "contentLoaded") {
         setIsLoading(false);
-      } else if (event.data.type === "saveContentResponse") {
-        setPageContents((prevContents) => ({
-          ...prevContents,
-          [selectedPage!]: event.data.content,
-        }));
       } else if (event.data.type === "generationStatus") {
-        setIsContentGenerating(event.data.isGenerating);
+        if (event.data.isGenerating) {
+          setIsContentGenerating(true);
+          setIsLoading(false);
+        }
         setIsLoading(event.data.isGenerating);
         if (event.data.isGenerating) {
           setShowGwLoader(false);
@@ -1185,7 +1142,7 @@ const FinalPreview: React.FC = () => {
       } else if (event.data.type === "generatedContent") {
         const pageName = selectedPage || "";
         const htmlContent = event.data.content;
-        // const PageList = [...pages];
+
         const currentPageIndex = pages.findIndex(
           (page) => page?.name === selectedPage
         );
@@ -1197,7 +1154,8 @@ const FinalPreview: React.FC = () => {
             selected: true,
           })
         );
-        setGeneratedPage((prevPages: any) => {
+
+        setGeneratedPage((prevPages: GeneratedPageState) => {
           const updatedPages = {
             ...prevPages,
             spinner: false,
@@ -1208,12 +1166,6 @@ const FinalPreview: React.FC = () => {
           return updatedPages;
         });
         storeHtmlContent(pageName, htmlContent);
-        // showSuccessToast();
-        // Store the HTML content
-
-        // if (!event.data.isGenerating) {
-        //   showSuccessToast();
-        // }
       } else if (event.data.type === "oldNewContent") {
         posthog?.capture("Genearted Page", {
           Generatedpage: event?.data?.pageName || selectedPage,
@@ -1428,7 +1380,7 @@ const FinalPreview: React.FC = () => {
       if (isContentGenerating || showGwLoader) {
         event.preventDefault();
         event.returnValue = ""; // Most browsers ignore custom messages but require this to trigger the alert.
-        setShowRefreshWarning(true); // Show custom warning popup
+        // Show custom warning popup
       }
     };
 
@@ -1627,6 +1579,16 @@ const FinalPreview: React.FC = () => {
             {showGwLoader && (
               <div className="absolute inset-0 z-20 flex items-center justify-center bg-white">
                 <GwLoader />
+              </div>
+            )}
+
+            {showImageWarning && (
+              <div className="absolute inset-0 z-20 flex items-center justify-center ">
+                <ImagLimitWarning
+                  onClose={() => {
+                    setshowImageWarning(false);
+                  }}
+                />
               </div>
             )}
 

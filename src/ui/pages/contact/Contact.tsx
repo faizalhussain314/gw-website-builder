@@ -5,7 +5,6 @@ import useDomainEndpoint from "../../../hooks/useDomainEndpoint";
 import { useDispatch, useSelector } from "react-redux";
 import { updateContactForm } from "../../../Slice/activeStepSlice";
 import { RootState } from "../../../store/store";
-import useFetchCustomContentData from "../../../hooks/useFetchCustomContentData";
 import "react-phone-number-input/style.css";
 import PhoneInput from "react-phone-number-input";
 import flags from "react-phone-number-input/flags";
@@ -19,7 +18,6 @@ function Contact() {
   );
 
   const [loading, setLoading] = useState(false);
-  const fetchCustomContent = useFetchCustomContentData();
 
   const [formData, setFormData] = useState({
     email: "",
@@ -63,7 +61,7 @@ function Contact() {
     }
   };
 
-  const validatePhoneNumber = (phone) => {
+  const validatePhoneNumber = (phone: string) => {
     if (!isValidPhoneNumber(phone)) {
       setFormError((prevData) => ({
         ...prevData,
@@ -89,7 +87,7 @@ function Contact() {
     }));
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.KeyboardEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     validateEmail();
@@ -217,7 +215,7 @@ function Contact() {
                         e.preventDefault();
                       }
                     }}
-                    className={`block w-full rounded-lg bg-white px-4 py-2.5 w-[720px] ${
+                    className={`block w-full rounded-lg bg-white px-4 py-2.5  ${
                       formError.email !== ""
                         ? "border border-[red]"
                         : "border border-[rgba(205, 212, 219, 1)] focus:border-palatinate-blue-500 active:border-palatinate-blue-500 active:outline-palatinate-blue-500 focus:outline-palatinate-blue-500"
@@ -242,7 +240,7 @@ function Contact() {
                     autoComplete="tel"
                     placeholder="Enter your Phone number"
                     onChange={(value) => {
-                      handleChange("phoneNumber", value);
+                      handleChange("phoneNumber", value ?? "");
                       // validatePhoneNumber(value);
                     }}
                     onBlur={() => validatePhoneNumber(formData.phoneNumber)}
@@ -255,7 +253,7 @@ function Contact() {
                         ? "border border-[red]"
                         : "border border-[rgba(205, 212, 219, 1)] focus:border-palatinate-blue-500 active:border-palatinate-blue-500 active:outline-palatinate-blue-500 focus:outline-palatinate-blue-500"
                     }`}
-                    className={`w-full rounded-lg bg-white px-4 py-2.5 outline-none w-[720px] ${
+                    className={`w-full rounded-lg bg-white px-4 py-2.5 outline-none ${
                       formError.phoneNumber !== ""
                         ? "border border-[red]"
                         : "border border-[rgba(205, 212, 219, 1)] focus:border-palatinate-blue-500 active:border-palatinate-blue-500 active:outline-palatinate-blue-500 focus:outline-palatinate-blue-500"

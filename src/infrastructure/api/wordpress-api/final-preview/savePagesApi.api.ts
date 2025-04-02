@@ -12,7 +12,7 @@ export const savePagesToDB = async (
   endpoint: string,
   pages: Page[],
   currentIndex: number
-): Promise<void> => {
+): Promise<boolean> => {
   try {
     const pagename = pages[currentIndex]?.name;
     const pagestatus = pages[currentIndex]?.status;
@@ -28,7 +28,11 @@ export const savePagesToDB = async (
       page_slug: pageslug,
       selected: selectedvalue,
     });
-
+    if (response.status) {
+      return true;
+    } else {
+      return false;
+    }
     // console.log("Pages stored successfully:", response.data);
   } catch (error) {
     console.error("Error storing pages:", error);

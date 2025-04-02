@@ -1,13 +1,11 @@
 import axios from "axios";
 
 // Accept the endpoint as a parameter
-export const deletePage = async (
-  endpoint: string,
-): Promise<any> => {
+export const deletePage = async (endpoint: string): Promise<string> => {
   try {
     const response = await axios.delete(endpoint);
     console.log("Pages deleted successfully", response.data);
-    return response;
+    return response.data;
   } catch (error) {
     console.error("Error storing pages:", error);
     throw error;

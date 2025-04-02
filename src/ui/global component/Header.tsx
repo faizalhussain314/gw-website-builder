@@ -1,5 +1,3 @@
-import GravityWriteLogo from "../../assets/logo.svg";
-
 interface HeaderProps {
   active: boolean;
 }

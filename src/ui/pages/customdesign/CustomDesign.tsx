@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import CustomizeLayout from "../../Layouts/CustomizeLayout";
 import { useDispatch, useSelector } from "react-redux";
 import useDomainEndpoint from "../../../hooks/useDomainEndpoint";
@@ -23,7 +23,6 @@ function CustomDesign() {
 
   const fetchInitialData = async () => {
     const url = getDomainFromEndpoint("/wp-json/custom/v1/get-form-details");
-    const iframe = document.getElementById("myIframe") as HTMLIFrameElement;
 
     try {
       const response = await fetch(url, {
@@ -66,7 +65,7 @@ function CustomDesign() {
     );
   };
 
-  const fetchTemplateData = async () => {
+  const fetchTemplateData = useCallback(async () => {
     const url = getDomainFromEndpoint("/wp-json/custom/v1/get-form-details");
     try {
       const response = await fetch(url, {
@@ -85,11 +84,11 @@ function CustomDesign() {
     } catch (error) {
       console.error("Error fetching template data:", error);
     }
-  };
+  }, [dispatch, getDomainFromEndpoint]);
 
   useEffect(() => {
     fetchTemplateData();
-  }, []);
+  }, [fetchTemplateData]);
 
   const onLoadmsg = () => {
     sendNonClickable();

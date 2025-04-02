@@ -3,12 +3,7 @@ import GravityWriteLogo from "../../assets/logo.svg";
 // import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import {
-  setFont,
-  setColor,
-  setLogo,
-  setWidth,
-} from "../../Slice/activeStepSlice";
+import { setFont, setColor, setWidth } from "../../Slice/activeStepSlice";
 import { RootState } from "../../store/store";
 import useDomainEndpoint from "../../hooks/useDomainEndpoint";
 import useStoreContent from "../../hooks/useStoreContent ";

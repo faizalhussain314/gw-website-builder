@@ -1,7 +1,5 @@
 import React, { ReactNode } from "react";
-// import CustomizeSidebar from "../component/customizeSidebar";
 import CustomizeSidebar from "../component/CustomizeSidebar";
-import Header from "../global component/Header";
 
 interface MainLayoutProps {
   children: ReactNode;

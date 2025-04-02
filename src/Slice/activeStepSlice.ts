@@ -4,10 +4,10 @@ import {
   Page,
   Design,
   Color,
-  Font,
   UpdateContactFormPayload,
   templateList,
   StyleState,
+  TemplatePage,
 } from "../types/activeStepSlice.type";
 
 const initialState: UserDataState = {
@@ -203,7 +203,7 @@ export const activeStepSlice = createSlice({
       }
     },
 
-    setPagesFromTemplate: (state, action: PayloadAction<Page[]>) => {
+    setPagesFromTemplate: (state, action: PayloadAction<TemplatePage[]>) => {
       const templatePages = action.payload;
 
       // Create the mandatory Home page
@@ -214,7 +214,7 @@ export const activeStepSlice = createSlice({
       //   selected: false, // Initially not selected
       // };
 
-      const mappedPages = templatePages.map((page: any) => ({
+      const mappedPages = templatePages.map((page: TemplatePage) => ({
         name: page.title,
         status: "",
         slug: page.slug,
@@ -245,7 +245,7 @@ export const activeStepSlice = createSlice({
     setlastStep: (state, action: PayloadAction<string>) => {
       state.lastStep = action.payload;
     },
-    setStyle: (state, action: PayloadAction<any>) => {
+    setStyle: (state, action: PayloadAction<StyleState>) => {
       state.style = action.payload;
     },
   },

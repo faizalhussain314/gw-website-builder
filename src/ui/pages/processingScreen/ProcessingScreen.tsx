@@ -25,9 +25,22 @@ import axios from "axios";
 
 const API_URL = import.meta.env.VITE_API_BACKEND_URL;
 
+// Define a generic API response interface (you can extend this as needed)
+interface ApiResponse<T = unknown> {
+  status: string;
+  data?: T;
+  message?: string;
+}
+
+// Interface for the getTemplates response
+interface TemplateResponse {
+  status: string;
+  data: TemplateData;
+  message?: string;
+}
+
 const ProcessingScreen: React.FC = () => {
   const [progress, setProgress] = useState(0);
-  const [totalSteps, setTotalSteps] = useState(0);
   const [status, setStatus] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [importLimit, setImportLimit] = useState(false);
@@ -37,7 +50,6 @@ const ProcessingScreen: React.FC = () => {
   const { getDomainFromEndpoint } = useDomainEndpoint();
   const fetchCustomContentData = useFetchCustomContentData();
   const logo = useSelector((state: RootState) => state.userData.logo);
-  const formData = useSelector((state: RootState) => state.userData);
   const template_id = useSelector(
     (state: RootState) => state.userData.templateid
   );
@@ -48,13 +60,8 @@ const ProcessingScreen: React.FC = () => {
   const bussinessName = useSelector(
     (state: RootState) => state.userData.businessName
   );
-  const templateName = useSelector(
-    (state: RootState) => state.userData.templatename
-  );
 
   const logoWidth = useSelector((state: RootState) => state.userData.logoWidth);
-
-  // const url = getDomainFromEndpoint("/wp-json/custom/v1/get-user-token");
 
   const fetchTemplates = async (): Promise<TemplateData | null> => {
     try {
@@ -66,7 +73,7 @@ const ProcessingScreen: React.FC = () => {
             "/wp-json/custom/v1/get-user-token"
           );
           const response = await axios.get(url);
-          const result = response.data;
+          const result = response.data as { status: boolean; token?: string };
 
           if (result.status && result.token) {
             wp_token = result.token;
@@ -112,7 +119,7 @@ const ProcessingScreen: React.FC = () => {
             }
           );
 
-          const retryData = await retryResponse.json();
+          const retryData = (await retryResponse.json()) as TemplateResponse;
 
           if (retryResponse.ok) {
             return retryData.data;
@@ -131,11 +138,11 @@ const ProcessingScreen: React.FC = () => {
     }
   };
 
-  const postData = async (
+  const postData = async <T = unknown,>(
     endpoint: string,
     data: object,
     method: "POST" | "DELETE" = "POST"
-  ): Promise<any> => {
+  ): Promise<ApiResponse<T> | null> => {
     const url = getDomainFromEndpoint(endpoint);
     if (!url) return null;
 
@@ -192,7 +199,7 @@ const ProcessingScreen: React.FC = () => {
       return;
     }
 
-    const { plugins, pages, template_import_urls, site_logo } = templateData;
+    const { plugins, pages, template_import_urls } = templateData;
 
     const reduxPages = pages.map((apiPage: ApiPage) =>
       mapApiPageToReduxPage(apiPage)
@@ -219,8 +226,12 @@ const ProcessingScreen: React.FC = () => {
         is_type: "sitecount",
       }
     );
+    if (!updateCountResponse || updateCountResponse.status !== "success") {
+      console.error("Failed to update site count:", updateCountResponse);
+      setIsProcessing(false);
+    }
 
-    if (updateCountResponse.status !== "success") {
+    if (updateCountResponse?.status !== "success") {
       console.error("Failed to update site count:", updateCountResponse);
       setIsProcessing(false);
     }
@@ -274,7 +285,7 @@ const ProcessingScreen: React.FC = () => {
     );
 
     const stepsCount = apiSteps.length + selectedPagesToInstall.length * 2 + 4;
-    setTotalSteps(stepsCount);
+    // setTotalSteps(stepsCount);
 
     for (let i = 0; i < apiSteps.length; i++) {
       setStatus(apiSteps[i].name);

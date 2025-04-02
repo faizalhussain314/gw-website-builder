@@ -85,3 +85,11 @@ export interface UserDataState {
   style: StyleState;
   logoWidth: number;
 }
+
+export interface TemplatePage {
+  id: number;
+  title: string;
+  iframe_url: string;
+  slug: string;
+  template_id: number;
+}

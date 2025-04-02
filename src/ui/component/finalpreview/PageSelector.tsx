@@ -1,12 +1,10 @@
 import React, { useEffect, useRef, useState } from "react";
-import CachedIcon from "@mui/icons-material/Cached";
 import { Page } from "../../../types/page.type";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Tooltip from "@mui/material/Tooltip";
 import { updateReduxPage } from "../../../Slice/activeStepSlice";
-import { useDispatch, useSelector } from "react-redux";
-import { RootState } from "../../../store/store";
+import { useDispatch } from "react-redux";
 
 type Props = {
   pages: Page[];
@@ -44,16 +42,11 @@ const PageSelector: React.FC<Props> = ({
   pages,
   selectedPage,
   isContentGenerating,
-  handlePageUpdate,
   togglePage,
   handleNext,
   handleSkipPage,
   handleAddPage,
-  setShowPopup,
-  previousClicked,
-  handlePrevious,
   handleImportSelectedPage,
-  lateloader,
   updatePageStatus,
   setPages,
   handleGeneratePage,
@@ -68,6 +61,7 @@ const PageSelector: React.FC<Props> = ({
     toast.warn("Please wait while content is being generated.");
   };
   const showLoadingToast = () => {
+    console.log("value of isLoading", isLoading);
     toast.warn("please wait until the page loads");
   };
   const selectedPagesCount = pages.filter((page) => page.selected).length;
@@ -75,7 +69,6 @@ const PageSelector: React.FC<Props> = ({
 
   const dispatch = useDispatch();
 
-  const currentPages = useSelector((state: RootState) => state.userData.pages);
   const isHomeGenerated = pages.some(
     (page) => page.name === "Home" && page.status === "Generated"
   );
@@ -108,11 +101,11 @@ const PageSelector: React.FC<Props> = ({
     togglePage(pageName);
   };
 
-  const [nextPage, setNextPage] = useState("");
-
   const handleSkipClick = (pageName: string) => {
-    if (isContentGenerating || isLoading) {
+    if (isContentGenerating || showGwLoader) {
       showWarningToast();
+    } else if (isLoading) {
+      showLoadingToast();
       return;
     } else {
       updatePageStatus(pageName, "Skipped", false);
@@ -205,11 +198,6 @@ const PageSelector: React.FC<Props> = ({
     );
   };
 
-  const handleGeneratePageClick = () => {
-    setShowPopup(true);
-    lateloader(true);
-  };
-
   const [pageButtonStates, setPageButtonStates] = useState<
     Record<string, boolean>
   >(() =>
@@ -282,8 +270,11 @@ const PageSelector: React.FC<Props> = ({
                 : ""
             }`}
             onClick={() => {
-              if (isContentGenerating || isLoading || showGwLoader) {
+              if (isContentGenerating || showGwLoader) {
                 showWarningToast();
+              } else if (isLoading) {
+                showLoadingToast();
+                return;
               } else {
                 setShowButton(true);
                 handlePageClick(page.name);
@@ -353,7 +344,7 @@ const PageSelector: React.FC<Props> = ({
                 <div
                   onClick={() => {
                     if (isContentGenerating) {
-                      // showWarningToast();
+                      showWarningToast();
                       return;
                     } else {
                       handlePageClick(page.name);
@@ -414,23 +405,22 @@ const PageSelector: React.FC<Props> = ({
                         <button
                           className={`bg-white text-[#1E2022] hover:bg-palatinate-blue-600 hover:text-white rounded px-3 py-1.5 w-full text-[14px] font-[500] ${
                             isContentGenerating || isLoading || showGwLoader
-                              ? "opacity-50"
+                              ? "opacity-50 cursor-not-allowed"
                               : ""
                           }`}
                           onClick={() => {
-                            if (
-                              isContentGenerating ||
-                              isLoading ||
-                              showGwLoader
-                            ) {
+                            if (isContentGenerating || showGwLoader) {
                               showWarningToast();
+                            } else if (isLoading) {
+                              showLoadingToast();
+                              return;
                             } else {
                               handleNext(page.name);
                             }
                           }}
                           disabled={
                             isContentGenerating || isLoading || showGwLoader
-                          }
+                          } // Disable if generating, loading, or showGwLoader is true
                         >
                           Keep & Next
                         </button>
@@ -456,11 +446,13 @@ const PageSelector: React.FC<Props> = ({
                           <button
                             className={`bg-white text-[#1E2022] hover:bg-palatinate-blue-600 hover:text-white rounded px-3 py-1.5 w-full text-[14px] font-[500] ${
                               isContentGenerating || isLoading
-                                ? "opacity-50"
+                                ? "opacity-50 cursor-not-allowed"
                                 : ""
                             }`}
                             onClick={() => handleSkipClick(page.name)}
-                            disabled={isContentGenerating || isLoading}
+                            disabled={
+                              isContentGenerating || isLoading || showGwLoader
+                            } // Disable if generating or loading
                           >
                             Skip Page
                           </button>
@@ -472,12 +464,12 @@ const PageSelector: React.FC<Props> = ({
                           className={`bg-white text-[#1E2022] hover:bg-palatinate-blue-600 hover:text-white rounded px-3 py-1.5 w-full text-[14px] font-[500] ${
                             !(isContentGenerating || isLoading || showGwLoader)
                               ? "opacity-100"
-                              : "opacity-50"
+                              : "opacity-50 cursor-not-allowed"
                           }`}
                           onClick={handleGeneratePage}
                           disabled={
                             isContentGenerating || isLoading || showGwLoader
-                          }
+                          } // Disable if generating or loading
                         >
                           Generate Page
                         </button>
@@ -485,12 +477,12 @@ const PageSelector: React.FC<Props> = ({
                           className={`bg-white text-[#1E2022] hover:bg-palatinate-blue-600 hover:text-white rounded px-3 py-1.5 w-full text-[14px] font-[500] ${
                             !(isContentGenerating || isLoading || showGwLoader)
                               ? "opacity-100"
-                              : "opacity-50"
+                              : "opacity-50 cursor-not-allowed"
                           }`}
                           onClick={() => handleSkipClick(page.name)}
                           disabled={
                             isContentGenerating || isLoading || showGwLoader
-                          }
+                          } // Disable if generating or loading
                         >
                           Skip Page
                         </button>
@@ -514,8 +506,11 @@ const PageSelector: React.FC<Props> = ({
                 <button
                   className=" tertiary w-full py-3 px-8 mb-4 rounded-lg flex items-center gap-1.5 mx-auto justify-center"
                   onClick={() => {
-                    if (isContentGenerating || isLoading || showGwLoader) {
+                    if (isContentGenerating || showGwLoader) {
                       showWarningToast();
+                    } else if (isLoading) {
+                      showLoadingToast();
+                      return;
                     } else {
                       handleImportSelectedPage(); // You may need to pass the page data if necessary
                     }
@@ -565,7 +560,9 @@ const PageSelector: React.FC<Props> = ({
                       : ""
                   } `}
                   onClick={() => {
-                    if (isContentGenerating || isLoading || showGwLoader) {
+                    if (isLoading) {
+                      showLoadingToast();
+                    } else if (isContentGenerating || showGwLoader) {
                       showWarningToast();
                     } else {
                       handleNext(currentPage.name);
@@ -683,5 +680,3 @@ const PageSelector: React.FC<Props> = ({
 };
 
 export default PageSelector;
-
-// className={` text-white flex flex-col items-center justify-center outline-none rounded-lg font-medium text-center tracking-tight transition duration-300 ease-in-out `}

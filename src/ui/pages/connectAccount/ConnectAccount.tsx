@@ -1,7 +1,6 @@
 import { useNavigate } from "react-router-dom";
 
 import bgImage from "../../../assets/connectGWBg.png";
-import spaceShip from "../../../assets/Spaceship.gif";
 import useDomainEndpoint from "../../../hooks/useDomainEndpoint";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../store/store";
