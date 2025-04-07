@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import MainLayout from "../../Layouts/MainLayout";
 import { CircularProgressbar, buildStyles } from "react-circular-progressbar";
 import "react-circular-progressbar/dist/styles.css";
@@ -63,7 +63,7 @@ const ProcessingScreen: React.FC = () => {
 
   const logoWidth = useSelector((state: RootState) => state.userData.logoWidth);
 
-  const fetchTemplates = async (): Promise<TemplateData | null> => {
+  const fetchTemplates = useCallback(async (): Promise<TemplateData | null> => {
     try {
       let wp_token = store.getState().user.wp_token;
 
@@ -136,31 +136,34 @@ const ProcessingScreen: React.FC = () => {
       console.error("Error fetching templates:", error);
       return null;
     }
-  };
+  }, [dispatch, fetchCustomContentData, getDomainFromEndpoint, template_id]);
 
-  const postData = async <T = unknown,>(
-    endpoint: string,
-    data: object,
-    method: "POST" | "DELETE" = "POST"
-  ): Promise<ApiResponse<T> | null> => {
-    const url = getDomainFromEndpoint(endpoint);
-    if (!url) return null;
+  const postData = useCallback(
+    async <T = unknown,>(
+      endpoint: string,
+      data: object,
+      method: "POST" | "DELETE" = "POST"
+    ): Promise<ApiResponse<T> | null> => {
+      const url = getDomainFromEndpoint(endpoint);
+      if (!url) return null;
 
-    try {
-      const response = await fetch(url, {
-        method: method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      if (!response.ok) throw new Error(`Error posting data to ${url}`);
-      return await response.json();
-    } catch (error) {
-      console.error(`Error in API call (${method}) to ${url}:`, error);
-      return null;
-    }
-  };
+      try {
+        const response = await fetch(url, {
+          method: method,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        });
+        if (!response.ok) throw new Error(`Error posting data to ${url}`);
+        return await response.json();
+      } catch (error) {
+        console.error(`Error in API call (${method}) to ${url}:`, error);
+        return null;
+      }
+    },
+    [getDomainFromEndpoint]
+  );
 
-  const processAPIs = async () => {
+  const processAPIs = useCallback(async () => {
     if (isProcessing) return;
     setIsProcessing(true);
 
@@ -384,20 +387,32 @@ const ProcessingScreen: React.FC = () => {
     setStatus("Regenerating Global CSS");
     await postData("/wp-json/custom/v1/regenerate-global-css", {});
 
-    setStatus("Emptying tables");
-    await postData("/wp-json/custom/v1/empty-tables", {}, "DELETE");
-
     setStatus("importing animation");
     await postData("/wp-json/custom/v1/install-animation", {});
+
+    setStatus("Emptying tables");
+    await postData("/wp-json/custom/v1/empty-tables", {}, "DELETE");
 
     setProgress(100);
     dispatch(clearUserData());
     setIsProcessing(false);
-  };
+  }, [
+    bussinessName,
+    dispatch,
+    fetchTemplates,
+    getDomainFromEndpoint,
+    isProcessing,
+    logo,
+    logoWidth,
+    navigate,
+    postData,
+    selectedPages,
+    template_id,
+  ]);
 
   useEffect(() => {
     if (!isProcessing) processAPIs();
-  }, []);
+  }, [isProcessing, processAPIs]);
 
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {

@@ -127,10 +127,6 @@ function Category() {
   };
 
   const handleClose = () => {
-    // if (userDetails.generatedSite >= userDetails.max_genration) {
-    //   return;
-    // } else {
-    //   // setLimitReached(false);
     window.location.href = "/wp-admin/admin.php?page=gravitywrite_settings";
   };
 

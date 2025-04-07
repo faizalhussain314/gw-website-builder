@@ -93,15 +93,24 @@ function Description() {
 
   // Remove these useEffects
   useEffect(() => {
-    if (!loader1 && debouncedDescription1) {
-      updateDescriptions(
-        "description1",
-        debouncedDescription1,
-        getDomainFromEndpoint
-      );
-      dispatch(setDescriptionOne(debouncedDescription1));
+    // Only fetch the initial descriptions once on mount.
+    if (!reduxDescription1 && !reduxDescription2) {
+      const fetchInitialDescriptions = async () => {
+        const result = await getDescriptions(getDomainFromEndpoint);
+        if (result) {
+          if (result.description1) {
+            setDescription1(result.description1);
+            dispatch(setDescriptionOne(result.description1));
+          }
+          if (result.description2) {
+            setDescription2(result.description2);
+            dispatch(setDescriptionTwo(result.description2));
+          }
+        }
+      };
+      fetchInitialDescriptions();
     }
-  }, [debouncedDescription1, dispatch, getDomainFromEndpoint, loader1]);
+  }, [dispatch, getDomainFromEndpoint, reduxDescription1, reduxDescription2]);
 
   useEffect(() => {
     if (!loader2 && debouncedDescription2) {
