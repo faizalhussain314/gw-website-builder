@@ -4,7 +4,6 @@ import { CircularProgressbar, buildStyles } from "react-circular-progressbar";
 import "react-circular-progressbar/dist/styles.css";
 import { useNavigate } from "react-router-dom"; // Import useNavigate from react-router-dom
 import "../../../index.css";
-import websitebg from "../../../assets/websiteloader-bg.svg";
 
 // Helper function to get the full URL
 const getDomainFromEndpoint = (endpoint: string) => {
@@ -162,7 +161,7 @@ function ProcessingScreen() {
           <div
             className="w-[340px] h-[340px] flex items-center justify-center"
             style={{
-              backgroundImage: `url(${websitebg})`,
+              backgroundImage: `url("https://plugin.mywpsite.org/templates-data/staging/dist/websiteloader-bg.svg")`,
 
               backgroundSize: "contain",
               backgroundPosition: "center center",

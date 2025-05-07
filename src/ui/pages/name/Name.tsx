@@ -7,7 +7,6 @@ import { RootState } from "../../../store/store";
 import useDomainEndpoint from "../../../hooks/useDomainEndpoint";
 import { getBusinessName } from "../../../infrastructure/api/wordpress-api/name/getBusinessName.api";
 import { updateBusinessName } from "../../../infrastructure/api/wordpress-api/name/updateBusinessName.api";
-import arrow from "../../../assets/arrow.svg";
 import { handleEnterKey } from "../../../core/utils/handleEnterKey";
 
 function Name() {
@@ -108,7 +107,10 @@ function Name() {
                   onClick={handlePrevious}
                   className="previous-btn flex px-[30px] font-medium py-[15px] text-base sm:text-sm text-white sm:mt-2 rounded-lg  gap-2.5 justify-center"
                 >
-                  <img src={arrow} alt="arrow icon" />
+                  <img
+                    src="https://plugin.mywpsite.org/arrow.svg"
+                    alt="arrow icon"
+                  />
                   Previous
                 </button>
                 <button

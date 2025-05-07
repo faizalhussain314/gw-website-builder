@@ -22,7 +22,6 @@ export const fetchCategoryList = async (
       throw new Error("Missing wp_token. Cannot fetch category list.");
     }
 
-    console.log("Fetching category list with token:", wp_token);
     const response = await axios.get(`${API_URL}ai/builder/category-list`, {
       headers: {
         "Content-Type": "application/json",

@@ -5,12 +5,14 @@ interface MainLayoutProps {
   children: ReactNode;
   setLimitReached: React.Dispatch<React.SetStateAction<boolean>>;
   setPlanExpired: React.Dispatch<React.SetStateAction<boolean>>;
+  setIssue: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const CustomizeLayout: React.FC<MainLayoutProps> = ({
   children,
   setLimitReached,
   setPlanExpired,
+  setIssue,
 }) => {
   return (
     <>
@@ -20,6 +22,7 @@ const CustomizeLayout: React.FC<MainLayoutProps> = ({
             <CustomizeSidebar
               setLimitReached={setLimitReached}
               setPlanExpired={setPlanExpired}
+              setIssue={setIssue}
             />
           </aside>
         </div>

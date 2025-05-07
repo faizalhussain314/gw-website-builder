@@ -5,7 +5,7 @@ document.addEventListener("DOMContentLoaded", () => {
    * Global Variables
    * ------------------------------------------------------------------------- */
   let API_BASE_URL = "https://api.gravitywrite.com/api";
-  let stagging_url = "https://dev.gravitywrite.com/api";
+  let stagging_url = "https://staging-api.gravitywrite.com/api";
   let currentIndex = 0;
   let isFetching = false; // Used in stream content
   let isFetchingPageSelectors = false;
@@ -15,8 +15,14 @@ document.addEventListener("DOMContentLoaded", () => {
   let imageUrlData = {}; // To store mapping of old/new image URLs
 
   let apiResponseData = [];
+  let imageFailureQueue = [];
 
   let stylePrompt = "";
+  let completedCount = 0; // how many images are finished (success OR fail)
+  let totalItems = 0; // how many images we expect in this round
+  let globalPageName = ""; // saved once per “start” message
+  var globalCleaned = {};
+  var logoUpdated = false;
 
   /* -------------------------------------------------------------------------
    * STEP 1: Utility Functions for Background Image Extraction
@@ -28,7 +34,6 @@ document.addEventListener("DOMContentLoaded", () => {
    * @returns {string|null} - The extracted URL or null if extraction fails.
    */
   function extractBackgroundImageUrl(backgroundImage) {
-    console.log("[extractBackgroundImageUrl] Called with:", backgroundImage);
     if (
       typeof backgroundImage === "string" &&
       backgroundImage.trim() !== "none"
@@ -39,24 +44,16 @@ document.addEventListener("DOMContentLoaded", () => {
       );
       extractedUrl = extractedUrl.replace(/^["'()]+|["'()]+$/g, "");
       if (extractedUrl && extractedUrl !== backgroundImage) {
-        console.log(
-          "[extractBackgroundImageUrl] Final Cleaned URL:",
-          extractedUrl
-        );
         return extractedUrl;
-      } else {
-        console.log(
-          "[extractBackgroundImageUrl] No valid URL extracted from:",
-          backgroundImage
-        );
       }
-    } else {
-      console.log(
-        "[extractBackgroundImageUrl] Invalid backgroundImage value:",
-        backgroundImage
-      );
     }
     return null;
+  }
+  //--------------------------------------------------------------------
+  // helper – call once for *every* failure
+  //--------------------------------------------------------------------
+  function recordImageFailure({ selector, payload, error }) {
+    imageFailureQueue.push({ selector, payload, error });
   }
 
   /**
@@ -70,6 +67,7 @@ document.addEventListener("DOMContentLoaded", () => {
       console.error(`Element not found for selector: ${selectorId}`);
       return "";
     }
+
     return element.textContent.trim() || "";
   }
 
@@ -80,104 +78,256 @@ document.addEventListener("DOMContentLoaded", () => {
    * @returns {string|null} - The extracted URL or null if not found.
    */
   function getBackgroundImageFromClass(classSelector) {
-    for (const sheet of document.styleSheets) {
+    const styleSheets = [...document.styleSheets];
+
+    for (const sheet of styleSheets) {
       try {
         const rules = sheet.cssRules || sheet.rules;
-        if (!rules) continue;
         for (const rule of rules) {
           if (rule.selectorText && rule.selectorText.includes(classSelector)) {
-            const backgroundImage = rule.style.backgroundImage;
-            if (backgroundImage && backgroundImage !== "none") {
-              const url = extractBackgroundImageUrl(backgroundImage);
-              if (url) {
-                return url;
-              } else {
-                console.log(
-                  "[getBackgroundImageFromClass] Failed to extract URL from:",
-                  backgroundImage
-                );
-              }
-            }
+            const bgImage = rule.style?.backgroundImage;
+            const url = extractBackgroundImageUrl(bgImage);
+            if (url) return url;
           }
         }
       } catch (e) {
-        console.log(
-          "[getBackgroundImageFromClass] Error accessing stylesheet:",
-          e
-        );
+        // Skip cross-origin stylesheets
       }
     }
-    console.log(
-      "[getBackgroundImageFromClass] No CSS rule found for",
-      classSelector
-    );
     return null;
   }
 
-  /**
-   * Retrieves the background image URL from an element.
-   * It first checks class-based rules, then inline style, and finally the computed style.
-   * @param {string} selector - The CSS selector for the element.
-   * @returns {string|null} - The background image URL or null if not found.
-   */
   function getBackgroundImageFromElement(selector) {
     const element = document.querySelector(selector);
     if (!element) {
-      console.log(
-        "[getBackgroundImageFromElement] Element not found for selector:",
-        selector
-      );
       return null;
     }
 
-    // Check each class that starts with "elementor-element-"
+    // Check for inherited background image specifically for jkit-icon-box-wrapper
+    if (
+      element.classList.contains("jkit-icon-box-wrapper") ||
+      element.className.startsWith("jkit-icon-box-wrapper")
+    ) {
+      const inheritedBg = getInheritedBackgroundImage(element);
+      if (inheritedBg) {
+        return inheritedBg;
+      }
+    }
+
+    // Get computed style for the element itself
+    // const getComputedValue = window.getComputedStyle(element);
+
+    // Use a Set to store unique image URLs
+    let imageUrlData = new Set();
+
+    // Check each class on the current element
     for (const className of element.classList) {
-      if (className.startsWith("elementor-element-")) {
+      if (
+        className.startsWith("elementor-element-") ||
+        className.startsWith("jkit-icon-box-wrapper")
+      ) {
         const classSelector = `.${className}`;
         const url = getBackgroundImageFromClass(classSelector);
-        if (url) {
+        if (url && !imageUrlData.has(url)) {
+          imageUrlData.add(url);
+
           return url;
-        } else {
-          console.log(
-            "[getBackgroundImageFromElement] No URL found for class",
-            className
-          );
+        }
+      }
+    }
+
+    // Fallback: Check the parent’s parent’s parent (or a fixed level upward)
+    const parentEl = element.parentElement;
+    if (parentEl) {
+      // Example: travel three levels up
+      let targetEl = parentEl;
+      for (let i = 0; i < 2; i++) {
+        // already have one level from parentEl, so two more levels to get three total
+        if (targetEl.parentElement) {
+          targetEl = targetEl.parentElement;
+        }
+      }
+      if (targetEl) {
+        for (const parentClassName of targetEl.classList) {
+          if (parentClassName.startsWith("elementor-element-")) {
+            const parentClassSelector = `.${parentClassName}`;
+            const parentUrl = getBackgroundImageFromClass(parentClassSelector);
+            if (parentUrl && !imageUrlData.has(parentUrl)) {
+              imageUrlData.add(parentUrl);
+
+              return parentUrl;
+            }
+          }
         }
       }
     }
 
     // Fallback: Check inline style
     const inlineBackgroundImage = element.style.backgroundImage;
-    console.log(
-      "[getBackgroundImageFromElement] Inline background image:",
-      inlineBackgroundImage
-    );
+
     if (inlineBackgroundImage && inlineBackgroundImage !== "none") {
       const url = extractBackgroundImageUrl(inlineBackgroundImage);
       if (url) {
-        console.log("[getBackgroundImageFromElement] Found inline URL:", url);
         return url;
       }
     }
 
     // Fallback: Check computed style
-    const computedBackgroundImage = getComputedStyle(element).backgroundImage;
-    console.log(
-      "[getBackgroundImageFromElement] Computed background image:",
-      computedBackgroundImage
-    );
+    const computedBackgroundImage =
+      window.getComputedStyle(element).backgroundImage;
+
     if (computedBackgroundImage && computedBackgroundImage !== "none") {
       const url = extractBackgroundImageUrl(computedBackgroundImage);
       if (url) {
-        console.log("[getBackgroundImageFromElement] Found computed URL:", url);
         return url;
       }
     }
 
-    console.log(
-      "[getBackgroundImageFromElement] No background image found for element",
-      selector
+    return null;
+  }
+
+  function showFallbackImage(selector, isbackground, darkTheme) {
+    const elementImagewhite = "https://plugin.mywpsite.org/whiteelement.png";
+    const elementImagedark = "https://plugin.mywpsite.org/darkelement.png";
+    const backgroundwhite = "https://plugin.mywpsite.org/white-bg.png";
+    const backgroundDark = "https://plugin.mywpsite.org/dark-bg.png";
+
+    const newImageUrl = isbackground
+      ? darkTheme
+        ? backgroundDark
+        : backgroundwhite
+      : darkTheme
+      ? elementImagedark
+      : elementImagewhite;
+
+    const element = document.querySelector(selector);
+    if (!element) {
+      console.warn("⚠️ Fallback image: element not found:", selector);
+      return;
+    }
+
+    if (isbackground) {
+      const beforeImage = getBeforePseudoElementBackground(selector);
+
+      if (
+        selector === "#py-barber-services-banner" ||
+        selector === "#py-barber-about-banner"
+      ) {
+        updateBeforePseudoElementBackground(selector, newImageUrl);
+        element.style.backgroundImage = `url(${newImageUrl}) !important`;
+      } else if (beforeImage) {
+        updateBeforePseudoElementBackground(selector, newImageUrl);
+      } else {
+        element.style.backgroundImage = `url(${newImageUrl})`;
+      }
+    } else {
+      element.src = newImageUrl;
+      element.srcset = newImageUrl;
+    }
+
+    // Safely update imageUrlData
+    const key = selector;
+    if (!imageUrlData[key]) {
+      imageUrlData[key] = {};
+    }
+
+    const oldUrl = Object.keys(imageUrlData[key])[0];
+
+    imageUrlData[key][oldUrl] = newImageUrl;
+  }
+
+  /* -------------------------------------------------------------------------
+   *
+   * @param {Object}   opts
+   * @param {string}   opts.pageName         – e.g. eventData.page_name
+   * @param {Object}   opts.cleanedContent   – { oldText : newText, … }
+   * @param {Object}   opts.imageUrlMap      – { '#selector' : { oldUrl : newUrl } }
+   * @param {Array}    opts.failureQueue     – [{ selector, payload, error }, …]
+   * @param {boolean}  [opts.isGenerating]   – defaults to false
+   */
+  function flushResultsToParent({
+    pageName,
+    cleanedContent,
+    imageUrlMap,
+    failureQueue,
+    isGenerating = false,
+  }) {
+    if (!cleanedContent || Object.keys(cleanedContent).length === 0) return;
+
+    // 1. text diff map --------------------------------------------------------
+    window.parent.postMessage(
+      {
+        type: "oldNewContent",
+        pageName,
+        content: cleanedContent, // { oldText : newText }
+      },
+      "*"
     );
+
+    // 2. a *snapshot* of the full generated HTML ------------------------------
+    window.parent.postMessage(
+      {
+        type: "generatedContent",
+        pageName,
+        content: document.documentElement.outerHTML,
+        isGenerating,
+      },
+      "*"
+    );
+
+    // 3. image diff map -------------------------------------------------------
+    window.parent.postMessage(
+      {
+        type: "oldNewImages",
+        pageName,
+        images: imageUrlMap, // { '#selector' : { old : new } }
+        isGenerating,
+      },
+      "*"
+    );
+
+    // 4. overall status flag --------------------------------------------------
+    window.parent.postMessage({ type: "generationStatus", isGenerating }, "*");
+
+    // 5. consolidated failures (only if any) ----------------------------------
+    if (failureQueue && failureQueue.length) {
+      window.parent.postMessage(
+        {
+          type: "image-failure",
+          failures: failureQueue, // [{ selector, payload, error }, …]
+        },
+        "*"
+      );
+    }
+  }
+
+  // Modified helper function that climbs a fixed number of levels (here: 3 total levels up)
+  // and checks that target element's class list for classes starting with "elementor-element-"
+  function getInheritedBackgroundImage(el) {
+    // Traverse three levels upward
+    let target = el;
+    for (let i = 0; i < 4; i++) {
+      if (target.parentElement) {
+        target = target.parentElement;
+      } else {
+        break;
+      }
+    }
+
+    if (!target) {
+      return null;
+    }
+
+    for (const cls of target.classList) {
+      if (cls.startsWith("elementor-element-")) {
+        const classSelector = `.${cls}`;
+        const bg = getBackgroundImageFromClass(classSelector);
+        if (bg && bg !== "none") {
+          return bg;
+        }
+      }
+    }
+
     return null;
   }
 
@@ -186,33 +336,88 @@ document.addEventListener("DOMContentLoaded", () => {
    * @param {string} selector - The CSS selector of the element with the :before pseudo-element.
    * @returns {string|null} - The current background image URL or null if not found.
    */
-  function getBeforePseudoElementBackground(selector) {
-    const element = document.querySelector(selector);
-    if (!element) {
-      console.log(`Element not found for selector: ${selector}`);
-      return null;
-    }
-
-    const beforeStyle = window.getComputedStyle(element, "::before");
-
-    // Ensure the pseudo-element is rendered
-    const content = beforeStyle.getPropertyValue("content");
-    if (!content || content === "none" || content === '""') {
-      console.log(
-        `::before pseudo-element has no content and will not render for ${selector}`
+  function ensureStylesheetLoaded() {
+    return new Promise((resolve) => {
+      const links = Array.from(
+        document.querySelectorAll('link[rel="stylesheet"]')
       );
-      return null;
-    }
+      if (!links.length) return resolve();
 
-    const bgImage = beforeStyle.getPropertyValue("background-image");
-    if (!bgImage || bgImage === "none") {
-      console.log(`No background image in ::before for ${selector}`);
-      return null;
-    }
+      let loaded = 0;
 
-    let url = bgImage.slice(4, -1).replace(/^["']|["']$/g, ""); // Clean url("...") → ...
-    console.log(`✅ Extracted ::before image URL for ${selector}:`, url);
-    return url || null;
+      links.forEach((link) => {
+        if (link.sheet) {
+          // Already loaded
+          loaded++;
+          if (loaded === links.length) resolve();
+        } else {
+          link.addEventListener("load", () => {
+            loaded++;
+            if (loaded === links.length) resolve();
+          });
+          link.addEventListener("error", () => {
+            loaded++; // Even on error, count as loaded to prevent hanging
+            if (loaded === links.length) resolve();
+          });
+        }
+      });
+
+      // Fallback - in case all are already loaded
+      if (loaded === links.length) {
+        resolve();
+      }
+    });
+  }
+
+  function getBeforePseudoElementBackground(selector) {
+    ensureStylesheetLoaded().then(() => {
+      const element = document.querySelector(selector);
+      if (!element) {
+        console.log(`Element not found for selector: ${selector}`);
+        return null;
+      }
+
+      // Retrieve the computed style of the element's ::before pseudo-element
+      const beforeStyle = window.getComputedStyle(element, "::before");
+
+      // Ensure the pseudo-element is rendered and has valid content
+
+      // const content = extractBackgroundImageUrl(beforeStyle.backgroundImage);
+
+      // if (content) {
+      //   console.log("content", content);
+      //   return content;
+      // }
+      // if (!content || content === "none" || content === '""') {
+      //   console.log(
+      //     `::before pseudo-element has no content and will not render for ${selector}`
+      //   );
+      //   return null;
+      // }
+
+      // Extract the background image from the ::before pseudo-element
+      const bgImage = beforeStyle.getPropertyValue("background-image");
+      let url = extractBackgroundImageUrl(bgImage); // Use your existing URL extraction function
+      if (url) {
+        return url;
+      }
+
+      // If no background image on ::before, check parent elements and their classes for background images
+      let currentElement = element.parentElement;
+      while (currentElement) {
+        // Check for background images in the parent element's computed style
+        const parentBgImage = getComputedStyle(currentElement).backgroundImage;
+        url = extractBackgroundImageUrl(parentBgImage); // Use the same extraction function
+        if (url) {
+          return url;
+        }
+
+        // Move to the parent element
+        currentElement = currentElement.parentElement;
+      }
+
+      return null;
+    });
   }
 
   /**
@@ -225,6 +430,21 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!element) {
       console.log(`Element not found for selector: ${selector}`);
       return;
+    }
+
+    if (
+      (selector === "#py-barber-services-banner" ||
+        selector === "#py-barber-about-banner") &&
+      newImageUrl !== "https://plugin.mywpsite.org/white-normal.gif"
+    ) {
+      const styleTag = window.document.createElement("style");
+      styleTag.innerHTML = `
+        ${selector}::before {
+          background-image: url(${newImageUrl}) !important;
+         
+        }
+      `;
+      document.head.appendChild(styleTag);
     }
 
     // Inject the new background image for the :before pseudo-element
@@ -255,14 +475,6 @@ document.addEventListener("DOMContentLoaded", () => {
       document.querySelectorAll("[id^='px']")
     ).map((el) => `#${el.id}`);
 
-    console.log(
-      "GW Selectors:",
-      gwSelectors,
-      "NQ Elements:",
-      nqElements,
-      "Image Elements:",
-      imageElements
-    );
     return { gwSelectors, nqElements, imageElements };
   }
 
@@ -400,7 +612,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     if (!nqElements || nqElements.length === 0) {
-      console.log("No nqElements provided");
       return;
     }
 
@@ -418,7 +629,7 @@ document.addEventListener("DOMContentLoaded", () => {
         throw new Error(`Error: ${response.status}`);
       }
       const data = await response.json();
-      console.log("data.data", data.data);
+
       data.data.forEach((item) => {
         if (item.isbackground) {
           let actualBackgroundImage = getBeforePseudoElementBackground(
@@ -429,35 +640,17 @@ document.addEventListener("DOMContentLoaded", () => {
             actualBackgroundImage = getBackgroundImageFromElement(
               item.selector
             );
-            console.log(
-              "console from !actualBackgroundImage",
-              actualBackgroundImage
-            );
           }
           if (actualBackgroundImage) {
             imageUrlData[item.selector] = { [actualBackgroundImage]: "" };
-            console.log(
-              "console from actualBackgroundImage",
-              actualBackgroundImage
-            );
           }
 
           if (actualBackgroundImage) {
             imageUrlData[item.selector] = { [actualBackgroundImage]: "" };
           }
-        } else {
-          // Non-background image handling (currently commented out)
-          // const itemSelector = document.querySelector(item.selector);
-          // const oldimage = itemSelector.src;
-          // imageUrlData[item.selector] = { [oldimage]: "" };
-          // itemSelector.src = "https://plugin.mywpsite.org/loader-gif-final.gif";
-          // itemSelector.srcset = "https://plugin.mywpsite.org/loader-gif-final.gif";
         }
       });
 
-      setTimeout(() => {
-        console.log("Generated JSON with old image URLs:", imageUrlData);
-      }, 2000);
       return data;
     } catch (error) {
       console.error("Error fetching NQ image selectors:", error);
@@ -481,7 +674,9 @@ document.addEventListener("DOMContentLoaded", () => {
     if (Array.isArray(nqImageSelectorResult)) {
       nqImageSelectorResult.forEach((item) => {
         const { selector, isbackground } = item;
-        console.log(`Generating image for selector: ${selector}`);
+        var originalSelector = selector;
+
+        const dark_theme = eventData.dark_theme;
 
         const payload = {
           selector: selector.split(">")[0].trim(),
@@ -497,63 +692,155 @@ document.addEventListener("DOMContentLoaded", () => {
         };
 
         const element = document.querySelector(selector);
-        const loaderGifUrl = "https://plugin.mywpsite.org/Dots-Loader.gif";
+        const loaderGifUrl = "https://plugin.mywpsite.org/white-normal.gif";
         let oldImageUrl = "";
 
         if (element) {
           if (isbackground) {
             const beforeImage = getBeforePseudoElementBackground(selector);
-            if (beforeImage) {
+            if (
+              selector === "#py-barber-services-banner" ||
+              selector === "#py-barber-about-banner"
+            ) {
+              oldImageUrl = getBackgroundImageFromElement(selector) || "";
+              updateBeforePseudoElementBackground(selector, loaderGifUrl);
+            } else if (beforeImage) {
               oldImageUrl = beforeImage;
-              // Set loader image for the pseudo-element.
               updateBeforePseudoElementBackground(selector, loaderGifUrl);
             } else {
-              // Fallback to the element's own background image.
               oldImageUrl = getBackgroundImageFromElement(selector) || "";
-              element.style.backgroundImage = `url(${loaderGifUrl})`;
+              // element.style.backgroundImage = `url(${loaderGifUrl})`;
+              element.style.backgroundImage = `url("https://plugin.mywpsite.org/Rectangle-white-bg%20-low-quality.gif)`;
             }
           } else {
             oldImageUrl = element.src;
+
+            imageUrlData[item.selector] = { [oldImageUrl]: "" };
             element.src = loaderGifUrl;
             element.srcset = loaderGifUrl;
           }
         }
 
-        const fetchFunction = async () => {
+        // Function to call the API to fetch image URL
+        const fetchFunction = async (requestId) => {
           return fetch(`${API_BASE_URL}/get-image-url`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
               Authorization: `Bearer ${bearer_token}`,
             },
-            body: JSON.stringify(payload),
+            body: JSON.stringify({ ...payload, requestId }), // Attach requestId here
           });
         };
-        retryFetch(fetchFunction)
-          .then(async (response) => {
+
+        // Polling function with retry logic
+        const pollForCompletedImage = (requestId, retries = 3, payload) => {
+          if (!requestId) {
+            console.error("No requestId found in polling function.");
+            return;
+          }
+
+          setTimeout(async () => {
             try {
+              const response = await retryFetch({
+                fetchFunction,
+                payload,
+                selector: originalSelector,
+                delay: 5000,
+                retries: 3,
+                isbackground,
+                dark_theme,
+              });
               const data = await response.json();
-              // console.log(
-              //   `API response status for ${item.selector}:`,
-              //   response.status,
-              //   "Parsed API response:",
-              //   data
-              // );
-              return data;
-            } catch (e) {
-              console.log("error in response of .then");
+
+              if (data && data.status === "completed" && data.data.image_urls) {
+                const newImageUrl = data.data.image_urls;
+
+                if (element) {
+                  if (isbackground) {
+                    const beforeImage =
+                      getBeforePseudoElementBackground(selector);
+
+                    if (
+                      selector === "#py-barber-services-banner" ||
+                      selector === "#py-barber-about-banner"
+                    ) {
+                      updateBeforePseudoElementBackground(
+                        selector,
+                        newImageUrl
+                      );
+                      element.style.backgroundImage = `url(${newImageUrl}) !important`;
+                    } else if (beforeImage) {
+                      updateBeforePseudoElementBackground(
+                        selector,
+                        newImageUrl
+                      );
+                    } else {
+                      element.style.backgroundImage = `url(${newImageUrl})`;
+                    }
+                  } else {
+                    element.src = newImageUrl;
+                    element.srcset = newImageUrl;
+                  }
+                  imageUrlData[item.selector] = { [oldImageUrl]: newImageUrl };
+                }
+              } else if (data && data.status === "pending" && retries > 0) {
+                pollForCompletedImage(requestId, retries - 1, payload); // Retry
+              } else {
+                if (data.status === "failed") {
+                  showFallbackImage(originalSelector, isbackground, dark_theme);
+
+                  completedCount++;
+
+                  return; // stop polling this one
+                }
+
+                console.error(`Unexpected response for ${selector}:`, data);
+              }
+            } catch (error) {
+              showFallbackImage(originalSelector, isbackground, dark_theme);
+              recordImageFailure({
+                selector: payload.selector,
+                payload,
+                error: error,
+              });
+              console.error("Error in polling for image completion", error);
             }
-          })
-          .then((data) => {
-            // console.log("Generated image response for", selector, data.data);
-            if (data && data.data && data.data.image_urls) {
+          }, 3000); // Poll every 3 seconds
+        };
+
+        // Initial fetch to start polling if the status is "pending"
+        retryFetch({
+          fetchFunction,
+          payload,
+          selector: originalSelector,
+          delay: 5000,
+          retries: 3,
+          isbackground, // 🔁 add this
+          dark_theme, // 🔁 and this
+        }) // Pass requestId from here
+          .then(async (response) => {
+            const data = await response.json();
+
+            if (data && data.status === "pending" && data.requestId) {
+              pollForCompletedImage(data.requestId, 3, payload); // Retry 3 times
+            } else if (
+              data &&
+              data.status === "completed" &&
+              data.data.image_urls
+            ) {
               const newImageUrl = data.data.image_urls;
               if (element) {
                 if (isbackground) {
-                  // Check if pseudo-element exists again for updating.
                   const beforeImage =
                     getBeforePseudoElementBackground(selector);
-                  if (beforeImage) {
+                  if (
+                    selector === "#py-barber-services-banner" ||
+                    selector === "#py-barber-about-banner"
+                  ) {
+                    element.style.backgroundImage = `url(${newImageUrl})`;
+                    updateBeforePseudoElementBackground(selector, newImageUrl);
+                  } else if (beforeImage) {
                     updateBeforePseudoElementBackground(selector, newImageUrl);
                   } else {
                     element.style.backgroundImage = `url(${newImageUrl})`;
@@ -565,21 +852,74 @@ document.addEventListener("DOMContentLoaded", () => {
                 imageUrlData[item.selector] = { [oldImageUrl]: newImageUrl };
               }
             } else {
-              console.error(
-                `No valid image URL returned for selector: ${selector}`,
-                data
-              );
+              // const elementImagewhite =
+              //   "https://plugin.mywpsite.org/whiteelement.png";
+              // const elementImagedark =
+              //   "https://plugin.mywpsite.org/darkelement.png";
+              // const backgroundwhite =
+              //   "https://plugin.mywpsite.org/white-bg.png";
+              // const backgroundDark = "https://plugin.mywpsite.org/dark-bg.png";
+              // const element = document.querySelector(selector);
+              // const newImageUrl = isbackground
+              //   ? dark_theme
+              //     ? backgroundDark
+              //     : backgroundwhite
+              //   : dark_theme
+              //   ? elementImagedark
+              //   : elementImagewhite;
+              // if (element) {
+              //   if (isbackground) {
+              //     const beforeImage =
+              //       getBeforePseudoElementBackground(selector);
+              //     if (
+              //       selector === "#py-barber-services-banner" ||
+              //       selector === "#py-barber-about-banner"
+              //     ) {
+              //       console.log(
+              //         "image Changed from full code",
+              //         selector,
+              //         newImageUrl
+              //       );
+              //       element.style.backgroundImage = `url(${newImageUrl})`;
+              //       updateBeforePseudoElementBackground(selector, newImageUrl);
+              //     } else if (beforeImage) {
+              //       updateBeforePseudoElementBackground(selector, newImageUrl);
+              //     } else {
+              //       element.style.backgroundImage = `url(${newImageUrl})`;
+              //     }
+              //   } else {
+              //     element.src = newImageUrl;
+              //     element.srcset = newImageUrl;
+              //   }
+              //   imageUrlData[selector] = { [oldImageUrl]: newImageUrl };
+              //   console.log(
+              //     `[handleNqImageGeneration] Image generation completed immediately for ${selector}: ${newImageUrl}`
+              //   );
+              // }
+              // changeImage(selector, isbackground, oldImageUrl, dark_theme);
+              recordImageFailure({
+                selector: payload.selector,
+                payload,
+                error: data,
+              });
+              console.error("Unexpected API response for", selector, data);
+              showFallbackImage(originalSelector, isbackground, dark_theme);
             }
           })
           .catch((error) => {
+            showFallbackImage(originalSelector, isbackground, dark_theme);
+            // recordImageFailure({
+            //   selector: payload.selector,
+            //   payload,
+            //   error: error,
+            // });
             console.error("Error generating NQ image for", selector, error);
           });
       });
     } else {
       console.error(
         "nqImageSelectorResult is not an array:",
-        nqImageSelectorResult,
-        "please check if backend structure has changed"
+        nqImageSelectorResult
       );
     }
   }
@@ -590,11 +930,79 @@ document.addEventListener("DOMContentLoaded", () => {
    * @param {Object} eventData - Event data containing necessary details.
    * @param {object} cleanedContent - oldnew content of text
    */
-  function handleImageGeneration(bearer_token, eventData, cleanedContent) {
-    const totalItems = apiResponseData.data.length;
-    let completedCount = 0;
+  function handleImageGeneration(
+    bearer_token,
+    eventData,
+    cleanedContent,
+    darkTheme
+  ) {
+    totalItems = apiResponseData.data.length; // update global
+    completedCount = 0;
     const pageName = eventData.page_name;
-    const loaderGifUrl = "https://plugin.mywpsite.org/Dots-Loader.gif";
+    globalPageName = pageName;
+    const loaderGifUrl = "https://plugin.mywpsite.org/white-normal.gif";
+    var originalSelector = "";
+
+    // Polling function that re-calls the get-image-url API
+    async function pollForCompletedImage(
+      originalSelector,
+      payload,
+      requestId,
+      isbackground
+    ) {
+      const pollInterval = 5000; // 5 seconds
+
+      while (true) {
+        await new Promise((resolve) => setTimeout(resolve, pollInterval));
+        try {
+          const response = await fetch(`${API_BASE_URL}/get-image-url`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${bearer_token}`,
+            },
+            // Include the original payload plus the requestId from the pending response.
+            body: JSON.stringify({ ...payload, requestId }),
+          });
+          const data = await response.json();
+
+          if (data.status === "completed" && data.data?.image_urls) {
+            return data;
+          } else if (data.status === "pending") {
+            if (data.status === "failed") {
+              showFallbackImage(originalSelector, isbackground, darkTheme);
+              recordImageFailure({
+                selector: payload.selector,
+                payload,
+                error: data,
+              });
+              return; // stop polling this one
+            }
+
+            // Continue the loop
+          } else {
+            showFallbackImage(originalSelector, isbackground, darkTheme);
+            recordImageFailure({
+              selector: originalSelector,
+              payload,
+              error: data,
+            });
+            throw new Error(
+              `[pollForCompletedImage] Unexpected response status: ${data.status}`
+            );
+          }
+        } catch (error) {
+          showFallbackImage(originalSelector, isbackground, darkTheme);
+          recordImageFailure({
+            selector: payload.selector,
+            payload,
+            error: error,
+          });
+          console.error("[pollForCompletedImage] Error during polling:", error);
+          throw error;
+        }
+      }
+    }
 
     apiResponseData.data.forEach((item) => {
       const contentPayload = {};
@@ -605,6 +1013,8 @@ document.addEventListener("DOMContentLoaded", () => {
           );
         });
       }
+
+      originalSelector = item.selector;
 
       const payload = {
         selector: item.selector.split(">")[0].trim(),
@@ -638,7 +1048,7 @@ document.addEventListener("DOMContentLoaded", () => {
             } else {
               // Fallback to the element's own background image.
               oldImageUrl = getBackgroundImageFromElement(item.selector) || "";
-              element.style.backgroundImage = `url(${loaderGifUrl})`;
+              element.style.backgroundImage = `url("https://plugin.mywpsite.org/Rectangle-white-bg%20-low-quality.gif")`;
             }
           } else {
             oldImageUrl = element.src;
@@ -659,32 +1069,42 @@ document.addEventListener("DOMContentLoaded", () => {
         });
       };
 
-      retryFetch(fetchFunction)
+      // Call our retryFetch (or similar) with the original fetchFunction.
+      retryFetch({
+        fetchFunction,
+        payload,
+        selector: originalSelector,
+        delay: 5000,
+        retries: 3,
+        isbackground: item.isbackgroundimage, // 🔁 add this
+        dark_theme: darkTheme, // 🔁 and this
+      })
         .then(async (response) => {
           try {
             const data = await response.json();
-            console.log(
-              `handleImageGeneration: API response status for ${item.selector}:`,
-              response.status,
-              "Parsed API response:",
-              data
-            );
+
             return data;
           } catch (e) {
-            console.log("error in response of .then");
+            console.log("Error parsing JSON response:", e);
           }
         })
-        .then((data) => {
-          console.log(
-            "handleImageGeneration fun.then((data)):Generated image response for",
-            item.selector,
-            data
-          );
-          if (data && data.data.image_urls) {
+        .then(async (data) => {
+          // If the response indicates that the image generation is pending,
+          // poll until we get a completed response.
+          if (data && data.status === "pending" && data.requestId) {
+            data = await pollForCompletedImage(
+              originalSelector,
+              payload,
+              data.requestId,
+              item.isbackgroundimage
+            );
+          }
+
+          if (data && data.data && data.data.image_urls) {
             const newImageUrl = data.data.image_urls;
             if (element) {
               if (item.isbackgroundimage) {
-                // Again check for the pseudo-element background.
+                // First, check if the pseudo-element background exists.
                 const beforeImage = getBeforePseudoElementBackground(
                   item.selector
                 );
@@ -694,9 +1114,26 @@ document.addEventListener("DOMContentLoaded", () => {
                     newImageUrl
                   );
                 } else {
-                  element.style.backgroundImage = `url(${newImageUrl})`;
+                  // New logic: If the item's selector starts with "#px-", then look for a nested element:
+                  let targetElement = element;
+                  if (item.selector.startsWith("#px-")) {
+                    const candidate = element.querySelector("div > div > div");
+                    if (
+                      candidate &&
+                      candidate.classList.contains("jkit-icon-box-wrapper") &&
+                      candidate.classList.contains("hover-from-arise")
+                    ) {
+                      targetElement = candidate;
+                    } else {
+                      console.log(
+                        `Candidate child not found or missing required classes for ${item.selector}. Using original element.`
+                      );
+                    }
+                  }
+                  targetElement.style.backgroundImage = `url(${newImageUrl})`;
                 }
               } else {
+                // Non-background image handling.
                 element.src = newImageUrl;
                 element.srcset = newImageUrl;
               }
@@ -714,48 +1151,31 @@ document.addEventListener("DOMContentLoaded", () => {
               `No valid image URL returned for selector: ${item.selector}`,
               data
             );
+            showFallbackImage(
+              originalSelector,
+              item.isbackgroundimage,
+              darkTheme
+            );
           }
         })
         .catch((error) => {
           console.error("Error generating image for", item.selector, error);
+          showFallbackImage(
+            originalSelector,
+            item.isbackgroundimage,
+            darkTheme
+          );
         })
         .finally(() => {
           completedCount++;
           if (completedCount === totalItems) {
-            console.log("oldnewcontent from finally block", cleanedContent);
-            window.parent.postMessage(
-              {
-                type: "oldNewContent",
-                pageName: window.location.pathname.split("/").pop(),
-                content: cleanedContent,
-              },
-              "*"
-            );
-
-            const pageContent = document.documentElement.outerHTML;
-            window.parent.postMessage(
-              {
-                type: "generatedContent",
-                pageName: pageName,
-                content: pageContent,
-                isGenerating: false,
-              },
-              "*"
-            );
-            window.parent.postMessage(
-              {
-                type: "oldNewImages",
-                pageName: pageName,
-                images: imageUrlData,
-                isGenerating: false,
-              },
-              "*"
-            );
-
-            window.parent.postMessage(
-              { type: "generationStatus", isGenerating: false },
-              "*"
-            );
+            flushResultsToParent({
+              pageName,
+              cleanedContent,
+              imageUrlMap: imageUrlData,
+              failureQueue: imageFailureQueue,
+              isGenerating: false,
+            });
           }
         });
     });
@@ -768,13 +1188,21 @@ document.addEventListener("DOMContentLoaded", () => {
    * @param {number} retries - The number of retries before giving up.
    * @returns {Promise<Response>} - Resolves to the response of the fetch call.
    */
-  async function retryFetch(fetchFunction, delay = 5000, retries = 3) {
+  async function retryFetch({
+    fetchFunction,
+    payload,
+    selector,
+    delay = 5000,
+    retries = 3,
+    isbackground,
+    dark_theme,
+  }) {
     let attempt = 0;
 
     while (attempt < retries) {
       try {
         const response = await fetchFunction();
-        console.log("response from retryFetch", response);
+
         // If the response is successful, return the response
         if (response.ok) {
           return response;
@@ -785,20 +1213,39 @@ document.addEventListener("DOMContentLoaded", () => {
         attempt++;
         console.error(`Attempt ${attempt} failed: ${error.message}`);
         if (attempt < retries) {
-          console.log(`Retrying in ${delay / 1000} seconds...`);
           await new Promise((resolve) => setTimeout(resolve, delay)); // Wait before retrying
         } else {
+          showFallbackImage(selector, isbackground, dark_theme);
+          recordImageFailure({
+            selector: payload.selector,
+            payload,
+            error: { message: "max-retries" },
+          });
+          completedCount;
+          if (completedCount === totalItems) {
+            flushResultsToParent({
+              pageName: globalPageName,
+              cleanedContent: globalCleaned,
+              imageUrlMap: imageUrlData,
+              failureQueue: imageFailureQueue,
+              isGenerating: false,
+            });
+          }
           throw new Error("Max retries reached. API call failed.");
         }
       }
     }
+  }
+
+  function cleanContent(content) {
+    return content.replace(/^[\n\t]+|[\n\t]+$/g, "").trim();
   }
   /**
    * Fetches streaming content from the API and processes the stream.
    * @param {Object} payload - Request payload.
    * @param {Array} processedSelectors - Array of processed selectors.
    */
-  async function fetchStreamContent(payload, processedSelectors) {
+  async function fetchStreamContent(payload, processedSelectors, darkTheme) {
     if (isFetching) return;
     isFetching = true;
 
@@ -828,21 +1275,30 @@ document.addEventListener("DOMContentLoaded", () => {
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
+
         result += new TextDecoder("utf-8").decode(value, { stream: true });
+
         let endIndex;
         while ((endIndex = result.indexOf("~")) !== -1) {
           if (currentIndex >= processedSelectors.length) {
             console.error(
               "Error: Extra content in stream with no available selectors."
             );
-            return;
+            // return;
           }
-          const completeData = result.substring(0, endIndex);
+
+          let completeData = result.substring(0, endIndex);
           const selectorData = processedSelectors[currentIndex];
+
+          // Send isGenerating: true when content starts typing
           window.parent.postMessage(
-            { type: "generationStatus", isGenerating: true },
+            {
+              type: "generationStatus",
+              isGenerating: true,
+            },
             "*"
           );
+
           await typeEffect(selectorData, completeData);
           scrollToElement(selectorData.id);
           currentIndex++;
@@ -860,17 +1316,24 @@ document.addEventListener("DOMContentLoaded", () => {
         currentIndex++;
       }
 
-      // Clean up and update content for each selector
-      const cleanContent = (content) => content.trim();
       processedSelectors.forEach((item) => {
         const element = document.querySelector(item.id);
         if (element) {
-          const targetNode = item.custom_selector
-            ? element
-            : element.children[0]?.children[1] ||
+          let targetNode;
+          if (item.custom_selector) {
+            targetNode = element;
+          } else {
+            targetNode =
+              element.children[0]?.children[1] ||
               element.children[0]?.children[0];
+          }
+
           if (targetNode && targetNode.nodeName.toLowerCase() !== "style") {
-            let newContent = cleanContent(targetNode.textContent || "");
+            let newContent = targetNode.textContent || "";
+
+            newContent = cleanContent(newContent);
+
+            // Update new content for the respective selector ID
             oldNewContent[item.id].new = newContent;
           }
         }
@@ -878,14 +1341,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const cleanedContent = {};
       Object.keys(oldNewContent).forEach((id) => {
-        const oldContent = cleanContent(oldNewContent[id].old);
-        const newContent = cleanContent(oldNewContent[id].new);
+        let oldContent = oldNewContent[id].old;
+        let newContent = oldNewContent[id].new;
+
+        oldContent = cleanContent(oldContent);
+        newContent = cleanContent(newContent);
+
+        // Ensure we skip empty entries
         if (oldContent !== "" || newContent !== "") {
           cleanedContent[oldContent] = newContent;
         }
       });
 
-      handleImageGeneration(bearer_token, eventData, cleanedContent);
+      handleImageGeneration(bearer_token, eventData, cleanedContent, darkTheme);
     } catch (error) {
       console.error("Streaming data error:", error.message);
       window.parent.postMessage(
@@ -953,6 +1421,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const template_id = event.data.template_id;
       const stagging = event.data.stagging;
       const { gwSelectors, nqElements, imageElements } = getAllGWSelectors();
+      const darkTheme = event.data.dark_theme;
 
       // Immediately apply loader to each image element
 
@@ -979,7 +1448,6 @@ document.addEventListener("DOMContentLoaded", () => {
         .then((response) => response.json())
         .then((data) => {
           stylePrompt = data.data.prompt;
-          console.log("style prompt is:", stylePrompt);
 
           fetchPageSelectors(gwSelectors, bearer_token, template_id, stagging)
             .then((processedSelectors) => {
@@ -996,7 +1464,8 @@ document.addEventListener("DOMContentLoaded", () => {
                   bearer_token,
                   stagging,
                 },
-                processedSelectors
+                processedSelectors,
+                darkTheme
               );
             })
             .catch((error) => {
@@ -1034,14 +1503,13 @@ document.addEventListener("DOMContentLoaded", () => {
    * @param {Object} data - The API response data.
    */
   function handleImageSelectorResponse(data) {
-    console.log("Image Selector API Response:", data);
     apiResponseData = data;
 
-    const loaderGifUrl = "https://plugin.mywpsite.org/Dots-Loader.gif";
+    const loaderGifUrl = "https://plugin.mywpsite.org/white-normal.gif";
     apiResponseData.data.forEach((selectorDetails) => {
       const selector = selectorDetails.selector;
       const element = document.querySelector(selector);
-      console.log("changing the loop for ", selector);
+
       if (!selector.isbackgroundimage) {
         if (element.tagName.toLowerCase() === "img") {
           if (!imageUrlData[selector]) {
@@ -1054,12 +1522,92 @@ document.addEventListener("DOMContentLoaded", () => {
           if (!imageUrlData[selector]) {
             imageUrlData[selector] = { [originalUrl]: "" };
           }
-          element.style.backgroundImage = `url(${loaderGifUrl})`;
+          element.style.backgroundImage = `url("https://plugin.mywpsite.org/Rectangle-white-bg%20-low-quality.gif")`;
         }
       }
     });
-    // Add any custom logic here if needed.
   }
+
+  // ────────────────────────────────────────────────────────────────────────────
+  // Step 4: retry any failures on demand
+  // ────────────────────────────────────────────────────────────────────────────
+  // window.addEventListener("message", (event) => {
+  //   if (event.data.type === "retryFailures") {
+  //     // pass along your token so fetches will auth
+  //     regenerateFailedImages(event.data.bearer_token);
+  //   }
+  // });
+
+  // /**
+  //  * Retry‐generate every failed image in imageFailureQueue, in parallel.
+  //  * @param {string} bearer_token
+  //  */
+  // async function regenerateFailedImages(bearer_token) {
+  //   if (!imageFailureQueue.length) return;
+
+  //   // copy & clear the queue so new failures go back into it
+  //   const failuresToRetry = imageFailureQueue.splice(0);
+  //   const newFailureQueue = [];
+
+  //   // run them all at once
+  //   await Promise.all(
+  //     failuresToRetry.map(async ({ selector, payload }) => {
+  //       try {
+  //         // 1) call the same endpoint you used before
+  //         let resp = await retryFetch(
+  //           () =>
+  //             fetch(`${API_BASE_URL}/get-image-url`, {
+  //               method: "POST",
+  //               headers: {
+  //                 "Content-Type": "application/json",
+  //                 Authorization: `Bearer ${bearer_token}`,
+  //               },
+  //               body: JSON.stringify(payload),
+  //             }),
+  //           payload
+  //         );
+  //         let data = await resp.json();
+
+  //         // 2) if still pending, poll until complete
+  //         if (data.status === "pending" && data.requestId) {
+  //           data = await pollForCompletedImage(payload, data.requestId);
+  //         }
+
+  //         // 3) if success—swap out the image in the DOM, update imageUrlData
+  //         if (data.status === "completed" && data.data.image_urls) {
+  //           const newUrl = data.data.image_urls;
+  //           const el = document.querySelector(selector);
+  //           if (el && el.tagName.toLowerCase() === "img") {
+  //             el.src = newUrl;
+  //             el.srcset = newUrl;
+  //           } else if (el) {
+  //             el.style.backgroundImage = `url(${newUrl})`;
+  //           }
+  //           // remember old → new
+  //           const oldUrl = Object.keys(imageUrlData[selector] || {})[0] || "";
+  //           imageUrlData[selector] = { [oldUrl]: newUrl };
+  //         } else {
+  //           // otherwise push it back into failures
+  //           newFailureQueue.push({ selector, payload, error: data });
+  //         }
+  //       } catch (err) {
+  //         newFailureQueue.push({ selector, payload, error: err });
+  //       }
+  //     })
+  //   );
+
+  //   // 4) restore any left‐over failures
+  //   imageFailureQueue.push(...newFailureQueue);
+
+  //   // 5) finally, send the updated results back up
+  //   flushResultsToParent({
+  //     pageName: globalPageName,
+  //     cleanedContent: globalCleaned,
+  //     imageUrlMap: imageUrlData,
+  //     failureQueue: imageFailureQueue,
+  //     isGenerating: false,
+  //   });
+  // }
 
   /* -------------------------------------------------------------------------
    * STEP 4: Other Functionalities (Logo Updates, Scrolling, CSS Variables, etc.)
@@ -1072,7 +1620,6 @@ document.addEventListener("DOMContentLoaded", () => {
       document.body.insertAdjacentHTML("beforeend", bodyContent);
     }
     if (event.data.type === "businessName") {
-      console.log("businessName event triggered");
       const businessName = event.data.text;
       const darkTheme = event.data.dark_theme ?? 0;
       updateLogoText("#template-logo", businessName, darkTheme);
@@ -1082,15 +1629,16 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     if (event.data.type === "changeLogo") {
       const logoUrl = event.data.logoUrl;
-      console.log("changeLogo event triggered");
+
       if (logoUrl && logoUrl.trim()) {
         logoUpdated = true;
         updateLogoImage("#template-logo", logoUrl);
         updateLogoImage("#footer-logo", logoUrl);
-      } else {
-        removeLogoAndAddBusinessName("#template-logo", event.data.businessName);
-        removeLogoAndAddBusinessName("#footer-logo", event.data.businessName);
       }
+      // } else {
+      //   removeLogoAndAddBusinessName("#template-logo", event.data.businessName);
+      //   removeLogoAndAddBusinessName("#footer-logo", event.data.businessName);
+      // }
     }
   });
 
@@ -1139,11 +1687,16 @@ document.addEventListener("DOMContentLoaded", () => {
     const existingText = parentElement.querySelector("#logo-text");
     if (existingText) existingText.remove();
     const logoElement = parentElement.querySelector("img:last-of-type");
-    if (logoElement) {
+    if (existingText) existingText.remove();
+
+    const logoContainer = parentElement.querySelector(
+      "div > div > a > div > div"
+    );
+    if (logoContainer) {
       logoElement.src = logoUrl;
       logoElement.srcset = `${logoUrl} 1x, ${logoUrl} 2x`;
       logoElement.sizes = "(max-width: 319px) 100vw, 319px";
-      logoElement.style.display = "block";
+      logoElement.style.setProperty("display", "block", "important");
       logoElement.alt = "Uploaded Logo";
     } else {
       console.warn(`Logo element not found in ${containerSelector}.`);
@@ -1202,7 +1755,6 @@ document.addEventListener("DOMContentLoaded", () => {
           `;
         document.head.appendChild(styleTag);
       } else if (event.data.type === "changeGlobalColors") {
-        console.log("changeGlobalColors event triggered on custom log");
         updateCSSVariables(event.data);
       } else {
         console.log("Logo elements not found to change the size.");
@@ -1389,21 +1941,22 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // Listen for a specific "changeLogo" message to update the logo image.
-  window.addEventListener("message", (event) => {
-    if (event.data.type === "changeLogo") {
-      const logoUrl = event.data.logoUrl;
-      const logoElement = document.querySelector(
-        "#template-logo > div > div > a > div > div > img"
-      );
-      if (logoElement) {
-        logoElement.src = logoUrl;
-        logoElement.srcset = `${logoUrl} 319w, ${logoUrl} 300w`;
-        logoElement.sizes = "(max-width: 319px) 100vw, 319px";
-      } else {
-        console.warn("Logo element not found.");
-      }
-    }
-  });
+  // window.addEventListener("message", (event) => {
+  //   if (event.data.type === "changeLogo") {
+  //     const logoUrl = event.data.logoUrl;
+  //     const logoElement = document.querySelector(
+  //       "#template-logo > div > div > a > div > div > img"
+  //     );
+  //     if (logoElement) {
+  //       logoElement.src = logoUrl;
+  //       logoElement.srcset = `${logoUrl} 319w, ${logoUrl} 300w`;
+  //       logoElement.sizes = "(max-width: 319px) 100vw, 319px";
+  //       logoElement.style.setProperty("display", "block", "important");
+  //     } else {
+  //       console.warn("Logo element not found.");
+  //     }
+  //   }
+  // });
 
   // Another listener for updating contact details with a slightly different mapping.
   window.addEventListener("message", (event) => {

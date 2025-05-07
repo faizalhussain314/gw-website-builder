@@ -8,10 +8,12 @@ import { RootState } from "../../../store/store";
 import { sendIframeMessage } from "../../../core/utils/sendIframeMessage.utils";
 import UpgradeWords from "../../component/dialogs/UpgradeWords";
 import PlanExpired from "../../component/dialogs/PlanExpired";
+import SomethingWrong from "../../component/dialogs/SomethingWrong";
 
 function CustomDesign() {
   const [parsedTemplateList, setParsedTemplateList] = useState(null);
   const [planExpired, setPlanExpired] = useState(false);
+  const [issue, setIssue] = useState(false);
   const dispatch = useDispatch();
   const { getDomainFromEndpoint } = useDomainEndpoint();
   const businessName = useSelector(
@@ -44,7 +46,10 @@ function CustomDesign() {
 
         if (result.logo) {
           sendIframeMessage("changeLogo", { logoUrl: result.logo });
+        } else {
+          sendIframeMessage("bussinessName", businessName);
         }
+        return;
       }
 
       sendIframeMessage("bussinessName", businessName);
@@ -78,7 +83,7 @@ function CustomDesign() {
       if (result && result.templateList) {
         const parsedData = JSON.parse(result.templateList);
         setParsedTemplateList(parsedData);
-        console.log("this is parsed Data", parsedData);
+
         dispatch(setTemplateList(parsedData));
       }
     } catch (error) {
@@ -98,9 +103,11 @@ function CustomDesign() {
     <CustomizeLayout
       setLimitReached={setLimitReached}
       setPlanExpired={setPlanExpired}
+      setIssue={setIssue}
     >
       {limitReached && <UpgradeWords />}
       {planExpired && <PlanExpired />}
+      {issue && <SomethingWrong />}
       {/* Pass setter */}
       {currentUrl ? (
         <iframe

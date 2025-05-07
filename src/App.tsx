@@ -176,7 +176,7 @@ const App = () => {
         // Fetch token only if username exists
         await fetchWpToken(dispatch, getDomainFromEndpoint);
       } else {
-        console.log("Username is empty, skipping token fetch.");
+        console.error("Username is empty, skipping token fetch.");
       }
     };
 

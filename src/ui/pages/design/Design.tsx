@@ -24,16 +24,19 @@ import Popup from "../../component/dialogs/Popup";
 import StyleRemoveWarning from "../../component/dialogs/StyleRemoveWarning";
 import useStoreContent from "../../../hooks/useStoreContent ";
 import UpgradePopup from "../../component/dialogs/UpgradePopup";
-import arrow from "../../../assets/arrow.svg";
 import info from "../../../assets/icons/info.svg";
 import { Tooltip } from "@mui/material";
 import { handleEnterKey } from "../../../core/utils/handleEnterKey";
 import { Template } from "../../../types/design.type";
+import SomethingWrong from "../../component/dialogs/SomethingWrong";
 
 const API_URL = import.meta.env.VITE_API_BACKEND_URL;
 
 function Design() {
   const { activeIndex, handleBoxClick } = useTemplateList();
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [issue, setIssue] = useState(false);
 
   const [templateList, settemplateList] = useState<Template[]>([]);
   const businessName = useSelector(
@@ -172,6 +175,7 @@ function Design() {
   //   fetchTemplates();
   //   // }
   // }, [debouncedValue, dispatch]);
+
   const applyTemplateSelection = async (
     index: number,
     template: Template
@@ -193,8 +197,7 @@ function Design() {
       console.error("Error saving template to backend:", error);
     }
 
-    // Call handleBoxClick to ensure the state is properly updated
-    handleBoxClick(index, template, template.id); // Restore handleBoxClick usage
+    handleBoxClick(index, template, template.id);
   };
 
   const fetchSelectedTemplate = useCallback(async () => {
@@ -323,16 +326,7 @@ function Design() {
     fetchSelectedTemplate,
   ]);
 
-  // Handle template selection
-  // const handleTemplateSelect = (template) => {
-  //   setSelectedTemplate(template); // Store the selected template in state
-  //   console.log("Selected Template:", template); // You can use this state later
-  // };
   const handleContinue = () => {
-    // if (templateChange) {
-    //   setWarning(true);
-    //   return;
-    // }
     if (!activeTemplate?.name) {
       setshowValidationError(true);
     } else {
@@ -371,11 +365,7 @@ function Design() {
     } else {
       console.error("Token not available, waiting for Redux update.");
     }
-  }, [fetchTemplateList, wp_token]); // Depend on wp_token from Redux
-
-  // const handlePopOverClose = () =>{
-
-  // }
+  }, [fetchTemplateList, wp_token]);
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLFormElement>) => {
     handleEnterKey({ event, callback: handleContinue }); // Use your utility function
@@ -404,6 +394,8 @@ function Design() {
           onClose={() => setUpgradepopup(false)}
         />
       )}
+
+      {issue && <SomethingWrong />}
 
       <div className="flex flex-col justify-between h-full p-10">
         <div className="flex flex-col w-full h-full mx-auto overflow-x-hidden">
@@ -535,7 +527,10 @@ function Design() {
           <div className="flex items-center pt-10 gap-x-4">
             <Link to={"/contact"}>
               <button className="previous-btn flex px-[10px] py-[15px] text-base text-white font-medium sm:mt-2 rounded-md w-[150px] gap-3 justify-center">
-                <img src={arrow} alt="arrow-icon" />
+                <img
+                  src="https://plugin.mywpsite.org/arrow.svg"
+                  alt="arrow-icon"
+                />
                 Previous
               </button>
             </Link>

@@ -36,6 +36,7 @@ type Props = {
   afterContact: boolean;
   showGwLoader: boolean;
   generatedPageName: string[];
+  planExpired: boolean;
 };
 
 const PageSelector: React.FC<Props> = ({
@@ -55,13 +56,13 @@ const PageSelector: React.FC<Props> = ({
   afterContact,
   showGwLoader,
   generatedPageName,
+  planExpired,
 }) => {
   const [showButtons, setShowButton] = useState(true);
   const showWarningToast = () => {
-    toast.warn("Please wait while content is being generated.");
+    toast.warn("Please wait while we are generating.");
   };
   const showLoadingToast = () => {
-    console.log("value of isLoading", isLoading);
     toast.warn("please wait until the page loads");
   };
   const selectedPagesCount = pages.filter((page) => page.selected).length;
@@ -136,14 +137,27 @@ const PageSelector: React.FC<Props> = ({
 
     const isPageGenerated = generatedPageName.includes(currentPage.name);
 
+    const computeStatus = (page: Page): string => {
+      if (newSelectedValue) {
+        // user is ticking the box
+        if (isPageGenerated) return "Generated";
+        if (page.status === "Skipped" || !page.status) return "Added";
+        return page.status;
+      }
+
+      // user is **un‑ticking** the box
+      // ‑‑ keep "Generated" as‑is, clear only "Added" (or whatever else you want)
+      if (page.status === "Added") return "";
+      return page.status; // Generated (and everything else) stays
+    };
+
     if (["blog", "contact", "contact-us"].includes(slug)) {
       const updatedPages = pages.map((page) =>
         page.slug === slug
           ? {
               ...page,
               selected: newSelectedValue,
-              status:
-                currentPage.status && currentPage.status !== "" ? "" : "Added",
+              status: computeStatus(page),
             }
           : page
       );
@@ -153,8 +167,7 @@ const PageSelector: React.FC<Props> = ({
       dispatch(
         updateReduxPage({
           name: currentPage.name,
-          status:
-            currentPage.status && currentPage.status !== "" ? "" : "Added",
+          status: computeStatus(currentPage),
           selected: newSelectedValue,
         })
       );
@@ -166,15 +179,7 @@ const PageSelector: React.FC<Props> = ({
         ? {
             ...page,
             selected: newSelectedValue,
-            status: newSelectedValue
-              ? isPageGenerated
-                ? "Generated"
-                : page.status === "Skipped" || !page.status
-                ? "Added"
-                : page.status
-              : page.status === "Generated" || page.status === "Added"
-              ? "" // Reset status to "" when deselected and status is "Generated" or "Added"
-              : page.status,
+            status: computeStatus(currentPage),
           }
         : page
     );
@@ -184,15 +189,7 @@ const PageSelector: React.FC<Props> = ({
     dispatch(
       updateReduxPage({
         name: currentPage.name,
-        status: newSelectedValue
-          ? isPageGenerated
-            ? "Generated"
-            : currentPage.status === "Skipped" || !currentPage.status
-            ? "Added"
-            : currentPage.status
-          : currentPage.status === "Generated" || currentPage.status === "Added"
-          ? ""
-          : currentPage.status,
+        status: computeStatus(currentPage),
         selected: newSelectedValue,
       })
     );
@@ -275,6 +272,8 @@ const PageSelector: React.FC<Props> = ({
               } else if (isLoading) {
                 showLoadingToast();
                 return;
+              } else if (planExpired) {
+                return;
               } else {
                 setShowButton(true);
                 handlePageClick(page.name);
@@ -296,7 +295,12 @@ const PageSelector: React.FC<Props> = ({
                     className="mr-4 flex items-center w-4 h-4"
                     checked={page.selected}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                      if (isContentGenerating || isLoading || showGwLoader) {
+                      if (
+                        isContentGenerating ||
+                        isLoading ||
+                        showGwLoader ||
+                        planExpired
+                      ) {
                         return;
                       }
                       e.stopPropagation();
@@ -345,6 +349,8 @@ const PageSelector: React.FC<Props> = ({
                   onClick={() => {
                     if (isContentGenerating) {
                       showWarningToast();
+                      return;
+                    } else if (planExpired) {
                       return;
                     } else {
                       handlePageClick(page.name);
@@ -462,26 +468,42 @@ const PageSelector: React.FC<Props> = ({
                       <div className="w-full flex items-center gap-4">
                         <button
                           className={`bg-white text-[#1E2022] hover:bg-palatinate-blue-600 hover:text-white rounded px-3 py-1.5 w-full text-[14px] font-[500] ${
-                            !(isContentGenerating || isLoading || showGwLoader)
+                            !(
+                              isContentGenerating ||
+                              isLoading ||
+                              showGwLoader ||
+                              planExpired
+                            )
                               ? "opacity-100"
                               : "opacity-50 cursor-not-allowed"
                           }`}
                           onClick={handleGeneratePage}
                           disabled={
-                            isContentGenerating || isLoading || showGwLoader
+                            isContentGenerating ||
+                            isLoading ||
+                            showGwLoader ||
+                            planExpired
                           } // Disable if generating or loading
                         >
                           Generate Page
                         </button>
                         <button
                           className={`bg-white text-[#1E2022] hover:bg-palatinate-blue-600 hover:text-white rounded px-3 py-1.5 w-full text-[14px] font-[500] ${
-                            !(isContentGenerating || isLoading || showGwLoader)
+                            !(
+                              isContentGenerating ||
+                              isLoading ||
+                              showGwLoader ||
+                              planExpired
+                            )
                               ? "opacity-100"
                               : "opacity-50 cursor-not-allowed"
                           }`}
                           onClick={() => handleSkipClick(page.name)}
                           disabled={
-                            isContentGenerating || isLoading || showGwLoader
+                            isContentGenerating ||
+                            isLoading ||
+                            showGwLoader ||
+                            planExpired
                           } // Disable if generating or loading
                         >
                           Skip Page
@@ -511,11 +533,18 @@ const PageSelector: React.FC<Props> = ({
                     } else if (isLoading) {
                       showLoadingToast();
                       return;
+                    } else if (planExpired) {
+                      return;
                     } else {
-                      handleImportSelectedPage(); // You may need to pass the page data if necessary
+                      handleImportSelectedPage();
                     }
                   }}
-                  disabled={isContentGenerating || isLoading || showGwLoader}
+                  disabled={
+                    isContentGenerating ||
+                    isLoading ||
+                    showGwLoader ||
+                    planExpired
+                  }
                 >
                   Import Selected {buttonText}{" "}
                   <span>
@@ -564,11 +593,18 @@ const PageSelector: React.FC<Props> = ({
                       showLoadingToast();
                     } else if (isContentGenerating || showGwLoader) {
                       showWarningToast();
+                    } else if (planExpired) {
+                      return;
                     } else {
                       handleNext(currentPage.name);
                     }
                   }}
-                  disabled={isContentGenerating || isLoading || showGwLoader}
+                  disabled={
+                    isContentGenerating ||
+                    isLoading ||
+                    showGwLoader ||
+                    planExpired
+                  }
                 >
                   Keep &amp; Next
                 </button>
@@ -579,7 +615,10 @@ const PageSelector: React.FC<Props> = ({
                       ? "opacity-100"
                       : "opacity-50"
                   } ${
-                    isContentGenerating || isLoading || showGwLoader
+                    isContentGenerating ||
+                    isLoading ||
+                    showGwLoader ||
+                    planExpired
                       ? "opacity-50"
                       : ""
                   } `}
@@ -587,7 +626,12 @@ const PageSelector: React.FC<Props> = ({
                     e.stopPropagation(); // Prevent triggering the main onClick
                     handleGeneratePage();
                   }}
-                  disabled={isContentGenerating || isLoading || showGwLoader}
+                  disabled={
+                    isContentGenerating ||
+                    isLoading ||
+                    showGwLoader ||
+                    planExpired
+                  }
                 >
                   Generate Page
                 </button>
@@ -629,17 +673,22 @@ const PageSelector: React.FC<Props> = ({
                 ? "opacity-100"
                 : "opacity-50"
             } ${
-              isContentGenerating || isLoading || showGwLoader
+              isContentGenerating || isLoading || showGwLoader || planExpired
                 ? "opacity-50"
                 : ""
             }`}
             ref={offerButtonRef}
             onClick={() => {
-              if (!isContentGenerating && isHomeGenerated) {
+              if ((!isContentGenerating && isHomeGenerated) || planExpired) {
                 handleImportSelectedPage();
               }
             }}
-            disabled={!isHomeGenerated || isContentGenerating || showGwLoader}
+            disabled={
+              !isHomeGenerated ||
+              isContentGenerating ||
+              showGwLoader ||
+              planExpired
+            }
           >
             <span className="flex items-center gap-1.5 w-[80%] mx-auto justify-center text-xs mt-1 underline text-[#165CFF]">
               Import Selected {buttonText}{" "}

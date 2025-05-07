@@ -21,6 +21,7 @@ import {
 } from "../../../Slice/userSlice";
 import ThreeDotLoader from "../../component/loader/ThreeDotLoader.tsx";
 import ApiErrorPopup from "../../component/dialogs/ApiErrorPopup.tsx";
+import SomethingWrong from "../../component/dialogs/SomethingWrong.tsx";
 
 function Category() {
   const dispatch = useDispatch();
@@ -41,6 +42,8 @@ function Category() {
   const [mainLoader, setMainLoader] = useState(false);
   const [apiError, setApiError] = useState(false);
   const wp_token = useSelector((state: RootState) => state.user.wp_token);
+  const [issue, setIssue] = useState(false);
+  const originalCategoryRef = useRef<string | null>(selectedCategory);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -95,17 +98,26 @@ function Category() {
     );
 
     if (isValidCategory) {
-      if (selectedCategory == inputValue) {
+      // if (selectedCategory == inputValue) {
+      //   navigate("/name");
+      //   return;
+      // }
+
+      if (inputValue.trim() === (originalCategoryRef.current || "").trim()) {
         navigate("/name");
+        return;
       }
+
       setError(null);
       setLoading(true);
       try {
         await updateCategoryDetails(inputValue, getDomainFromEndpoint);
         setLoading(false);
+
         navigate("/name");
       } catch (err) {
         console.error("Error updating category details:", err);
+        setIssue(true);
         setLoading(false);
         setError("Failed to update category details. Please try again.");
       }
@@ -116,13 +128,14 @@ function Category() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(e.target.value.trimStart());
-    handleCategoryChange(e.target.value.trimStart());
+    // handleCategoryChange(e.target.value.trimStart());
     setShowDropdown(true);
   };
 
   const handleSelect = (category: string) => {
     setInputValue(category);
     handleCategoryChange(category);
+
     setShowDropdown(false);
   };
 
@@ -146,6 +159,7 @@ function Category() {
       }
     } catch (error) {
       console.error("Error checking site count:", error);
+      setIssue(true);
     }
   }, [setLimitReached, getDomainFromEndpoint]);
 
@@ -191,6 +205,7 @@ function Category() {
       }
     } catch (error) {
       console.error("Error fetching user details:", error);
+      setIssue(true);
     }
   }, [dispatch, getDomainFromEndpoint]);
   const sendTokenAndEmailToBackend = useCallback(
@@ -200,13 +215,11 @@ function Category() {
           "wp-json/custom/v1/user-details-react"
         );
 
-        const response = await axios.post(endpoint, {
+        await axios.post(endpoint, {
           email: email,
           wp_token: wp_token,
           fe_token: fe_token,
         });
-
-        console.log(response);
 
         await fetchUserDetails();
       } catch (error) {
@@ -227,8 +240,6 @@ function Category() {
       if (wp_token && fe_token && email) {
         setMainLoader(true);
         sendTokenAndEmailToBackend(wp_token, fe_token, email);
-      } else {
-        console.error("Missing token or email in URL");
       }
     }
   }, [sendTokenAndEmailToBackend]);
@@ -242,6 +253,7 @@ function Category() {
   return (
     <MainLayout>
       {limitReached && <LimitReachedPopup onClose={handleClose} />}
+      {issue && <SomethingWrong />}
 
       {mainLoader && <ThreeDotLoader />}
       {apiError && <ApiErrorPopup alertType="userDetails" />}

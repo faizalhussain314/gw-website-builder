@@ -1,5 +1,4 @@
 import { useNavigate } from "react-router-dom";
-import aibuilder from "../../../assets/aibuilder.svg";
 import IntroLayout from "../../Layouts/IntroLayout";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../store/store";
@@ -51,7 +50,11 @@ function Welcome() {
         </div>
         {/* 2 */}
         <div className="flex items-center h-full">
-          <img src={aibuilder} alt="" className="w-[461px] h-[449px]" />
+          <img
+            src="https://plugin.mywpsite.org/aibuilder.svg"
+            alt=""
+            className="w-[461px] h-[449px]"
+          />
         </div>
       </div>
     </IntroLayout>

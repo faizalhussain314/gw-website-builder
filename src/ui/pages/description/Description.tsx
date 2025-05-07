@@ -16,6 +16,8 @@ import UpgradePopup from "../../component/dialogs/UpgradePopup";
 import arrow from "../../../assets/arrow.svg";
 import { handleEnterKey } from "../../../core/utils/handleEnterKey";
 import { useDebounce } from "use-debounce";
+import SomethingWrong from "../../component/dialogs/SomethingWrong";
+import PlanExpired from "../../component/dialogs/PlanExpired";
 
 function Description() {
   const dispatch = useDispatch();
@@ -29,10 +31,12 @@ function Description() {
 
   const [description1, setDescription1] = useState<string>("");
   const [description2, setDescription2] = useState<string>("");
+  const [planExpired, setPlanExpired] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loader1, setLoader1] = useState<boolean>(false);
   const [loader2, setLoader2] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [issue, setIssue] = useState(false);
 
   const templateList = useSelector(
     (state: RootState) => state.userData.templateList
@@ -41,6 +45,7 @@ function Description() {
   const [description1Error, setDescription1Error] = useState<boolean>(false);
   const [description2Error, setDescription2Error] = useState<boolean>(false);
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [debouncedDescription1] = useDebounce(description1, 500);
   const [debouncedDescription2] = useDebounce(description2, 500);
   const reduxDescription1 = useSelector(
@@ -81,6 +86,7 @@ function Description() {
     const target = e.target as HTMLTextAreaElement;
     const newValue = target.value.trimStart();
     setDescription1(newValue);
+    dispatch(setDescriptionOne(newValue));
   };
 
   const handleChangeDescription2 = (
@@ -89,6 +95,7 @@ function Description() {
     const target = e.target as HTMLTextAreaElement;
     const newValue = target.value.trimStart();
     setDescription2(newValue);
+    dispatch(setDescriptionTwo(newValue));
   };
 
   // Remove these useEffects
@@ -110,7 +117,7 @@ function Description() {
       };
       fetchInitialDescriptions();
     }
-  }, [dispatch, getDomainFromEndpoint, reduxDescription1, reduxDescription2]);
+  }, []);
 
   useEffect(() => {
     if (!loader2 && debouncedDescription2) {
@@ -165,9 +172,18 @@ function Description() {
       if (!response?.data?.status) {
         setwordLimitError(true);
         return;
+      } else if (
+        response?.data?.status === "pending" ||
+        response?.data?.status === "canceled" ||
+        response?.data?.status === "overdue" ||
+        response?.data?.status === "expired"
+      ) {
+        setPlanExpired(true);
+        return;
       }
     } catch (error) {
       console.error("Error checking word count:", error);
+      setIssue(true);
       return;
     }
 
@@ -295,10 +311,6 @@ function Description() {
   };
 
   const setReduxValue = async () => {
-    // console.log("values", setLoader1, setLoader2);
-    // if (setLoader1 || setLoader2) {
-    //   return;
-    // }
     let errorMessage = "";
 
     if (!description1.trim() && !description2.trim()) {
@@ -378,8 +390,14 @@ function Description() {
           }}
         />
       )}
+      {planExpired && (
+        <div className="fixed inset-0 flex items-center justify-center  backdrop-blur-xl bg-opacity-50 z-50">
+          <PlanExpired />
+        </div>
+      )}
       <div className="bg-[#F9FCFF] h-full flex flex-col justify-between overflow-hidden ">
         <div className="h-full px-10 pt-10 overflow-x-hidden overflow-y-auto">
+          {issue && <SomethingWrong />}
           <div className="flex flex-col">
             <h1 className="text-txt-black-600 font-semibold text-3xl font-[inter]">
               What is {businessName}? Tell us more about it.

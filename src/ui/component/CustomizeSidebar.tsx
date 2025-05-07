@@ -1,6 +1,4 @@
 import React, { useState, useEffect, useRef } from "react";
-import GravityWriteLogo from "../../assets/logo.svg";
-// import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { setFont, setColor, setWidth } from "../../Slice/activeStepSlice";
@@ -24,7 +22,8 @@ import { nextPage } from "../../core/utils/customizesidebar/pageUtils";
 const CustomizeSidebar: React.FC<{
   setLimitReached: React.Dispatch<React.SetStateAction<boolean>>;
   setPlanExpired: React.Dispatch<React.SetStateAction<boolean>>;
-}> = ({ setLimitReached, setPlanExpired }) => {
+  setIssue: React.Dispatch<React.SetStateAction<boolean>>;
+}> = ({ setLimitReached, setPlanExpired, setIssue }) => {
   const [selectedColor, setSelectedColor] = useState<SelectedColor>({
     primary: "",
     secondary: "",
@@ -184,6 +183,7 @@ const CustomizeSidebar: React.FC<{
       setWordCountLoader,
       setLimitReached,
       setPlanExpired,
+      setIssue,
       navigate
     );
   };
@@ -252,7 +252,7 @@ const CustomizeSidebar: React.FC<{
     <div className="bg-white w-full min-h-screen h-screen z-10 border-2 flex flex-col justify-between">
       <div className="flex items-center justify-between p-4">
         <img
-          src={GravityWriteLogo}
+          src="https://plugin.mywpsite.org/logo.svg"
           alt="Gravity Write Logo"
           className="h-10 cursor-pointer w-44"
         />

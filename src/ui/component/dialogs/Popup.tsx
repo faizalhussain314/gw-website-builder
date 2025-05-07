@@ -1,7 +1,6 @@
 import React from "react";
 import CloseIcon from "@mui/icons-material/Close";
 import { Link } from "react-router-dom";
-import partyImoji from "../../../assets/partyemoji.svg";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../store/store";
 
@@ -28,7 +27,7 @@ const Popup: React.FC<PopupProps> = ({
         <div className="flex items-start justify-between ">
           <h2 className="text-2xl font-semibold inline-flex items-center w-full gap-2.5 mb-3">
             Congratulations, you’re almost there!
-            <img src={partyImoji} />
+            <img src="https://plugin.mywpsite.org/partyemoji.svg" />
           </h2>
           <button
             onClick={onClose}

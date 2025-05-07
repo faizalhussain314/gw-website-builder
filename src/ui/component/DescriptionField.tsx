@@ -44,10 +44,7 @@ const DescriptionField: React.FC<DescriptionFieldProps> = ({
           className="flex gap-2 text-palatinate-blue-600 hover:text-palatinate-blue-800"
           onClick={onAIWrite}
         >
-          <img
-            src="https://tours.mywpsite.org/wp-content/uploads/2024/08/sparkle.svg"
-            alt="sparkle"
-          />
+          <img src="https://plugin.mywpsite.org/sparkle.svg" alt="sparkle" />
           <span className="text-sm font-normal transition duration-150 ease-in-out">
             Write Using AI
           </span>

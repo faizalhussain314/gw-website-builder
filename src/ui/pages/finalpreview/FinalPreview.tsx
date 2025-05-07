@@ -6,7 +6,6 @@ import React, {
   useMemo,
 } from "react";
 import axios from "axios";
-import GravityWriteLogo from "../../../assets/logo.svg";
 import MenuIcon from "../../../assets/menu.svg";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../../../store/store";
@@ -17,7 +16,6 @@ import { useNavigate } from "react-router-dom";
 import ViewModeSwitcher from "../../component/finalpreview/ViewModeSwitcher";
 import PageSelector from "../../component/finalpreview/PageSelector";
 import CloseIcon from "@mui/icons-material/Close";
-import popupimg from "../../../assets/popupimg.svg";
 import { Page } from "../../../types/page.type";
 import PlumberPageSkeleton from "../../component/PlumberPageSkeleton ";
 import GwLoader from "../../component/loader/gwLoader";
@@ -44,6 +42,7 @@ import {
 } from "../../../types/generatedContent.type.ts";
 import { checkImageCount } from "../../../infrastructure/api/wordpress-api/final-preview/checkImageCount.api.ts";
 import ImagLimitWarning from "../../component/dialogs/ImageLimitWarning.tsx";
+import SomethingWrong from "../../component/dialogs/SomethingWrong.tsx";
 
 const Mode = import.meta.env.VITE_MODE;
 
@@ -103,9 +102,11 @@ const FinalPreview: React.FC = () => {
     useState(false);
   const [isImportLoading, setIsImportLoading] = useState(false);
   const [updateCountError, setupdateCountError] = useState(false);
+
   const contactDetails = useSelector(
     (state: RootState) => state.userData.contactform
   );
+  const [issue, setIssue] = useState(false);
   const currentUrl =
     useSelector(
       (state: RootState) => state.userData?.templateList?.pages[0]?.iframe_url
@@ -165,13 +166,13 @@ const FinalPreview: React.FC = () => {
   };
 
   const showWarningToast = () => {
-    toast.warn("Please wait while content is being generated.");
+    toast.warn("Please wait while we are generating.");
   };
 
   const showSuccessToast = useCallback(() => {
     setIsContentGenerating(false);
     setIsLoading(false);
-    toast.success("Content generation complete!");
+    toast.success("generation complete!");
 
     updatePageStatus(selectedPage!, "Generated", true);
   }, [selectedPage]);
@@ -223,6 +224,7 @@ const FinalPreview: React.FC = () => {
   const storeHtmlContent = useCallback(
     async (pageName: string, htmlContent: string) => {
       try {
+        if (issue) return;
         const endpoint = getDomainFromEndpoint(
           "/wp-json/custom/v1/save-generated-html-data"
         );
@@ -230,8 +232,6 @@ const FinalPreview: React.FC = () => {
           console.error("Endpoint is not available.");
           return;
         }
-
-        console.log("event triggered store content event triggered from api");
 
         await axios.post(endpoint, {
           version_name: "5.5",
@@ -243,7 +243,7 @@ const FinalPreview: React.FC = () => {
         console.error("Error storing HTML content:", error);
       }
     },
-    [getDomainFromEndpoint, templateName]
+    [getDomainFromEndpoint, issue, templateName]
   );
 
   const updateIframeSrc = useCallback(
@@ -353,8 +353,6 @@ const FinalPreview: React.FC = () => {
           "/wp-json/custom/v1/update-count"
         );
 
-        console.log("storeoldnew started");
-
         if (!updateCountEndpoint) {
           console.error("Update count endpoint is not available.");
           return;
@@ -367,7 +365,7 @@ const FinalPreview: React.FC = () => {
           sitecount: 0,
           is_type: "words",
         });
-        console.log("updateResponse.status", updateResponse.status);
+
         if (updateResponse.status !== 200) {
           setapiIssue(true);
           console.error(
@@ -386,31 +384,24 @@ const FinalPreview: React.FC = () => {
           return;
         }
 
-        const saveResponse = await axios.post(saveContentEndpoint, {
+        await axios.post(saveContentEndpoint, {
           version_name: "5.5",
           page_name: pageName,
           template_name: templateName,
-          json_content:
-            pageName === "Home" ||
-            pageName === "About" ||
-            pageName === "About Us" ||
-            pageName === "Services" ||
-            pageName === "Service"
-              ? jsonContent
-              : "",
+          json_content: jsonContent,
         });
 
-        if (saveResponse.status === 200) {
-          console.log(
-            "Old and new content stored successfully:",
-            saveResponse.data
-          );
-        } else {
-          console.error(
-            "Failed to store old and new content:",
-            saveResponse.data
-          );
-        }
+        // if (saveResponse.status === 200) {
+        //   console.log(
+        //     "Old and new content stored successfully:",
+        //     saveResponse.data
+        //   );
+        // } else {
+        //   console.error(
+        //     "Failed to store old and new content:",
+        //     saveResponse.data
+        //   );
+        // }
       } catch (error) {
         setapiIssue(true);
         console.error(
@@ -433,7 +424,7 @@ const FinalPreview: React.FC = () => {
     const currentPageIndex = pages.findIndex(
       (page) => page.name === currentPage
     );
-    console.log("currentPage", currentPage);
+
     const arrayVal = rearrangeArray(pages, currentPageIndex);
 
     if (arrayVal?.length > 0) {
@@ -613,7 +604,6 @@ const FinalPreview: React.FC = () => {
       updateIframeSrc(existingContent);
     } else if (selectedPage && !generatedPage[selectedPage]) {
       setwordCountAlert(false);
-      console.log("selectedpage", selectedPage, templateName);
 
       if (!selectedPage && !templateName) {
         return;
@@ -657,26 +647,16 @@ const FinalPreview: React.FC = () => {
                 setapiIssue
               );
 
-              console.log("imageCount", imageCount);
-
               if (!imageCount) {
                 setIsLoading(false);
 
-                console.log(
-                  "image count is exceeded",
-                  imageCount,
-                  isContentGenerating,
-                  isLoading,
-                  showGwLoader
-                );
-
                 setIsContentGenerating(false);
+                setIsLoading(false);
+                setShowGwLoader(false);
 
                 setshowImageWarning(true);
 
                 return;
-              } else {
-                console.log("image count was available");
               }
               const iframe = iframeRef.current;
               const currentPage = pages.find(
@@ -699,6 +679,7 @@ const FinalPreview: React.FC = () => {
                     secondaryColor:
                       Color.secondary || initialColor.secondaryColor,
                     stagging: Mode === "staging" ? true : false,
+                    dark_theme: templateList.dark_theme,
                   },
                   "*"
                 );
@@ -739,6 +720,7 @@ const FinalPreview: React.FC = () => {
             secondaryColor: Color.secondary || initialColor.secondaryColor,
             stagging: Mode === "staging" ? true : false,
             color: Color,
+            dark_theme: templateList.dark_theme,
           },
           "*"
         );
@@ -763,7 +745,9 @@ const FinalPreview: React.FC = () => {
 
     if (existingContent) {
       updateIframeSrc(existingContent[0]);
-
+      if (showImageWarning) {
+        setshowImageWarning(false);
+      }
       setIsPageGenerated(true);
       setShowGwLoader(false);
     } else {
@@ -801,9 +785,9 @@ const FinalPreview: React.FC = () => {
 
         dispatch(
           updateReduxPage({
-            name: updatedPages[currentPageIndex].name, // Page name
-            status: "Generated", // Mark as generated
-            selected: true, // Set as selected
+            name: updatedPages[currentPageIndex].name,
+            status: "Generated",
+            selected: true,
           })
         );
       } else if (
@@ -867,9 +851,9 @@ const FinalPreview: React.FC = () => {
           updatedPages[currentPageIndex].selected = true;
           dispatch(
             updateReduxPage({
-              name: updatedPages[currentPageIndex].name, // Page name
-              status: "Added", // Mark as Added
-              selected: true, // Set as selected
+              name: updatedPages[currentPageIndex].name,
+              status: "Added",
+              selected: true,
             })
           );
         } else if (currentPages[currentPageIndex].status == "Added") {
@@ -877,9 +861,9 @@ const FinalPreview: React.FC = () => {
           updatedPages[currentPageIndex].selected = false;
           dispatch(
             updateReduxPage({
-              name: updatedPages[currentPageIndex].name, // Page name
-              status: "", // Mark as Added
-              selected: false, // Set as not selected
+              name: updatedPages[currentPageIndex].name,
+              status: "",
+              selected: false,
             })
           );
         }
@@ -928,11 +912,6 @@ const FinalPreview: React.FC = () => {
             iframe.src = `${iframeSrc}/${nextPageSlug}`;
           }
         }
-        // const iframe: null | HTMLIFrameElement = iframeRef.current;
-        // const nextPageSlug = updatedPages[nextPageIndex].slug;
-        // if (iframe) {
-        //   iframe.src = `${iframeSrc}/${nextPageSlug}`;
-        // }
       }
     }
   };
@@ -999,14 +978,19 @@ const FinalPreview: React.FC = () => {
         );
 
         if (!imageCount) {
-          console.log("image count is exeed");
+          console.error("image count is exeed");
+
+          if (isContentGenerating || isLoading || showGwLoader) {
+            setIsContentGenerating(false);
+            setIsLoading(false);
+            setShowGwLoader(false);
+          }
           setIsContentGenerating(false);
           setIsLoading(false);
+          setShowGwLoader(false);
           setshowImageWarning(true);
 
           return;
-        } else {
-          console.log("image count was available");
         }
 
         const iframe = iframeRef.current;
@@ -1026,6 +1010,7 @@ const FinalPreview: React.FC = () => {
               primaryColor: Color.primary || initialColor.primaryColor,
               secondaryColor: Color.secondary || initialColor.secondaryColor,
               stagging: Mode === "staging" ? true : false,
+              dark_theme: templateList.dark_theme,
             },
             "*"
           );
@@ -1033,15 +1018,14 @@ const FinalPreview: React.FC = () => {
       } else if (
         response?.data?.status === "pending" ||
         response?.data?.status === "canceled" ||
-        response?.data?.status === "overdue"
+        response?.data?.status === "overdue" ||
+        response?.data?.status === "expired"
       ) {
+        setIsLoading(false);
+        setIsContentGenerating(false);
+        setShowGwLoader(false);
         setPlanExpired(true);
-      } else if (
-        response?.data?.status === false &&
-        response?.data?.message.length >= 0
-      ) {
-        setapiIssue(true);
-      } else {
+      } else if (response?.data?.status === false) {
         setShowGwLoader(false);
         setIsContentGenerating(false);
         setIsLoading(false);
@@ -1051,6 +1035,8 @@ const FinalPreview: React.FC = () => {
           setIsLoading(false);
         }
         setwordCountAlert(true);
+      } else {
+        setapiIssue(true);
       }
     } catch (error) {
       console.error("Error while calling the word count API:", error);
@@ -1088,7 +1074,6 @@ const FinalPreview: React.FC = () => {
     }
   };
   const rearrangeArray = (array: Page[], startIndex: number) => {
-    console.log("rearrangeArray", array);
     if (startIndex < 0 || startIndex >= array.length) {
       throw new Error("Index out of bounds");
     }
@@ -1139,7 +1124,10 @@ const FinalPreview: React.FC = () => {
         if (event.data.isGenerating) {
           setShowGwLoader(false);
         }
+      } else if (event.data.type === "somethingwentWrong") {
+        setIssue(true);
       } else if (event.data.type === "generatedContent") {
+        if (apiIssue) return;
         const pageName = selectedPage || "";
         const htmlContent = event.data.content;
 
@@ -1173,6 +1161,7 @@ const FinalPreview: React.FC = () => {
         if (updateCountError) {
           return;
         }
+
         const pageName = event.data.pageName || selectedPage || "";
         const wordCount = calculateWordCount(event.data.content);
         handleOldNewContent(pageName, event.data.content, wordCount);
@@ -1180,6 +1169,11 @@ const FinalPreview: React.FC = () => {
         setupdateCountError(true);
         setapiIssue(true);
       }
+      // else if (event.data.type === "image-failure") {
+      //   console.log("log from image-failure", event.data.failures, "even.data");
+      //   setImageFailure(event.data.failures);
+      //   setImageError(true);
+      // }
     };
     function calculateWordCount(contentObject: object) {
       let totalWordCount = 0;
@@ -1206,13 +1200,14 @@ const FinalPreview: React.FC = () => {
     showSuccessToast,
     posthog,
     updateCountError,
+    apiIssue,
   ]);
 
   const handleImportSelectedPage = async () => {
-    // posthog?.capture("import selected page", {
-    //   installedTemplate: templateList.name,
-    // });
-    // console.log(`import selected page ${templateList.name}`);
+    posthog?.capture("import selected page", {
+      installedTemplate: templateList.name,
+    });
+
     setImportLoad(true);
 
     try {
@@ -1248,7 +1243,8 @@ const FinalPreview: React.FC = () => {
       } else if (
         response?.data?.status === "pending" ||
         response?.data?.status === "canceled" ||
-        response?.data?.status === "overdue"
+        response?.data?.status === "overdue" ||
+        response?.data?.status === "expired"
       ) {
         setPlanExpired(true);
       } else {
@@ -1395,7 +1391,6 @@ const FinalPreview: React.FC = () => {
     const receiveMessage = async (event: MessageEvent) => {
       // Check for the oldNewImages message from the iframe
       if (event.data.type === "oldNewImages") {
-        console.log("image event recevied", event.data.images);
         try {
           const saveImageEndpoint = getDomainFromEndpoint(
             "/wp-json/custom/v1/save-generated-image"
@@ -1404,13 +1399,6 @@ const FinalPreview: React.FC = () => {
             console.error("Save image endpoint is not available.");
             return;
           }
-
-          console.log(
-            "image data from react",
-            "pagename",
-            selectedPage,
-            event.data.images
-          );
 
           const cleanedImageMapping = Object.values(event.data.images).reduce<
             Record<string, string>
@@ -1455,7 +1443,7 @@ const FinalPreview: React.FC = () => {
           <div className="bg-white min-h-screen w-[23vw] lg:w-[30vw] z-10 border-r border-[#DFEAF6]">
             <div className="flex items-center justify-between py-4 border-b cursor-pointer pr-7 ps-3 sidebar-header border-[#DFEAF6]">
               <img
-                src={GravityWriteLogo}
+                src="https://plugin.mywpsite.org/logo.svg"
                 alt="gravity write logo"
                 className="h-10 p-2 rounded-md"
               />
@@ -1508,6 +1496,7 @@ const FinalPreview: React.FC = () => {
               afterContact={afterContact}
               showGwLoader={showGwLoader}
               generatedPageName={generatedPageName}
+              planExpired={planExpired}
             />
           </div>
         </aside>
@@ -1530,7 +1519,7 @@ const FinalPreview: React.FC = () => {
                   </div>
                   <div className="px-12 py-8">
                     <img
-                      src={popupimg}
+                      src="https://plugin.mywpsite.org/popupimg.svg"
                       alt="Generate Page"
                       className="mx-auto mb-2"
                     />
@@ -1544,6 +1533,8 @@ const FinalPreview: React.FC = () => {
                 </div>
               </div>
             )}
+
+          {issue && <SomethingWrong />}
 
           {showImportWarning && (
             <UpgradePopup
@@ -1581,6 +1572,12 @@ const FinalPreview: React.FC = () => {
                 <GwLoader />
               </div>
             )}
+            {/* 
+{imageError && (
+              <div className="absolute inset-0 z-20 flex items-center justify-center ">
+                <ImageGenerationFailed />
+              </div>
+            )} */}
 
             {showImageWarning && (
               <div className="absolute inset-0 z-20 flex items-center justify-center ">

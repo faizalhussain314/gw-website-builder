@@ -6,7 +6,6 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { clearUserData, setPages } from "../../../Slice/activeStepSlice";
 import "../../../index.css";
-import websitebg from "../../../assets/websiteloader-bg.svg";
 import useDomainEndpoint from "../../../hooks/useDomainEndpoint";
 import store, { RootState } from "../../../store/store";
 import {
@@ -147,16 +146,44 @@ const ProcessingScreen: React.FC = () => {
       const url = getDomainFromEndpoint(endpoint);
       if (!url) return null;
 
+      const isTimeoutRequired = endpoint.includes("install-posts");
+
       try {
-        const response = await fetch(url, {
-          method: method,
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
-        });
-        if (!response.ok) throw new Error(`Error posting data to ${url}`);
-        return await response.json();
+        if (isTimeoutRequired) {
+          // Use AbortController for timeout
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 60000); // 120s timeout
+
+          const response = await fetch(url, {
+            method,
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data),
+            signal: controller.signal,
+          });
+
+          clearTimeout(timeoutId);
+
+          if (!response.ok) throw new Error(`Error posting data to ${url}`);
+          return await response.json();
+        } else {
+          // Regular fetch
+          const response = await fetch(url, {
+            method,
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data),
+          });
+
+          if (!response.ok) throw new Error(`Error posting data to ${url}`);
+          return await response.json();
+        }
       } catch (error) {
-        console.error(`Error in API call (${method}) to ${url}:`, error);
+        if (error.name === "AbortError") {
+          console.error(
+            `Timeout: API call (${method}) to ${url} aborted after 120s`
+          );
+        } else {
+          console.error(`Error in API call (${method}) to ${url}:`, error);
+        }
         return null;
       }
     },
@@ -193,14 +220,9 @@ const ProcessingScreen: React.FC = () => {
     }
 
     const templateData = await fetchTemplates();
-    if (!templateData) {
-      console.error("Template has no data");
-      if (!templateData && !bussinessName) {
-        navigate("/");
-      }
-
-      return;
-    }
+    // if (!templateData && !bussinessName) {
+    //   navigate("/");
+    // }
 
     const { plugins, pages, template_import_urls } = templateData;
 
@@ -394,8 +416,11 @@ const ProcessingScreen: React.FC = () => {
     await postData("/wp-json/custom/v1/empty-tables", {}, "DELETE");
 
     setProgress(100);
-    dispatch(clearUserData());
     setIsProcessing(false);
+    // Wait a moment before clearing so the success page remains stable.
+    setTimeout(() => {
+      dispatch(clearUserData());
+    }, 6000);
   }, [
     bussinessName,
     dispatch,
@@ -404,15 +429,25 @@ const ProcessingScreen: React.FC = () => {
     isProcessing,
     logo,
     logoWidth,
-    navigate,
     postData,
     selectedPages,
     template_id,
   ]);
 
   useEffect(() => {
-    if (!isProcessing) processAPIs();
-  }, [isProcessing, processAPIs]);
+    if (!isProcessing && progress === 0) {
+      processAPIs();
+    }
+  }, [isProcessing, progress]);
+
+  useEffect(() => {
+    if (progress === 100) {
+      const timeout = setTimeout(() => {
+        navigate("/success");
+      }, 5000);
+      return () => clearTimeout(timeout);
+    }
+  }, [progress, navigate]);
 
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -429,14 +464,6 @@ const ProcessingScreen: React.FC = () => {
     };
   }, [isProcessing]);
 
-  useEffect(() => {
-    if (progress === 100) {
-      const timeout = setTimeout(() => {
-        navigate("/success");
-      }, 3000);
-      return () => clearTimeout(timeout);
-    }
-  }, [progress, navigate]);
   return (
     <MainLayout>
       <div className="flex flex-col items-center justify-center h-[90vh]">
@@ -444,7 +471,7 @@ const ProcessingScreen: React.FC = () => {
         <div
           className="w-[340px] h-[340px] flex items-center justify-center"
           style={{
-            backgroundImage: `url(${websitebg})`,
+            backgroundImage: `url("https://plugin.mywpsite.org/websiteloader-bg.svg")`,
             backgroundSize: "contain",
             backgroundPosition: "center center",
             backgroundRepeat: "no-repeat",

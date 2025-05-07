@@ -21,8 +21,6 @@ if (POSTHOG_KEY) {
 } else {
   console.error("No PostHog key found, skipping PostHog initialization.");
 }
-console.log("PostHog Key:", POSTHOG_KEY);
-console.log("PostHog Host:", POSTHOG_HOST);
 
 root.render(
   <PostHogProvider client={posthog}>

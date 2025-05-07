@@ -1,6 +1,4 @@
 import { useNavigate } from "react-router-dom";
-
-import bgImage from "../../../assets/connectGWBg.png";
 import useDomainEndpoint from "../../../hooks/useDomainEndpoint";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../store/store";
@@ -21,7 +19,7 @@ function ConnectAccount() {
       navigate("/category");
     } else {
       if (Mode == "staging") {
-        window.location.href = `https://react-dev.gravitywrite.com/login?domain=wordpress-react&callback_url=${callBackUrl}`;
+        window.location.href = `https://staging.gravitywrite.com/login?domain=wordpress-react&callback_url=${callBackUrl}`;
       } else {
         window.location.href = `https://app.gravitywrite.com/login?domain=wordpress-react&callback_url=${callBackUrl}`;
       }
@@ -30,7 +28,7 @@ function ConnectAccount() {
   return (
     <div className="w-full h-screen relative isolate overflow-hidden pt-[100px] pb-[360px]">
       <img
-        src={bgImage}
+        src="https://plugin.mywpsite.org/connectGWBg.png"
         alt="background image"
         className="absolute inset-0 object-cover -z-10 size-full"
       />

@@ -1,5 +1,4 @@
 import React from "react";
-import errorgif from "../../../assets/Error.gif";
 
 // Define alert types that you want to handle
 type alertType = "contentError" | "userDetails" | "word limit";
@@ -29,7 +28,10 @@ const ApiErrorPopup: React.FC<ApiErrorPopupProps> = ({ alertType }) => {
     <div className="fixed inset-0 flex items-center justify-center bg-gray-500 backdrop-blur-xl bg-opacity-50 z-50">
       <div className="relative bg-white shadow-lg p-8 sm:p-8 w-full max-w-[500px] pb-6 z-10 rounded-[10px]">
         <div className="flex flex-col items-center justify-center p-4">
-          <img src={errorgif} className="w-auto h-52" />
+          <img
+            src="https://plugin.mywpsite.org/Error.gif"
+            className="w-auto h-52"
+          />
           <div className="flex items-center justify-center gap-2.5 -mt-4">
             <p className="text-2xl font-semibold text-neutral-950 text-center">
               {title}
