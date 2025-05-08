@@ -43,6 +43,7 @@ import {
 import { checkImageCount } from "../../../infrastructure/api/wordpress-api/final-preview/checkImageCount.api.ts";
 import ImagLimitWarning from "../../component/dialogs/ImageLimitWarning.tsx";
 import SomethingWrong from "../../component/dialogs/SomethingWrong.tsx";
+import { generateAndDisplayEcomProducts } from "./ecomDetails.ts";
 
 const Mode = import.meta.env.VITE_MODE;
 
@@ -73,7 +74,7 @@ const FinalPreview: React.FC = () => {
   ]);
   const [isOpen, setIsOpen] = useState(false);
   const [viewMode, setViewMode] = useState("desktop");
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [planExpired, setPlanExpired] = useState(false);
   const [isContentGenerating, setIsContentGenerating] = useState(false);
   const [isPageGenerated, setIsPageGenerated] = useState(false);
@@ -752,7 +753,7 @@ const FinalPreview: React.FC = () => {
       setShowGwLoader(false);
     } else {
       setIsPageGenerated(false);
-      setIsLoading(true);
+      // setIsLoading(true);
     }
   };
 
@@ -1469,10 +1470,22 @@ const FinalPreview: React.FC = () => {
                 </button>
                 {/* </Link> */}
               </div>
-              <span className="text-base text-[#88898A] font-normal">
+              <span
+                onClick={() => setIsLoading(false)}
+                className="text-base text-[#88898A] font-normal"
+              >
                 Preview your website’s potential with our interactive
                 demonstration.
               </span>
+              <button
+                onClick={() => {
+                  generateAndDisplayEcomProducts(businessName, Description, 6);
+                  setIsLoading(false);
+                }}
+                className="px-4 py-2 text-sm font-medium rounded-md cursor-pointer text-white bg-palatinate-blue-600 hover:bg-palatinate-blue-600 hover:text-white"
+              >
+                Generate products
+              </button>
             </div>
             <PageSelector
               pages={pages}
@@ -1567,11 +1580,11 @@ const FinalPreview: React.FC = () => {
 
           <div className="relative flex items-center justify-center w-full h-screen">
             {/* Show GwLoader only when showGwLoader is true */}
-            {showGwLoader && (
+            {/* {showGwLoader && (
               <div className="absolute inset-0 z-20 flex items-center justify-center bg-white">
                 <GwLoader />
               </div>
-            )}
+            )} */}
             {/* 
 {imageError && (
               <div className="absolute inset-0 z-20 flex items-center justify-center ">
@@ -1596,7 +1609,7 @@ const FinalPreview: React.FC = () => {
             )}
 
             {/* Skeleton Loader Layer */}
-            {isLoading && !isContentGenerating && <PlumberPageSkeleton />}
+            {/* {isLoading && !isContentGenerating && <PlumberPageSkeleton />} */}
 
             {wordCountAlert && <WordLimit />}
             {planExpired && <PlanExpired />}
@@ -1605,7 +1618,8 @@ const FinalPreview: React.FC = () => {
             {generatedPage[selectedPage] && isPageGenerated && (
               <iframe
                 ref={iframeRef}
-                src={iframeSrc}
+                // src={iframeSrc}
+                src="https://coffeeshop.mywpsite.org/shop/"
                 title="website"
                 id="myIframe"
                 onLoad={onLoadMsg}
@@ -1621,9 +1635,10 @@ const FinalPreview: React.FC = () => {
             {(!generatedPage[selectedPage!] || !isPageGenerated) && (
               <iframe
                 ref={iframeRef}
-                src={`${currentUrl}/${
-                  pages.find((page) => page.name === selectedPage)?.slug
-                }`}
+                // src={`${currentUrl}/${
+                //   pages.find((page) => page.name === selectedPage)?.slug
+                // }`}
+                src="https://coffeeshop.mywpsite.org/shop/"
                 title="website"
                 id="myIframe"
                 onLoad={onLoadMsg}
