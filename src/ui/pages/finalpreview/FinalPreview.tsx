@@ -1156,13 +1156,13 @@ const FinalPreview: React.FC = () => {
         storeHtmlContent(pageName, htmlContent);
       } else if (event.data.type === "oldNewContent") {
         posthog?.capture("Genearted Page", {
-          Generatedpage: event?.data?.pageName || selectedPage,
+          Generatedpage: selectedPage,
         });
         if (updateCountError) {
           return;
         }
 
-        const pageName = event.data.pageName || selectedPage || "";
+        const pageName = selectedPage;
         const wordCount = calculateWordCount(event.data.content);
         handleOldNewContent(pageName, event.data.content, wordCount);
       } else if (event.data.type === "streamingError") {

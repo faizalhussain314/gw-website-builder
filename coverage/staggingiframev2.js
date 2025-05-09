@@ -750,6 +750,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 retries: 3,
                 isbackground,
                 dark_theme,
+                requestId: requestId,
               });
               const data = await response.json();
 
@@ -786,6 +787,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
               } else if (data && data.status === "pending" && retries > 0) {
                 pollForCompletedImage(requestId, retries - 1, payload); // Retry
+              } else if (data && data.status === "pending") {
+                pollForCompletedImage(data.requestId, retries - 1, payload); // Retry
               } else {
                 if (data.status === "failed") {
                   showFallbackImage(originalSelector, isbackground, dark_theme);
@@ -796,6 +799,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
 
                 console.error(`Unexpected response for ${selector}:`, data);
+                if (retries >= 3) {
+                  console.error(
+                    `maximum retires(${retries}) reached for ${selector}`
+                  );
+                }
               }
             } catch (error) {
               showFallbackImage(originalSelector, isbackground, dark_theme);
@@ -1196,12 +1204,13 @@ document.addEventListener("DOMContentLoaded", () => {
     retries = 3,
     isbackground,
     dark_theme,
+    requestId,
   }) {
     let attempt = 0;
 
     while (attempt < retries) {
       try {
-        const response = await fetchFunction();
+        const response = await fetchFunction(requestId);
 
         // If the response is successful, return the response
         if (response.ok) {
