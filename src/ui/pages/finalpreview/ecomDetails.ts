@@ -1,4 +1,9 @@
-// CONFIGURATION
+import type {
+  Dispatch,
+  SetStateAction,
+  RefObject, // 👈 only types – doesn't bloat bundle
+} from "react";
+
 const API_BASE_URL = "https://dev.gravitywrite.com/api";
 const GENERATE_PRODUCT_ENDPOINT = `${API_BASE_URL}/ai-generateProduct`;
 const GENERATE_IMAGE_ENDPOINT = `${API_BASE_URL}/ai-product-image`;
@@ -7,6 +12,9 @@ const BEARER_TOKEN =
   "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiI5ZTg5YTg1ZC05YjhmLTQ1NGUtOWVlMC1lNzgxNTFiMzc3YWUiLCJqdGkiOiI5ZGQ4ZGI4ZmI0MzAwOGZiNjA1NWI5NmU1NTcwZDEwZTY0Yjc1MjFiNTI5YmZlNWFlZjIwZTAyM2Q2MGY2YjEwNDdkZWJkNmI4NzhmMGY5NSIsImlhdCI6MTc0NDA5MjA4OS44OTQ0MTEsIm5iZiI6MTc0NDA5MjA4OS44OTQ0MTMsImV4cCI6MTc1OTkwMzI4OS44OTIzMDUsInN1YiI6IjgwNiIsInNjb3BlcyI6W119.nzRIFNURZtSuLSW78H5LKtUL_s2h7ZmtU3YrnfmSRAA1IZzhBDgr7mLzknQuNVkOjvsSvzqWKaMilHbld4q35cFC3PajZ8uUVU-1wfGU7g7yLBiJWtrDsf2uvra8cO11Zp3SDx_OULphTMYKAMPMnxSPj9dRW80Wzlq6KUBwAxXioo4naNjeqFnu_nUprXyQ1S7AhLhG2N3-itva8vGXAN1xKf5XayKnK1gpTcnFz6B5uNJsx010YRKGqcZmU5Pt1cfTmPqaBLng0qXAT2aAocrUpuBuBtJBuv9BwOlrHnPrqWw21KkG-arFuETmAZtD2BdsgmzceDaWvERYEeX-dV_eRgcibGPxwpAW7QOdhA0goMJMsAJcQl-7Rp_a6DfiMzNPHximIf6dxgSBRV-bT3ykz9_81cgw3GjDhv2dcjg82l-bT4kgyroSyYzl1JLsT4Yge1kZi4e1PyPcBVM0cO1cYDIdZbsuInvfVje7oN66TVYdCJEila9zaSJAAfYYTSJSzyuM9YxXLmOopxmYpWgi8-XguS1rMAsunAu4Z-KyUfjnxSUVlbLmk24wIhe7mIk3QHAVw5LHQdsrAJAIl4fCfZpVsom6iAqhBTit86eL8JVIPBnK5HpPEaWRehwTRS9erw_6Cgewl9tNulM0vOU56BslYQAoq_mA2aGMULc";
 const StylePrompt =
   "Warm and inviting with soft, organic shapes in mint green (#1FB68D) and gentle seafoam (#E8FBF7). Elegant yet approachable, featuring delicate patterns and natural textures with a homey sophistication";
+
+const IMAGE_LOADER_URL = "https://plugin.mywpsite.org/white-normal.gif";
+
 // --- TYPE DEFINITIONS ---
 interface ProductSelectorSet {
   productName: string;
@@ -150,15 +158,20 @@ const selectors: SelectorsConfig = {
   ],
 };
 
-export const getEcomSelectors = (): SelectorsConfig => {
-  return selectors;
+export const getEcomSelectors = (): Promise<SelectorsConfig> => {
+  return new Promise((resolve) => {
+    const delayMs = 5_000 + Math.random() * 2_000;
+    setTimeout(() => resolve(selectors), 2000);
+  });
 };
 
-const iframeElement = document.getElementById(
-  "myIframe"
-) as HTMLIFrameElement | null;
-const iframeWindow = iframeElement?.contentWindow;
-console.log("myIframe", iframeElement);
+let iframeWindow: Window | null = null;
+
+// const iframeElement = document.getElementById(
+//   "myIframe"
+// ) as HTMLIFrameElement | null;
+// const iframeWindow = iframeElement?.contentWindow;
+// console.log("myIframe", iframeElement);
 
 async function fetchAIProducts(
   businessName: string,
@@ -346,8 +359,13 @@ async function sendProductsToWordPress(
 export async function generateAndDisplayEcomProducts(
   businessName: string,
   businessDescription: string,
-  numberOfProducts: string | number
+  numberOfProducts: string | number,
+  iframeRef: RefObject<HTMLIFrameElement>, // <── the ref
+  setIsLoading: Dispatch<SetStateAction<boolean>>
 ): Promise<void> {
+  setIsLoading(true);
+  console.log("iframwindow", iframeRef, iframeWindow);
+  iframeWindow = iframeRef.current?.contentWindow ?? null;
   if (!iframeWindow) {
     console.error(
       "Iframe not found or not accessible. Ensure the iframe ID is correct and the element exists."
@@ -374,12 +392,15 @@ export async function generateAndDisplayEcomProducts(
     return;
   }
 
-  const productSelectorsConfig = getEcomSelectors().product;
+  const { product: productSelectorsConfig } = await getEcomSelectors();
   const productsForWordPress: ProductForWordPress[] = [];
 
-  // 1. Initialize productsForWordPress and send initial textual data to iframe
   productsFromAPI.forEach((product, index) => {
     if (index < productSelectorsConfig.length) {
+      console.log(
+        "productSelectorsConfig.length",
+        productSelectorsConfig.length
+      );
       const selectorsForProduct = productSelectorsConfig[index];
 
       // CORRECTED TYPE FOR initialData:
@@ -403,7 +424,22 @@ export async function generateAndDisplayEcomProducts(
           selectors: selectorsForProduct,
         },
       };
+
       iframeWindow.postMessage(messageToIframe, "*");
+      setIsLoading(false);
+
+      iframeWindow.postMessage(
+        {
+          type: "PRODUCT_IMAGE_UPDATE",
+          payload: {
+            productIndex: index,
+            imageUrl: IMAGE_LOADER_URL,
+            selector: selectorsForProduct.productImage,
+          } satisfies ProductImageUpdatePayload,
+        },
+        "*"
+      );
+
       productsForWordPress.push({
         ...product,
         productIndex: index,

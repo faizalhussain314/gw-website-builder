@@ -538,7 +538,7 @@ const FinalPreview: React.FC = () => {
   const onLoadMsg = async () => {
     setwordCountAlert(false);
     setIsContentGenerating(false);
-    setIsLoading(true);
+    // setIsLoading(true);
     setLoaded(true);
 
     const iframe = iframeRef.current;
@@ -1479,8 +1479,14 @@ const FinalPreview: React.FC = () => {
               </span>
               <button
                 onClick={() => {
-                  generateAndDisplayEcomProducts(businessName, Description, 6);
-                  setIsLoading(false);
+                  generateAndDisplayEcomProducts(
+                    businessName,
+                    Description,
+                    6,
+                    iframeRef,
+                    setShowGwLoader
+                  );
+                  // setIsLoading(false);
                 }}
                 className="px-4 py-2 text-sm font-medium rounded-md cursor-pointer text-white bg-palatinate-blue-600 hover:bg-palatinate-blue-600 hover:text-white"
               >
@@ -1580,11 +1586,11 @@ const FinalPreview: React.FC = () => {
 
           <div className="relative flex items-center justify-center w-full h-screen">
             {/* Show GwLoader only when showGwLoader is true */}
-            {/* {showGwLoader && (
+            {showGwLoader && (
               <div className="absolute inset-0 z-20 flex items-center justify-center bg-white">
                 <GwLoader />
               </div>
-            )} */}
+            )}
             {/* 
 {imageError && (
               <div className="absolute inset-0 z-20 flex items-center justify-center ">
