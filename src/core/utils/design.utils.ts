@@ -41,7 +41,7 @@ export const fetchInitialCustomizationData = async (
 
     if (result) {
       // Handle color data
-      console.log("result:", result);
+
       if (result.color) {
         const resultColor: SelectedColor = JSON.parse(result.color);
         dispatch(setColor(resultColor));
@@ -92,10 +92,8 @@ export const sendMessageToIframes = (
         logoUrl: payload.logoUrl,
       };
       iframe?.contentWindow?.postMessage(message, "*");
-
-      console.log(`Iframe sent: type=${type}`, message);
     }
   } else {
-    console.log("No iframes found");
+    console.error("No iframes found");
   }
 };

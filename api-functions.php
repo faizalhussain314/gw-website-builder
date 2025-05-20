@@ -3584,7 +3584,7 @@ class GW_Website_Builder {
                                  <p>Period </p><p><strong><?php echo esc_html($display_data['period']); ?></strong></p>
                             </div>
                         </div>
-                        <a href="https://gravitywrite.com/pricing" target="_blank" style="line-height: 22px;font-size: 16px;font-weight: 500 !important;padding: 12px 35px;background-color: #2e4eff;color: #fff;text-decoration: none;border-radius: 7px;">
+                        <a href="https://app.gravitywrite.com/pricing" target="_blank" style="line-height: 22px;font-size: 16px;font-weight: 500 !important;padding: 12px 35px;background-color: #2e4eff;color: #fff;text-decoration: none;border-radius: 7px;">
                             <img src="https://plugin.mywpsite.org/wp-content/uploads/logo/Vector.svg" alt="Upgrade Icon" style="width: 20px; height: 20px; vertical-align: middle; margin-right: 8px;">
                             Upgrade
                         </a>

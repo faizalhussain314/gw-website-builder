@@ -77,7 +77,6 @@ const useFetchCustomContentData = () => {
           if (fields.includes("contactform")) {
             try {
               const contactForm = JSON.parse(data.contactform);
-              console.log(contactForm, "Parsed contact form");
 
               dispatch(
                 updateContactForm({

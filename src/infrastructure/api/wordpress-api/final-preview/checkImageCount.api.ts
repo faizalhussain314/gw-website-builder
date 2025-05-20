@@ -15,7 +15,6 @@ export const checkImageCount = async (
     });
 
     const data = response.data;
-    console.log("response of image count api", data);
 
     if (data.status) {
       return true;

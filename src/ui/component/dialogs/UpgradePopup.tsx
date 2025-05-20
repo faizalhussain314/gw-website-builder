@@ -36,7 +36,7 @@ const UpgradePopup: React.FC<UpgradePopupProps> = ({ onClose, alertType }) => {
   }
 
   const upgradeRedirection = () => {
-    window.open("https://gravitywrite.com/pricing", "_blank");
+    window.open("https://app.gravitywrite.com/pricing", "_blank");
   };
 
   const wrapperRef = useRef(null);

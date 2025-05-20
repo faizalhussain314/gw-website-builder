@@ -14,8 +14,6 @@ export const updateIframeLogo = (imageUrl: string, logoWidth: number) => {
     return;
   }
 
-  console.log("logo msg was work");
-
   // Use the `sendIframeMessage` utility to update the logo
   sendIframeMessage("changeLogo", { logoUrl: imageUrl });
 

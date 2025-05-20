@@ -230,10 +230,6 @@ const PageSelector: React.FC<Props> = ({
     return () => clearInterval(timer);
   }, [afterContact, isContentGenerating]);
 
-  // useEffect(() => {
-  //   console.log("page button value", pageButtonStates);
-  // }, [pageButtonStates]);
-
   const handleToggleButtons = (pageName: string) => {
     if (selectedPage.toLowerCase() !== pageName.toLowerCase()) {
       setPageButtonStates((prev) => ({

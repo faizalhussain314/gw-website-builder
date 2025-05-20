@@ -46,8 +46,6 @@ export const sendIframeMessage = (type: string, payload) => {
         );
       }
       if (type === "changeLogoSize" && payload.size) {
-        console.log("iframe triggered for size", payload.size);
-
         iframe?.contentWindow?.postMessage(
           {
             type: "changeLogoSize",
@@ -58,6 +56,6 @@ export const sendIframeMessage = (type: string, payload) => {
       }
     }
   } else {
-    console.log("No iframes found");
+    console.error("No iframes found");
   }
 };

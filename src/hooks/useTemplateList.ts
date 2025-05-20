@@ -69,8 +69,6 @@ const useTemplateList = (): UseTemplateListReturn => {
         const fetchedTemplateList =
           (await fetchtemplateList()) as unknown as FetchedTemplate[];
 
-        console.log("Fetched template list:", fetchedTemplateList);
-
         if (Array.isArray(fetchedTemplateList)) {
           const convertedTemplates = fetchedTemplateList.map(
             convertFetchedTemplate
@@ -101,9 +99,8 @@ const useTemplateList = (): UseTemplateListReturn => {
 
     dispatch(setTemplateList({ ...template, dark_theme: template.dark_theme }));
     setSelectedTemplateDetails(template);
-    console.log("pages of the template", template.pages);
+
     dispatch(setPagesFromTemplate(template.pages));
-    console.log("individual template list", template);
   };
 
   return {

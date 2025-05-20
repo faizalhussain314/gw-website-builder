@@ -33,7 +33,6 @@ export const savePagesToDB = async (
     } else {
       return false;
     }
-    // console.log("Pages stored successfully:", response.data);
   } catch (error) {
     console.error("Error storing pages:", error);
     throw error;

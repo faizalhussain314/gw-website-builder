@@ -8,7 +8,7 @@ type limitProps = {
 
 function LimitReachedPopup({ onClose }: limitProps) {
   const upgradePlan = () => {
-    window.open("https://gravitywrite.com/pricing", "_blank");
+    window.open("https://app.gravitywrite.com/pricing", "_blank");
   };
 
   return (

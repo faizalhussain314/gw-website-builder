@@ -59,7 +59,7 @@ export const uploadLogo = async (
 
     setSuccessMessage("Logo uploaded successfully!");
   } catch (err) {
-    console.log("this is the error message", err);
+    console.error("this is the error message", err);
     setError(err.message);
   } finally {
     setLoading(false);

@@ -1315,6 +1315,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       }
 
+      console.log("processedSelectors");
       if (
         currentIndex < processedSelectors.length &&
         result.trim().length > 0

@@ -22,8 +22,6 @@ export const saveSelectedTemplate = async (
     if (!response.ok) {
       throw new Error("Failed to save template");
     }
-
-    console.log("Template saved successfully");
   } catch (error) {
     console.error("Error in saving template:", error);
   }

@@ -4,7 +4,7 @@ import Crown from "../../../assets/crown.svg";
 
 const ImportCountError = () => {
   const upgradeRedirection = () => {
-    window.open("https://gravitywrite.com/pricing", "_blank");
+    window.open("https://app.gravitywrite.com/pricing", "_blank");
   };
 
   return (

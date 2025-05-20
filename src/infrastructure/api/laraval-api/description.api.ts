@@ -18,30 +18,17 @@ export const fetchDescriptionStream = async (
     businessName
   )}&category=${encodeURIComponent(category ?? "")}&type=${type}`;
 
-  console.log(
-    "previous description",
-    previousDescription.length >= 0,
-    type === 2
-  );
-  console.log("type === 1 && description1", description1);
-
   if (type === 2 && previousDescription.length >= 0) {
     url += `&description1=${encodeURIComponent(
       description1
     )}&userContent=${encodeURIComponent(description2)}`;
-    console.log("first block type === 2 && previousDescription");
   } else if (type === 1 && description1) {
     url += `&userContent=${encodeURIComponent(description1)}`;
-    // if (previousDescription) {
-    //   url += `&previousContent=${encodeURIComponent(previousDescription)}`;
-    //   console.log("2nd block", type === 1 && description1);
-    // }
   }
 
   let wp_token = store.getState().user.wp_token;
 
   if (!wp_token) {
-    console.log("wp_token not found in Redux, fetching new token...");
     wp_token = await fetchWpToken(dispatch, getDomainFromEndpoint);
   }
 
@@ -49,8 +36,6 @@ export const fetchDescriptionStream = async (
     console.error("Failed to fetch Bearer token.");
     throw new Error("Missing Bearer token. Cannot proceed with API call.");
   }
-
-  console.log("Using Bearer token:", wp_token);
 
   const response = await fetch(url, {
     method: "GET",
@@ -65,6 +50,5 @@ export const fetchDescriptionStream = async (
     throw new Error("Failed to fetch description");
   }
 
-  console.log("Description API response received.");
   return response.body?.getReader();
 };

@@ -21,7 +21,6 @@ const usePageData = (initialPages: Page[]) => {
       if (endpoint) {
         try {
           await savePagesToDB(endpoint, pagesToSave, 0);
-          console.log("Updated pages saved successfully!", pagesToSave);
         } catch (error) {
           console.error("Failed to store updated pages:", error);
         }

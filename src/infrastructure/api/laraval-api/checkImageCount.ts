@@ -9,7 +9,6 @@ export const checkImageCount = async (
 ) => {
   const wp_token = store.getState().user.wp_token;
 
-  console.log("auth token", wp_token);
   try {
     const response = await axios.get(
       `${API_URL}check-image-count?page_name=${pagename}&template_id=${templateId}`,
@@ -22,7 +21,6 @@ export const checkImageCount = async (
     );
 
     const data = response.data;
-    console.log("response of image count api", data);
 
     if (data.status) {
       return true;

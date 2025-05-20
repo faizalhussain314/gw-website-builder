@@ -1,14 +1,61 @@
-import React from "react";
-import MainLayout from "../../Layouts/MainLayout";
+import React, { useEffect, useRef } from "react";
+import MainLayout from "../../Layouts/MainLayout"; // Assuming MainLayout doesn't interfere
 
 function Success() {
   const handleVisitWebsite = () => {
     const currentUrl = window.location.href;
-
-    const domain = currentUrl.split("/wp-admin")[0];
-
-    window.open(`${domain}`, "_blank");
+    let domain = currentUrl.split("/wp-admin")[0];
+    if (!domain || domain === currentUrl) {
+      try {
+        const urlObject = new URL(currentUrl);
+        domain = `${urlObject.protocol}//${urlObject.host}`;
+      } catch (e) {
+        console.error(
+          "[SUCCESS COMPONENT] Could not parse domain from URL for 'Visit Website' button:",
+          e
+        );
+        domain = "#"; // Fallback
+      }
+    }
+    window.open(domain, "_blank");
   };
+
+  // Store the URL of this page when it mounts.
+  const successPageUrlRef = useRef<string>(window.location.href);
+
+  useEffect(() => {
+    const targetUrl = successPageUrlRef.current;
+
+    // 1. Add an initial history entry for the current page.
+    // This is the state we want to force the browser to stay on.
+    // The state object { isSuccessPageLock: true } helps identify our history entries in logs.
+    window.history.pushState(
+      { isSuccessPageLock: true, pageUrl: targetUrl },
+      "",
+      targetUrl
+    );
+
+    const handlePopState = () => {
+      window.history.pushState(
+        { isSuccessPageLock: true, pageUrl: targetUrl },
+        "",
+        targetUrl
+      );
+    };
+
+    window.addEventListener("popstate", handlePopState);
+
+    // Cleanup function when the component unmounts
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+
+      // If you want to be very clean and the current state is one you pushed:
+      // if (window.history.state && window.history.state.isSuccessPageLock && window.history.state.pageUrl === targetUrl) {
+      //   console.log("[SUCCESS COMPONENT] Optional: Attempting to go back once to remove the lock state from history as component unmounts.");
+      //   window.history.back(); // This can be tricky and might have unintended side effects depending on how/why the component unmounts.
+      // }
+    };
+  }, []); // Empty dependency array: effect runs once on mount, cleanup on unmount.
 
   return (
     <MainLayout>

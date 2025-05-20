@@ -4,7 +4,7 @@ import axios from "axios";
 export const deleteStyle = async (endpoint: string): Promise<boolean> => {
   try {
     const response = await axios.delete(endpoint);
-    console.log("Pages deleted successfully", response.data, response.status);
+
     if (response.status == 200) {
       return true;
     } else {

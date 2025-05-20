@@ -773,6 +773,9 @@ const FinalPreview: React.FC = () => {
     const currentPageIndex = pages.findIndex(
       (page) => page.name === currentPage
     );
+    const nextPageIndex = currentPageIndex + 1;
+    const nextPageName = pages[nextPageIndex]?.name;
+
     if (currentPageIndex !== -1) {
       const updatedPages = [...pages];
       if (
@@ -807,6 +810,7 @@ const FinalPreview: React.FC = () => {
       } else if (action === "skip") {
         updatedPages[currentPageIndex].status = "Skipped";
         updatedPages[currentPageIndex].selected = false;
+
         dispatch(
           updateReduxPage({
             name: updatedPages[currentPageIndex].name,
@@ -814,6 +818,8 @@ const FinalPreview: React.FC = () => {
             selected: false,
           })
         );
+
+        togglePage(nextPageName);
       } else if (
         action === "add" ||
         currentPage == "Contact Us" ||
@@ -897,15 +903,28 @@ const FinalPreview: React.FC = () => {
       } else {
         setSelectedPage(updatedPages[nextPageIndex].name);
 
+        // inside handlePageNavigation, after you do setSelectedPage(updatedPages[nextPageIndex].name);
+
+        // const newName = updatedPages[nextPageIndex].name;
+        // if (generatedPage[newName]) {
+        //   // bring in the already-generated blob
+        //   updateIframeSrc((generatedPage[newName] as string[])[0]);
+        //   setIsPageGenerated(true);
+        //   setShowGwLoader(false);
+        // }
+
         const nextPageContent = generatedPage[updatedPages[nextPageIndex].name];
 
         setIsPageGenerated(false);
         setIsLoading(true);
         if (nextPageContent) {
           updateIframeSrc(nextPageContent[0]);
+
+          setIsPageGenerated(true);
         } else {
           setIsPageGenerated(false);
           setIsLoading(true);
+
           const iframe: null | HTMLIFrameElement = iframeRef.current;
           const nextPageSlug = updatedPages[nextPageIndex].slug;
           if (iframe) {
@@ -1419,7 +1438,6 @@ const FinalPreview: React.FC = () => {
           });
 
           if (saveResponse.status === 200) {
-            console.log("Image data saved successfully:", saveResponse.data);
             showSuccessToast();
           } else {
             console.error("Failed to save image data:", saveResponse.data);

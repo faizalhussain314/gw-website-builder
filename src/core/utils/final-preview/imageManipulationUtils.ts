@@ -16,7 +16,6 @@ export const fetchAndReplaceImages = async (
   }
 
   const images = iframeDoc.querySelectorAll("img");
-  console.log(`Found ${images.length} images.`);
 
   for (const img of images) {
     const originalSrc = img.getAttribute("src");
@@ -27,7 +26,6 @@ export const fetchAndReplaceImages = async (
         const newImageUrl = await generateAIImage(originalSrc);
 
         img.setAttribute("src", newImageUrl);
-        console.log(`Replaced image: ${originalSrc} -> ${newImageUrl}`);
       } catch (error) {
         console.error(`Error replacing image ${originalSrc}:`, error);
       }

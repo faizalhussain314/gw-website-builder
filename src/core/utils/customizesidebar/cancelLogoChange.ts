@@ -11,12 +11,10 @@ export const cancelLogoChange = async (
   setSuccessMessage: React.Dispatch<React.SetStateAction<string | null>>,
   setError: React.Dispatch<React.SetStateAction<string | null>>
 ) => {
-  console.log("businessName", businessName);
-
   try {
     const endpoint = getDomainFromEndpoint("wp-json/custom/v1/delete-sitelogo");
     const response = await axios.delete(endpoint);
-    console.log(response, "response");
+
     if (response.data.success) {
       sendIframeMessage("bussinessName", businessName);
       setSuccessMessage(null);

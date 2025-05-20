@@ -4,10 +4,7 @@ import Crown from "../../../assets/crown.svg";
 
 const PlanExpired = () => {
   const upgradeRedirection = () => {
-    window.open(
-      " https://app.gravitywrite.com/credit-based?target=subscription",
-      "_blank"
-    );
+    window.open(" https://app.gravitywrite.com/pricing", "_blank");
   };
 
   return (

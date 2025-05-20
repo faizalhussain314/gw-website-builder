@@ -9,7 +9,7 @@ type limitProps = {
 
 function ImagLimitWarning({ onClose }: limitProps) {
   const upgradePlan = () => {
-    window.open("https://gravitywrite.com/pricing", "_blank");
+    window.open("https://app.gravitywrite.com/pricing", "_blank");
   };
   /** when user click outside then this hook will be exicuted*/
   const wrapperRef = useRef(null);

@@ -14,7 +14,6 @@ export const fetchCategoryList = async (
     let wp_token = store.getState().user.wp_token;
 
     if (!wp_token) {
-      console.log("Fetching wp_token...");
       wp_token = await fetchWpToken(dispatch, getDomainFromEndpoint);
     }
 

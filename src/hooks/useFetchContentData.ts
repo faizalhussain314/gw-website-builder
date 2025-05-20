@@ -91,7 +91,7 @@ const useFetchContentData = () => {
           const parsedTemplateList = JSON.parse(data.templateList);
           const Style = parsedTemplateList?.styles;
           dispatch(setTemplateList(parsedTemplateList || []));
-          console.log("parsed Template List", Style);
+
           dispatch(setStyle(Style));
         }
 
@@ -102,8 +102,6 @@ const useFetchContentData = () => {
 
         dispatch(setlastStep(data.lastStep || ""));
       }
-
-      console.log("create type for this data's", data);
 
       return data;
     } catch (error) {

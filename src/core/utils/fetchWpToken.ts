@@ -14,14 +14,14 @@ export const fetchWpToken = async (
 
     if (result.status && result.token) {
       dispatch(setWpToken(result.token)); // Store token in Redux
-      console.log("Token fetched successfully:", result.token);
+
       return result.token;
     } else {
       console.error("Failed to fetch token: Invalid response");
       return null;
     }
   } catch (error) {
-    console.log("Error fetching user token:", error);
+    console.error("Error fetching user token:", error);
     return null;
   }
 };

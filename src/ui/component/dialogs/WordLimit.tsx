@@ -4,7 +4,7 @@ import Crown from "../../../assets/icon-component/crown";
 
 const WordLimit = () => {
   const upgradeRedirection = () => {
-    window.open("https://gravitywrite.com/pricing", "_blank");
+    window.open("https://app.gravitywrite.com/pricing", "_blank");
   };
 
   return (
@@ -21,7 +21,6 @@ const WordLimit = () => {
           className="mt-8 text-base tertiary text-white flex items-center justify-center gap-2 px-6 py-3 rounded-lg mx-auto"
           onClick={upgradeRedirection}
         >
-          {/* <img src={Crown} alt="Crown" /> */}
           <Crown /> Upgrade Plan
         </button>
       </div>

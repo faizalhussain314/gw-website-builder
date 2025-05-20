@@ -33,10 +33,7 @@ const ProfileSection: React.FC = () => {
   );
 
   const upgradeAccount = () => {
-    window.open(
-      "https://app.gravitywrite.com/credit-based?target=subscription",
-      "_blank"
-    );
+    window.open("https://app.gravitywrite.com/pricing", "_blank");
   };
 
   const handleLogOut = async () => {
