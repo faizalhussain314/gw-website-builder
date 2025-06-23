@@ -8,7 +8,23 @@ export default defineConfig({
   define: {
     "process.env": {},
   },
-
+  resolve: {
+    alias: {
+      "@api": path.resolve(__dirname, "src/infrastructure/api"),
+      "@components": path.resolve(__dirname, "src/ui/component"),
+      "@pages": path.resolve(__dirname, "src/ui/pages"),
+      "@layouts": path.resolve(__dirname, "src/ui/Layouts"),
+      "@hooks": path.resolve(__dirname, "src/hooks"),
+      "@store": path.resolve(__dirname, "src/store"),
+      "@types": path.resolve(__dirname, "src/types"),
+      "@config": path.resolve(__dirname, "src/config"),
+      "@dialog": path.resolve(__dirname, "src/ui/component/dialogs"),
+      "@ui": path.resolve(__dirname, "src/ui"),
+      "@utils": path.resolve(__dirname, "src/core/utils"),
+      "@assets": path.resolve(__dirname, "src/assets"),
+      "@Slice": path.resolve(__dirname, "src/Slice"),
+    },
+  },
   build: {
     // sourcemap: true,
     outDir: path.resolve(__dirname, "dist/"),
@@ -27,21 +43,3 @@ export default defineConfig({
     },
   },
 });
-
-// import { defineConfig } from "vite";
-// import react from "@vitejs/plugin-react-swc";
-
-// export default defineConfig({
-//   plugins: [react()],
-//   base: "/wp-content/plugins/gw-website-builder-main/dist/",
-//   server: {
-//     proxy: {
-//       "/process-content": {
-//         target: "https://stagging.webspacekit.com/",
-//         changeOrigin: true,
-//         rewrite: (path) =>
-//           path.replace(/^\/process-content/, "/new-react-webhook-file.php"),
-//       },
-//     },
-//   },
-// });

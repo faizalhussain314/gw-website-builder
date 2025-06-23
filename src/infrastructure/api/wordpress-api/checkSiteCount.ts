@@ -1,7 +1,7 @@
 import wordpressAxios from "@config/wordpressAxios";
 
 export const checkSiteCount = async (): Promise<boolean> => {
-  const endpoint = "/wp-json/custom/v1/check-word-count";
+  const endpoint = "/wp-json/custom/v1/check-site-count";
   try {
     const response = await wordpressAxios.get(endpoint);
     if (response?.data?.status === true) {

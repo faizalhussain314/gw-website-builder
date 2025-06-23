@@ -1,22 +1,13 @@
-import { GetDomainFromEndpointType } from "../../../../types/apiTypes.type";
+import wordpressAxios from "@config/wordpressAxios";
 
 // Function to update category details
-export const updateCategoryDetails = async (
-  content: string,
-  getDomainFromEndpoint: GetDomainFromEndpointType
-) => {
-  const url = getDomainFromEndpoint("wp-json/custom/v1/update-form-details");
+export const updateCategoryDetails = async (content: string) => {
+  const url = "wp-json/custom/v1/update-form-details";
 
   try {
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ category: content }),
-    });
+    const response = await wordpressAxios.post(url, { category: content });
 
-    const result = await response.json();
+    const result = await response.data;
     return result;
   } catch (error) {
     console.error("Error making API call:", error);

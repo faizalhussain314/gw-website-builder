@@ -6,29 +6,33 @@ import ConnectAccount from "../ui/pages/connectAccount/ConnectAccount";
 import Category from "../ui/pages/category/Category";
 import Name from "../ui/pages/name/Name";
 import Description from "../ui/pages/description/Description";
-import Contact from "../ui/pages/contact/Contact";
-import Design from "../ui/pages/design/Design";
+import Contact from "@ui/pages/contact/Contact";
+import Design from "@ui/pages/design/Design";
 import ProcessingScreen from "../ui/pages/processingScreen/ProcessingScreen";
 import FinalPreview from "../ui/pages/finalpreview/FinalPreview";
 import CustomDesign from "../ui/pages/customdesign/CustomDesign";
 import Success from "../ui/pages/successPage/Success";
-import Test from "../backupcode/Test";
+import IntroLayout from "@ui/Layouts/IntroLayout";
+import MainLayout from "@ui/Layouts/MainLayout";
 
 const AppRoutes = () => (
   <Routes>
-    <Route path="/welcome" element={<Welcome />} />
+    <Route element={<IntroLayout />}>
+      <Route path="/" element={<Welcome />} />
+    </Route>
     <Route path="/connect-account" element={<ConnectAccount />} />
-    <Route path="/test" element={<Test />} />
-    <Route path="/" element={<Welcome />} />
-    <Route path="/category" element={<Category />} />
-    <Route path="/name" element={<Name />} />
-    <Route path="/description" element={<Description />} />
-    <Route path="/contact" element={<Contact />} />
-    <Route path="/design" element={<Design />} />
-    <Route path="/processing" element={<ProcessingScreen />} />
+
+    <Route element={<MainLayout />}>
+      <Route path="/category" element={<Category />} />
+      <Route path="/name" element={<Name />} />
+      <Route path="/description" element={<Description />} />
+      <Route path="/contact" element={<Contact />} />
+      <Route path="/design" element={<Design />} />
+      <Route path="/processing" element={<ProcessingScreen />} />
+      <Route path="/success" element={<Success />} />
+    </Route>
     <Route path="/final-preview" element={<FinalPreview />} />
     <Route path="/custom-design" element={<CustomDesign />} />
-    <Route path="/success" element={<Success />} />
   </Routes>
 );
 

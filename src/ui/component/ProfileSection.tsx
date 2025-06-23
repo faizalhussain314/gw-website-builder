@@ -8,7 +8,7 @@ import { useSelector } from "react-redux";
 import { RootState } from "../../store/store";
 import useDomainEndpoint from "../../hooks/useDomainEndpoint";
 import axios from "axios";
-import { useClickOutside } from "../../hooks/useClickOutside";
+import { useClickOutside } from "@hooks/index";
 import SignOut from "./dialogs/SignOut";
 
 const ProfileSection: React.FC = () => {
@@ -17,7 +17,6 @@ const ProfileSection: React.FC = () => {
 
   const [logOut, setlogOut] = useState(false);
 
-  /** when user click outside then this hook will be exicuted*/
   const wrapperRef = useRef(null);
   useClickOutside(wrapperRef, () => {
     setIsOpen(false);
@@ -31,6 +30,9 @@ const ProfileSection: React.FC = () => {
     (userDetails.generatedSite / userDetails.max_genration) * 100,
     100
   );
+
+  // Check if user data is loaded
+  const isLoading = !userDetails?.username || !userDetails?.email;
 
   const upgradeAccount = () => {
     window.open("https://app.gravitywrite.com/pricing", "_blank");
@@ -47,6 +49,7 @@ const ProfileSection: React.FC = () => {
         response?.data?.data?.message ===
           "Disconnection has already been completed."
       ) {
+        // console.log("signout sucessfull", response.data);
         window.location.href = "/wp-admin/admin.php?page=gravitywrite_settings";
       } else {
         console.error("Unexpected API response:", response?.data);
@@ -55,6 +58,11 @@ const ProfileSection: React.FC = () => {
       console.error("Error in logout API:", error);
     }
   };
+
+  // Skeleton component for loading state
+  const SkeletonLoader = ({ className }: { className: string }) => (
+    <div className={`animate-pulse bg-gray-200 rounded ${className}`}></div>
+  );
 
   return (
     <>
@@ -69,36 +77,49 @@ const ProfileSection: React.FC = () => {
         {/* Account Action Button Section */}
         <div
           className="flex justify-between w-full p-5 gap-x-3"
-          onClick={toggleMenu}
+          onClick={!isLoading ? toggleMenu : undefined}
         >
           <div
-            className={`px-3 py-2.5 flex items-center justify-between w-full max-w-[84%] border rounded-lg cursor-pointer ${
-              isOpen ? "border-palatinate-blue-600" : "border-[#E5E7EB]"
-            }`}
+            className={`px-3 py-2.5 flex items-center justify-between w-full max-w-[84%] border rounded-lg ${
+              !isLoading ? "cursor-pointer" : ""
+            } ${isOpen ? "border-palatinate-blue-600" : "border-[#E5E7EB]"}`}
           >
-            <p className="text-base font-medium truncate w-full max-w-[90%]">
-              {userDetails?.username}
-            </p>
+            {isLoading ? (
+              <SkeletonLoader className="h-5 w-32" />
+            ) : (
+              <p className="text-base font-medium truncate w-full max-w-[90%]">
+                {userDetails?.username}
+              </p>
+            )}
             <button
-              onClick={toggleMenu}
-              className="flex items-center p-0 bg-transparent border-none cursor-pointer focus:outline-none"
+              onClick={!isLoading ? toggleMenu : undefined}
+              className={`flex items-center p-0 bg-transparent border-none focus:outline-none ${
+                !isLoading ? "cursor-pointer" : ""
+              }`}
+              disabled={isLoading}
             >
               <img
                 src={ProfileArrowIcon}
                 className={`${
                   isOpen ? "rotate-180 " : "-rotate-180"
-                }transition-all duration-200 ease-in`}
+                }transition-all duration-200 ease-in ${
+                  isLoading ? "opacity-50" : ""
+                }`}
               />
             </button>
           </div>
-          <img
-            src={userDetails?.gravator}
-            alt="Profile"
-            className="w-10 h-10 rounded-full shrink-0"
-          />
+          {isLoading ? (
+            <SkeletonLoader className="w-10 h-10 rounded-full" />
+          ) : (
+            <img
+              src={userDetails?.gravator}
+              alt="Profile"
+              className="w-10 h-10 rounded-full shrink-0"
+            />
+          )}
         </div>
-        {/* Account Action Popup Section */}
-        {isOpen && (
+
+        {isOpen && !isLoading && (
           <div className="absolute bottom-[90%] w-[96%] left-2 bg-white rounded-lg border border-[#DAE1E9] shadow-lg z-20 py-4 px-2 transition-all duration-300 ease-in-out">
             <div className="flex items-center justify-center w-full gap-3 px-2">
               <img

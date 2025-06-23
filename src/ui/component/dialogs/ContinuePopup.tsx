@@ -20,7 +20,8 @@ const ContinuePopup: React.FC<ContinuePopup> = ({
   if (alertType === "regenerate") {
     message = "If you want to regenerate more <br /> upgrade to Pro!!!";
   } else if (alertType === "websiteCreation") {
-    message = "Your existing changes will be lost. How do you want to proceed?";
+    message =
+      "You have an unfinished website building session. Do you want to continue where you left off or start from scratch?";
   }
 
   return (
@@ -36,7 +37,9 @@ const ContinuePopup: React.FC<ContinuePopup> = ({
 
         <div className="flex items-center gap-x-2.5 w-full justify-center">
           <img src={Caution} alt="Caution" />
-          <h2 className="text-[22px] leading-7 font-semibold">Attention</h2>
+          <h2 className="text-[22px] leading-7 font-semibold">
+            Resume your last session?
+          </h2>
         </div>
         <p
           className="mt-5 mb-9 text-[#656567] text-lg"

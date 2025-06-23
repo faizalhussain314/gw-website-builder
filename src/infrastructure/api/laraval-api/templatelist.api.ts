@@ -1,26 +1,25 @@
-import { templatelist } from "../../../types/Preview.type";
-import { getToken } from "../../../core/utils/tokenUtil";
+import { laravelAxios } from "@config";
+import { Template } from "types/design.type";
 
-const API_URL = import.meta.env.VITE_API_BACKEND_URL;
+export const fetchtemplateList = async (): Promise<Template[]> => {
+  try {
+    const response = await laravelAxios.get("getTemplates");
+    console.log("templatedata", response.data.data);
 
-export const fetchtemplateList = async (): Promise<templatelist[]> => {
-  const token = getToken();
+    // Handle the API response structure
+    const apiResponse = response.data;
 
-  if (!token) {
-    return;
+    // Check if the response is successful
+    if (apiResponse.code === 200 && apiResponse.message === "success") {
+      // Return the templates array
+      return Array.isArray(apiResponse.data) ? apiResponse.data : [];
+    } else {
+      throw new Error(
+        `API returned error: ${apiResponse.message || "Unknown error"}`
+      );
+    }
+  } catch (error) {
+    console.error("Error fetching template list:", error);
+    throw new Error(`Failed to fetch template list: ${error.message}`);
   }
-  const response = await fetch(`${API_URL}getTemplates`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error("Failed to fetch category list");
-  }
-
-  const data = await response.json();
-  return data.data;
 };

@@ -1,21 +1,18 @@
-import React, { ReactNode } from "react";
+import React from "react";
 import Sidebar from "../global component/Sidebar";
+import { Outlet } from "react-router-dom";
 
-interface MainLayoutProps {
-  children: ReactNode;
-}
-
-const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
+const MainLayout: React.FC = () => {
   return (
     <div className="flex">
       <div className="w-[23%]">
         <Sidebar />
       </div>
-      {/* Main Container */}
-      <div className="flex flex-col flex-1 max-w-full max-h-screen">
-        {/* <Header active={false} /> */}
 
-        <main className="flex flex-col flex-1 overflow-y-auto">{children}</main>
+      <div className="flex flex-col flex-1 max-w-full max-h-screen">
+        <main className="flex flex-col flex-1 overflow-y-auto">
+          <Outlet />
+        </main>
       </div>
     </div>
   );

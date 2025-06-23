@@ -1,7 +1,7 @@
 import Caution from "../../../assets/caution.svg";
 import Crown from "../../../assets/crown.svg";
 import { useRef } from "react";
-import { useClickOutside } from "../../../hooks/useClickOutside";
+import { useClickOutside } from "@hooks/index";
 
 type limitProps = {
   onClose: () => void;

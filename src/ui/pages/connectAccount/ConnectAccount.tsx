@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import useDomainEndpoint from "../../../hooks/useDomainEndpoint";
+import { useDomainEndpoint } from "@hooks";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../store/store";
 
@@ -32,18 +32,6 @@ function ConnectAccount() {
         alt="background image"
         className="absolute inset-0 object-cover -z-10 size-full"
       />
-
-      {/* <img
-        src={spaceShip}
-        alt="space-ship gif"
-        className="hidden mac:inline-block absolute top-[35%] left-[131px] w-[226px] h-[226px]"
-      />
-      <img
-        src={spaceShip}
-        alt="space-ship gif"
-        className="hidden mac:inline-block absolute top-[25%] right-[137px] w-[226px] h-[226px]"
-      /> */}
-
       <div className="px-6 mx-auto max-w-7xl lg:px-8">
         <div className="mx-auto max-w-7xl">
           <div className="grid justify-center">

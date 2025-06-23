@@ -1,9 +1,7 @@
 import { useState } from "react";
 import { toast } from "react-toastify";
 
-export const useRegeneration = (
-  iframeRef: React.RefObject<HTMLIFrameElement>
-) => {
+const useRegeneration = (iframeRef: React.RefObject<HTMLIFrameElement>) => {
   const [isContentGenerating, setIsContentGenerating] = useState(false);
 
   const handleRegenerate = (templateName: string, pageSlug: string) => {
@@ -45,3 +43,5 @@ export const useRegeneration = (
 
   return { handleRegenerate, isContentGenerating };
 };
+
+export default useRegeneration;

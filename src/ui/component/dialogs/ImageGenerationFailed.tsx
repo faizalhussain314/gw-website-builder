@@ -1,6 +1,3 @@
-import Caution from "../../../assets/caution.svg";
-import Crown from "../../../assets/crown.svg";
-
 export const ImageGenerationFailed = () => {
   return (
     <div className="w-full h-full flex items-center justify-center bg-slate-700 bg-opacity-50 backdrop-blur-sm z-50 rounded">

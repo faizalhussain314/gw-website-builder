@@ -1,7 +1,7 @@
 import React, { useRef, useState } from "react";
 import CloseIcon from "@mui/icons-material/Close";
 import Caution from "../../../assets/caution.svg";
-import { useClickOutside } from "../../../hooks/useClickOutside";
+import { useClickOutside } from "@hooks/index";
 
 type SignOutProps = {
   onClose: () => void;

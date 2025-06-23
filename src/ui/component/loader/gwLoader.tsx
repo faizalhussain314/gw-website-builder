@@ -1,6 +1,6 @@
 import React from "react";
 
-function gwLoader() {
+function GwLoader() {
   return (
     <div className="mt-[50px] flex flex-col items-center gap-[12px] z-50 bg-white">
       <div className="mt-[50px] flex flex-col items-center gap-[12px]">
@@ -164,4 +164,4 @@ function gwLoader() {
   );
 }
 
-export default gwLoader;
+export default GwLoader;

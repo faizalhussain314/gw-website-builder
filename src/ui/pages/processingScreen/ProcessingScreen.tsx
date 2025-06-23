@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from "react";
-import MainLayout from "../../Layouts/MainLayout";
 import { CircularProgressbar, buildStyles } from "react-circular-progressbar";
 import "react-circular-progressbar/dist/styles.css";
 import { useNavigate } from "react-router-dom";
@@ -18,7 +17,7 @@ import {
   mapApiPageToReduxPage,
 } from "../../../types/processingpage.type";
 import useFetchCustomContentData from "../../../hooks/useFetchCustomContentData";
-import ImportCountError from "../../component/dialogs/ImportCountError";
+import { ImportCountError } from "@dialog";
 import { setWpToken } from "../../../Slice/userSlice";
 import axios from "axios";
 
@@ -465,7 +464,7 @@ const ProcessingScreen: React.FC = () => {
   }, [isProcessing]);
 
   return (
-    <MainLayout>
+    <React.Fragment>
       <div className="flex flex-col items-center justify-center h-[90vh]">
         {importLimit && <ImportCountError />}
         <div
@@ -509,7 +508,7 @@ const ProcessingScreen: React.FC = () => {
           </div>
         </div>
       </div>
-    </MainLayout>
+    </React.Fragment>
   );
 };
 

@@ -1,7 +1,7 @@
 import { Dispatch } from "redux";
-import { setColor, setFont, setLogo } from "../../Slice/activeStepSlice";
-import { SelectedColor, SelectedFont } from "../../types/customdesign.type";
-import { Font } from "../../types/activeStepSlice.type";
+import { wordpressAxios } from "@config";
+import { setColor, setFont, setLogo } from "@Slice/activeStepSlice";
+import { SelectedColor, SelectedFont } from "types/customdesign.type";
 
 interface FormDetailsResponse {
   color?: string;
@@ -16,32 +16,39 @@ interface SendMessagePayload {
   logoUrl?: string;
 }
 
+interface IframeMessage {
+  type: string;
+  primaryColor?: string;
+  secondaryColor?: string;
+  font?: SelectedFont;
+  logoUrl?: string;
+}
+
+interface StoreContentParams {
+  logo?: string;
+  color?: SelectedColor;
+  font?: string;
+}
+
 export const fetchInitialCustomizationData = async (
-  getDomainFromEndpoint: (endpoint: string) => string,
   dispatch: Dispatch,
   setSelectedColor: (color: SelectedColor) => void,
   setSelectedFont: (font: SelectedFont | null) => void,
   setLogoUrl: (url: string | null) => void,
-  storeContent: (content: {
-    logo?: string;
-    color?: SelectedColor;
-    font?: string;
-  }) => Promise<void>
-) => {
-  const url = getDomainFromEndpoint("wp-json/custom/v1/get-form-details");
-
+  storeContent: (content: StoreContentParams) => Promise<void>
+): Promise<void> => {
   try {
-    const response = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ fields: ["color", "font", "logo"] }),
-    });
+    const response = await wordpressAxios.post<FormDetailsResponse>(
+      "/wp-json/custom/v1/get-form-details",
+      {
+        fields: ["color", "font", "logo"],
+      }
+    );
 
-    const result: FormDetailsResponse = await response.json();
+    const result = response.data;
 
     if (result) {
       // Handle color data
-
       if (result.color) {
         const resultColor: SelectedColor = JSON.parse(result.color);
         dispatch(setColor(resultColor));
@@ -54,11 +61,10 @@ export const fetchInitialCustomizationData = async (
 
       // Handle font data
       if (result.font) {
-        const selectedfont: SelectedFont = JSON.parse(result.font); // Parse the font string to an object
-
-        setSelectedFont(selectedfont);
-        dispatch(setFont(selectedfont));
-        sendMessageToIframes("changeFont", { font: selectedfont });
+        const selectedFont: SelectedFont = JSON.parse(result.font);
+        setSelectedFont(selectedFont);
+        dispatch(setFont(selectedFont));
+        sendMessageToIframes("changeFont", { font: selectedFont });
       }
 
       // Handle logo data
@@ -71,29 +77,121 @@ export const fetchInitialCustomizationData = async (
       }
     }
   } catch (error) {
-    console.error("Error fetching initial data:", error);
+    console.error("Error fetching initial customization data:", error);
+    throw error; // Re-throw to allow caller to handle
   }
 };
 
 export const sendMessageToIframes = (
   type: string,
   payload: SendMessagePayload
-) => {
+): void => {
   const iframes = document.getElementsByTagName("iframe");
 
   if (iframes.length > 0) {
-    for (let i = 0; i < iframes.length; i++) {
-      const iframe = iframes[i];
-      const message = {
-        type,
-        primaryColor: payload.primary,
-        secondaryColor: payload.secondary,
-        font: payload.font,
-        logoUrl: payload.logoUrl,
-      };
+    const message: IframeMessage = {
+      type,
+      primaryColor: payload.primary,
+      secondaryColor: payload.secondary,
+      font: payload.font,
+      logoUrl: payload.logoUrl,
+    };
+
+    // Send message to all iframes
+    Array.from(iframes).forEach((iframe) => {
       iframe?.contentWindow?.postMessage(message, "*");
-    }
+    });
   } else {
-    console.error("No iframes found");
+    console.warn("No iframes found to send message to");
+  }
+};
+
+// Alternative: Create a more specific service for this functionality
+export class CustomizationDataService {
+  async fetchInitialData(): Promise<FormDetailsResponse> {
+    const response = await wordpressAxios.post<FormDetailsResponse>(
+      "/wp-json/custom/v1/get-form-details",
+      {
+        fields: ["color", "font", "logo"],
+      }
+    );
+    return response.data;
+  }
+
+  processColorData(
+    colorData: string,
+    dispatch: Dispatch,
+    setSelectedColor: (color: SelectedColor) => void
+  ): void {
+    const resultColor: SelectedColor = JSON.parse(colorData);
+    dispatch(setColor(resultColor));
+    setSelectedColor(resultColor);
+    sendMessageToIframes("changeGlobalColors", {
+      primary: resultColor.primary,
+      secondary: resultColor.secondary,
+    });
+  }
+
+  processFontData(
+    fontData: string,
+    dispatch: Dispatch,
+    setSelectedFont: (font: SelectedFont | null) => void
+  ): void {
+    const selectedFont: SelectedFont = JSON.parse(fontData);
+    setSelectedFont(selectedFont);
+    dispatch(setFont(selectedFont));
+    sendMessageToIframes("changeFont", { font: selectedFont });
+  }
+
+  async processLogoData(
+    logoData: string,
+    dispatch: Dispatch,
+    setLogoUrl: (url: string | null) => void,
+    storeContent: (content: StoreContentParams) => Promise<void>
+  ): Promise<void> {
+    setLogoUrl(logoData);
+    dispatch(setLogo(logoData));
+    sendMessageToIframes("changeLogo", { logoUrl: logoData });
+    await storeContent({ logo: logoData });
+  }
+}
+
+// Updated function signature that removes getDomainFromEndpoint dependency
+export const fetchInitialCustomizationDataV2 = async (
+  dispatch: Dispatch,
+  setSelectedColor: (color: SelectedColor) => void,
+  setSelectedFont: (font: SelectedFont | null) => void,
+  setLogoUrl: (url: string | null) => void,
+  storeContent: (content: StoreContentParams) => Promise<void>
+): Promise<void> => {
+  const service = new CustomizationDataService();
+
+  try {
+    const result = await service.fetchInitialData();
+
+    if (result) {
+      // Handle color data
+      if (result.color) {
+        service.processColorData(result.color, dispatch, setSelectedColor);
+      }
+
+      // Handle font data
+      if (result.font) {
+        service.processFontData(result.font, dispatch, setSelectedFont);
+      }
+
+      // Handle logo data
+      if (result.logo) {
+        await service.processLogoData(
+          result.logo,
+          dispatch,
+          setLogoUrl,
+          storeContent
+        );
+      }
+    }
+  } catch (error) {
+    console.error("Error fetching initial customization data:", error);
+    throw error;
   }
 };

@@ -1,5 +1,5 @@
 import React, { ReactNode } from "react";
-import CustomizeSidebar from "../component/CustomizeSidebar";
+import { CustomizeSidebar } from "@components";
 
 interface MainLayoutProps {
   children: ReactNode;

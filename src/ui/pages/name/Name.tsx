@@ -1,18 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import MainLayout from "../../Layouts/MainLayout";
 import { useDispatch, useSelector } from "react-redux";
-import { setBusinessName } from "../../../Slice/activeStepSlice";
-import { RootState } from "../../../store/store";
-import useDomainEndpoint from "../../../hooks/useDomainEndpoint";
-import { getBusinessName } from "../../../infrastructure/api/wordpress-api/name/getBusinessName.api";
-import { updateBusinessName } from "../../../infrastructure/api/wordpress-api/name/updateBusinessName.api";
-import { handleEnterKey } from "../../../core/utils/handleEnterKey";
+import { setBusinessName } from "@Slice/activeStepSlice";
+import { RootState } from "@store/store";
+import { getBusinessName, updateBusinessName } from "@api/wordpress-api";
+import { handleEnterKey } from "@utils";
 
 function Name() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { getDomainFromEndpoint } = useDomainEndpoint();
 
   const category = useSelector((state: RootState) => state.userData.category);
   const initialName = useSelector(
@@ -21,19 +17,6 @@ function Name() {
   const [name, setName] = useState<string>(initialName || "");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    const fetchInitialName = async () => {
-      if (category) return;
-      const content = await getBusinessName(getDomainFromEndpoint);
-      if (content && content.businessName) {
-        setName(content.businessName);
-        dispatch(setBusinessName(content.businessName));
-      }
-    };
-
-    fetchInitialName();
-  }, [category, dispatch, getDomainFromEndpoint]); // runs on mount and if these change
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newName = event.target.value;
@@ -51,7 +34,7 @@ function Name() {
       }
       setLoading(true);
       try {
-        await updateBusinessName(name, getDomainFromEndpoint);
+        await updateBusinessName(name);
         dispatch(setBusinessName(name));
         setLoading(false);
         navigate("/description");
@@ -63,6 +46,19 @@ function Name() {
     }
   };
 
+  useEffect(() => {
+    const fetchInitialName = async () => {
+      if (category) return;
+      const content = await getBusinessName();
+      if (content && content.businessName) {
+        setName(content.businessName);
+        dispatch(setBusinessName(content.businessName));
+      }
+    };
+
+    fetchInitialName();
+  }, [category, dispatch]);
+
   const handlePrevious = () => {
     if (name) {
       dispatch(setBusinessName(name));
@@ -71,7 +67,7 @@ function Name() {
   };
 
   return (
-    <MainLayout>
+    <React.Fragment>
       <div className="bg-[#F9FCFF] flex font-['inter']">
         <div className="p-[40px] w-full">
           <div className="flex flex-col">
@@ -151,7 +147,7 @@ function Name() {
           </div>
         </div>
       </div>
-    </MainLayout>
+    </React.Fragment>
   );
 }
 

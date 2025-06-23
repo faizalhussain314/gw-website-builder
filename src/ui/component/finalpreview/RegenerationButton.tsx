@@ -1,6 +1,6 @@
 import React, { useRef } from "react";
 import CachedIcon from "@mui/icons-material/Cached";
-import { useRegeneration } from "../../../hooks/useRegeneration";
+import { useRegeneration } from "@hooks/useRegeneration";
 
 const RegenerationButton: React.FC<{
   templateName: string;

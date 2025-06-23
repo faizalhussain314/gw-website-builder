@@ -1,15 +1,12 @@
-import axios from "axios";
 import { Dispatch } from "@reduxjs/toolkit";
 import { setWpToken } from "../../Slice/userSlice";
+import wordpressAxios from "@config/wordpressAxios";
 // import useDomainEndpoint from "../hooks/useDomainEndpoint";
 
-export const fetchWpToken = async (
-  dispatch: Dispatch,
-  getDomainFromEndpoint: (args: string) => string
-) => {
+export const fetchWpToken = async (dispatch: Dispatch) => {
   try {
-    const url = getDomainFromEndpoint("/wp-json/custom/v1/get-user-token");
-    const response = await axios.get(url);
+    const url = "/wp-json/custom/v1/get-user-token";
+    const response = await wordpressAxios.get(url);
     const result = response.data;
 
     if (result.status && result.token) {

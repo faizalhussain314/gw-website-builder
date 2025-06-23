@@ -7,6 +7,13 @@ import { checkWordCount } from "./checkWordCount";
 import { getBusinessName } from "./name/getBusinessName.api";
 import { updateBusinessName } from "./name/updateBusinessName.api";
 import { updateWordCount } from "./updateWordCount";
+import {
+  updateDescriptions,
+  getDescriptions,
+} from "./description/DescriptionService";
+import { getFormDataByName } from "./formDetails";
+import { saveSelectedTemplate } from "./desgin/saveSelectedtemplate";
+import { updateFormDetail } from "./updateFormDetail";
 
 export {
   fetchWpToken,
@@ -18,4 +25,15 @@ export {
   getBusinessName,
   updateBusinessName,
   updateWordCount,
+  getDescriptions,
+  updateDescriptions,
+  getFormDataByName,
+  saveSelectedTemplate,
+  updateFormDetail,
 };
+export {
+  checkImageCount,
+  deletePage,
+  deleteStyle,
+  savePagesToDB,
+} from "./final-preview";

@@ -6,7 +6,6 @@ const API_URL = import.meta.env.VITE_API_BACKEND_URL;
 
 export const fetchDescriptionStream = async (
   dispatch: Dispatch,
-  getDomainFromEndpoint: (args: string) => string,
   businessName: string,
   category: string | null,
   type: 1 | 2,
@@ -29,7 +28,7 @@ export const fetchDescriptionStream = async (
   let wp_token = store.getState().user.wp_token;
 
   if (!wp_token) {
-    wp_token = await fetchWpToken(dispatch, getDomainFromEndpoint);
+    wp_token = await fetchWpToken(dispatch);
   }
 
   if (!wp_token) {

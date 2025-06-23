@@ -1,4 +1,4 @@
-export const handleEnterKey = ({
+const handleEnterKey = ({
   event,
   callback,
   value,
@@ -31,3 +31,5 @@ export const handleEnterKey = ({
     callback();
   }
 };
+
+export default handleEnterKey;

@@ -1,14 +1,12 @@
-import React, { ReactNode } from "react";
+import React from "react";
+import { Outlet } from "react-router-dom";
 
-interface IntroLayoutProps {
-  children: ReactNode;
-}
-
-const IntroLayout: React.FC<IntroLayoutProps> = ({ children }) => {
+const IntroLayout: React.FC = () => {
   return (
     <div className="w-full min-h-screen h-full bg-[#F9FCFF]">
-      {/* <Header active={true} /> */}
-      <main className="h-[90vh]">{children}</main>
+      <main className="h-[90vh]">
+        <Outlet />
+      </main>
     </div>
   );
 };

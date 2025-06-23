@@ -40,3 +40,16 @@ export const emptyTable = async () => {
     throw error;
   }
 };
+
+export const getFormDataByName = async (fields: [string]) => {
+  const endpoint = "wp-json/custom/v1/get-form-details";
+  try {
+    const response = await wordpressAxios.post(endpoint, {
+      fields: fields,
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching content:", error);
+    throw error;
+  }
+};

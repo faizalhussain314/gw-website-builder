@@ -2,7 +2,7 @@ import React, { useRef } from "react";
 import CloseIcon from "@mui/icons-material/Close";
 import Caution from "../../../assets/caution.svg";
 import Crown from "../../../assets/crown.svg";
-import { useClickOutside } from "../../../hooks/useClickOutside";
+import { useClickOutside } from "@hooks/index.ts";
 
 type UpgradePopupProps = {
   onClose: () => void;

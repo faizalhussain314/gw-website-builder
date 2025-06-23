@@ -23,7 +23,7 @@ import { useSelector } from "react-redux";
 import { RootState } from "./store/store";
 import { fetchWpToken } from "./core/utils/fetchWpToken";
 import { usePostHog } from "posthog-js/react";
-import { UserDetails } from "./types/UserDetails";
+import { UserDetails } from "types/UserDetails";
 
 const App = () => {
   const navigate = useNavigate();
@@ -174,7 +174,7 @@ const App = () => {
     const fetchData = async () => {
       if (username) {
         // Fetch token only if username exists
-        await fetchWpToken(dispatch, getDomainFromEndpoint);
+        await fetchWpToken(dispatch);
       } else {
         console.error("Username is empty, skipping token fetch.");
       }
