@@ -1,5 +1,5 @@
 // services/wordpressService.ts
-import { wordpressAxios } from "../../../../config";
+import { wordpressAxios } from "@config";
 
 async function getUserDetails() {
   try {

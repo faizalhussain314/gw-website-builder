@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useDispatch } from "react-redux";
+import { useAppDispatch } from "@hooks/redux"; // Change this import
 import ContinuePopup from "./ui/component/dialogs/ContinuePopup";
 import useFetchContentData from "./hooks/useFetchContentData";
 import useSessionHandler from "./hooks/useSessionHandler";
@@ -16,6 +16,7 @@ import {
   setGravator,
   setGeneratedSite,
   setMaxGeneration,
+  setVersion,
 } from "./Slice/userSlice";
 import useDomainEndpoint from "./hooks/useDomainEndpoint";
 import axios from "axios";
@@ -24,11 +25,12 @@ import { RootState } from "./store/store";
 import { fetchWpToken } from "./core/utils/fetchWpToken";
 import { usePostHog } from "posthog-js/react";
 import { UserDetails } from "./types/UserDetails";
+import { fetchUsageDetails } from "./Slice/usageSlice";
 
 const App = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch(); // Change this line
   const posthog = usePostHog();
 
   const { isSessionActive, setSessionActive } = useSessionHandler();
@@ -38,6 +40,7 @@ const App = () => {
   const [fetchedData, setFetchedData] = useState<UserDetails | null>(null);
   const [firstLoad, setFirstLoad] = useState(true);
   const [isRefresh, setIsRefresh] = useState(false);
+  const [shouldFetchUsage, setShouldFetchUsage] = useState(true); // Add this state
   const username = useSelector((state: RootState) => state.user.username);
 
   const { fetchContent, emptyTable } = useFetchContentData();
@@ -61,6 +64,7 @@ const App = () => {
             "plan_detail",
             "website_used",
             "website_total",
+            "version",
           ],
         },
         {
@@ -79,11 +83,25 @@ const App = () => {
         dispatch(setGravator(result[0]?.gravator));
         dispatch(setGeneratedSite(parseInt(result[0]?.website_used)));
         dispatch(setMaxGeneration(parseInt(result[0]?.website_total)));
+        const version = result[0]?.version;
+        if (version !== undefined) {
+          dispatch(setVersion(version)); // Set actual version value
+        } else {
+          dispatch(setVersion(null)); // Set null if key is missing
+        }
       }
     } catch (error) {
       if (axios.isAxiosError(error)) {
         const status = error.response?.status;
         const message = error.response?.data?.message;
+
+        // Handle 404 error specifically
+        if (status === 404) {
+          // dispatch(setVersion(null));
+          setShouldFetchUsage(false); // Prevent usage details API from being called
+          console.error("User details not found (404):", message);
+          return;
+        }
 
         console.error("unexpected error:", status, message);
       } else {
@@ -192,6 +210,13 @@ const App = () => {
       // posthog?.group("plan", user.company_id);
     }
   }, [posthog, email, username]);
+
+  useEffect(() => {
+    // Fetch usage details when app starts, but only if shouldFetchUsage is true
+    if (shouldFetchUsage) {
+      dispatch(fetchUsageDetails());
+    }
+  }, [dispatch, shouldFetchUsage]);
 
   return (
     <div className="relative">

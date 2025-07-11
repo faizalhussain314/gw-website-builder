@@ -9,6 +9,16 @@ export default defineConfig({
     "process.env": {},
   },
 
+  resolve: {
+    alias: {
+      "@config": path.resolve(__dirname, "src/config"),
+      "@component": path.resolve(__dirname, "src/ui/component"),
+      "@assets": path.resolve(__dirname, "src/assets/"),
+      "@dialog": path.resolve(__dirname, "src/ui/component/dialogs"),
+      "@hooks": path.resolve(__dirname, "src/hooks/"),
+    },
+  },
+
   build: {
     // sourcemap: true,
     outDir: path.resolve(__dirname, "dist/"),

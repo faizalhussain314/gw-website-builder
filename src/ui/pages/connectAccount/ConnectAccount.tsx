@@ -19,7 +19,8 @@ function ConnectAccount() {
       navigate("/category");
     } else {
       if (Mode == "staging") {
-        window.location.href = `https://staging.gravitywrite.com/login?domain=wordpress-react&callback_url=${callBackUrl}`;
+        // window.location.href = `https://staging.gravitywrite.com/login?domain=wordpress-react&callback_url=${callBackUrl}`;
+        window.location.href = `https://gravitywrite-frontend.pages.dev/login?domain=wordpress-react&callback_url=${callBackUrl}`;
       } else {
         window.location.href = `https://app.gravitywrite.com/login?domain=wordpress-react&callback_url=${callBackUrl}`;
       }

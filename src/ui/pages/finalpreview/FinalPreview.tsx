@@ -346,7 +346,8 @@ const FinalPreview: React.FC = () => {
     async (
       pageName: string,
       jsonContent: Record<string, string>,
-      wordCount: number
+      wordCount: number,
+      imageCount: number
     ) => {
       try {
         const updateCountEndpoint = getDomainFromEndpoint(
@@ -364,6 +365,7 @@ const FinalPreview: React.FC = () => {
           template_id: templateList.id,
           sitecount: 0,
           is_type: "words",
+          image_count: imageCount,
         });
 
         if (updateResponse.status !== 200) {
@@ -414,8 +416,13 @@ const FinalPreview: React.FC = () => {
   );
 
   const handleOldNewContent = useCallback(
-    (pageName: string, content: Record<string, string>, wordCount: number) => {
-      storeOldNewContent(pageName, content, wordCount);
+    (
+      pageName: string,
+      content: Record<string, string>,
+      wordCount: number,
+      imageCount: number
+    ) => {
+      storeOldNewContent(pageName, content, wordCount, imageCount);
     },
     [storeOldNewContent]
   );
@@ -1182,8 +1189,19 @@ const FinalPreview: React.FC = () => {
         }
 
         const pageName = selectedPage;
+        const imageCount = event.data.image_count;
+        console.log(
+          "imageCount from postmesssage event",
+          imageCount,
+          event.data
+        );
         const wordCount = calculateWordCount(event.data.content);
-        handleOldNewContent(pageName, event.data.content, wordCount);
+        handleOldNewContent(
+          pageName,
+          event.data.content,
+          wordCount,
+          imageCount
+        );
       } else if (event.data.type === "streamingError") {
         setupdateCountError(true);
         setapiIssue(true);

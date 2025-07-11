@@ -9,6 +9,7 @@ interface UserState {
   generatedSite: number;
   max_genration: number;
   wp_token: string;
+  version: string | number | null;
 }
 
 const initialState: UserState = {
@@ -20,6 +21,7 @@ const initialState: UserState = {
   generatedSite: 2,
   max_genration: 6,
   wp_token: "",
+  version: "2.0",
 };
 
 export const userSlice = createSlice({
@@ -50,6 +52,9 @@ export const userSlice = createSlice({
     setWpToken: (state, action: PayloadAction<string>) => {
       state.wp_token = action.payload;
     },
+    setVersion: (state, action: PayloadAction<string>) => {
+      state.version = action.payload;
+    },
     resetUserState: (state) => {
       state.username = "";
       state.plan = "Free";
@@ -68,6 +73,7 @@ export const {
   setGeneratedSite,
   setMaxGeneration,
   setWpToken,
+  setVersion,
 } = userSlice.actions;
 
 export default userSlice.reducer;

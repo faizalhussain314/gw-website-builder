@@ -19,7 +19,16 @@
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": true,
-    "forceConsistentCasingInFileNames": true // Added option
+    "forceConsistentCasingInFileNames": true, // Added option
+
+    "baseUrl": "./src", // Base directory for imports
+    "paths": {
+      "@*": ["*"],
+      "@config/*": ["config/*"],
+      "@component": ["ui/component/*"],
+      "@dialog": ["src/ui/component/dialogs/*"],
+      "@hooks": ["/hooks/*"]
+    }
   },
   "include": ["src", "coverage/staggingiframev2.js"],
   "references": [{ "path": "./tsconfig.node.json" }]

@@ -374,3 +374,10 @@ iframe {
   border: 3px solid black !important;
   background-color: white !important;
 }
+
+.credit-blur {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0) 90%, #fff 98.79%);
+
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}

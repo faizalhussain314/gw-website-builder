@@ -5,7 +5,7 @@ document.addEventListener("DOMContentLoaded", () => {
    * Global Variables
    * ------------------------------------------------------------------------- */
   let API_BASE_URL = "https://api.gravitywrite.com/api";
-  let stagging_url = "https://staging-api.gravitywrite.com/api";
+  let stagging_url = "https://staging-credits-api.gravitywrite.com/api";
   let currentIndex = 0;
   let isFetching = false; // Used in stream content
   let isFetchingPageSelectors = false;
@@ -260,9 +260,11 @@ document.addEventListener("DOMContentLoaded", () => {
         type: "oldNewContent",
         pageName,
         content: cleanedContent, // { oldText : newText }
+        image_count: Object.keys(imageUrlMap || {}).length,
       },
       "*"
     );
+    console.log(" image_count", Object.keys(imageUrlMap).length);
 
     // 2. a *snapshot* of the full generated HTML ------------------------------
     window.parent.postMessage(
@@ -1315,7 +1317,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       }
 
-      console.log("processedSelectors");
       if (
         currentIndex < processedSelectors.length &&
         result.trim().length > 0
